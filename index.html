@@ -2,7 +2,7 @@
 <html data-theme="dark" lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AI Defect Agent v3.4</title>
+<title>AI Defect Agent v3.5</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -406,7 +406,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
   <div class="sb-top">
     <div class="logo">
       <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
-      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v3.4 · Platform Selector · CORS Fixed</div></div>
+      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v3.5 · Auto Issue Type · Platform Selector</div></div>
     </div>
     <div class="ppills">
       <div class="ppill" id="pill-jira"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M16 2L2 17l14 13 14-13L16 2z" fill="#2d84ff"/><path d="M16 9.5L9.5 17 16 23l6.5-6L16 9.5z" fill="white"/></svg>Jira</div>
@@ -430,6 +430,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
     <div class="cfg-row"><div class="cfg-lbl">API Token</div><input class="cfg-in" id="ci-jira-token" type="password" placeholder="ATATT3x..."/></div>
     <div class="cfg-row"><div class="cfg-lbl">Project Key</div><input class="cfg-in" id="ci-jira-proj" placeholder="QA"/></div>
     <div class="cfg-row"><div class="cfg-lbl">Board ID (for sprints)</div><input class="cfg-in" id="ci-jira-board" placeholder="1"/></div>
+    <div class="cfg-row"><div class="cfg-lbl">Issue Type <span style="color:var(--t3)">(optional — auto-detected)</span></div><input class="cfg-in" id="ci-jira-type" placeholder="Bug / Task / Story"/></div>
     <button class="btn-sv" onclick="saveCfg('jira')">Save Jira Config</button>
   </div></div>
 
@@ -588,7 +589,7 @@ localStorage.clear();
 
 const LS = k => '';
 const CFG = {
-  ant:'', jiraUrl:'', jiraEmail:'',
+  ant:'', jiraUrl:'', jiraEmail:'', jiraIssueType:'',
   jiraToken:'', jiraProj:'', jiraBoard:'',
   adoOrg:'', adoProj:'', adoPat:'', adoTeam:'',
   ghOwner:'', ghRepo:'', ghToken:'',
@@ -1223,7 +1224,7 @@ async function api(endpoint, body) {
   if (!r.ok) throw new Error(d.error || `Server ${r.status}`);
   return d;
 }
-function jiraCfg() { return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard }; }
+function jiraCfg() { return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'' }; }
 function adoCfg()  { return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam }; }
 function ghCfg()   { return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken }; }
 
@@ -1442,6 +1443,8 @@ function saveCfg(section){
     if(tok&&!tok.startsWith('●')){CFG.jiraToken=tok;localStorage.setItem('da_jira_token',tok);}
     if(proj){CFG.jiraProj=proj;localStorage.setItem('da_jira_proj',proj);}
     if(board){CFG.jiraBoard=board;localStorage.setItem('da_jira_board',board);}
+    const itype=v('ci-jira-type');
+    if(itype){CFG.jiraIssueType=itype;localStorage.setItem('da_jira_type',itype);}
   }
   if(section==='ado'){
     const org=v('ci-ado-org'),proj=v('ci-ado-project'),pat=v('ci-ado-pat'),team=v('ci-ado-team');
@@ -1525,7 +1528,7 @@ function resetSessionOnLoad() {
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
       <div class="msg ai">${aiAv()}<div><div class="msg-bub">
-        <strong>AI Defect Agent v3.4</strong> — Ready. Describe a defect below.<br><br>
+        <strong>AI Defect Agent v3.5</strong> — Ready. Describe a defect below.<br><br>
         <span style="color:var(--t2);font-size:12px">⭐ Severity scorer · 🧪 Test cases · 🔍 Root cause · 📋 Templates · 💬 Comments · 🔔 Notifications · 🏃 Sprint · 🎤 Voice · 📤 Export · 📊 Dashboard</span>
       </div></div></div>`;
   }
