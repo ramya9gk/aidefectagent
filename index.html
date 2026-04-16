@@ -2,7 +2,7 @@
 <html data-theme="dark" lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AI Defect Agent v4.1</title>
+<title>AI Defect Agent v4.3</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -406,7 +406,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
   <div class="sb-top">
     <div class="logo">
       <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
-      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v4.1 · Fully Secure · Zero Credentials in Browser</div></div>
+      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v4.3 · Reporter Email · TC_ Prefix · Secure</div></div>
     </div>
     <div class="ppills">
       <div class="ppill" id="pill-jira"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M16 2L2 17l14 13 14-13L16 2z" fill="#2d84ff"/><path d="M16 9.5L9.5 17 16 23l6.5-6L16 9.5z" fill="white"/></svg>Jira</div>
@@ -440,6 +440,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
       <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_PROJECT</code>
       <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_BOARD</code>
       <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_ISSUE_TYPE</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_REPORTER_EMAIL</code>
     </div>
     <button class="btn-sv" style="background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('jira')">✓ Test Jira Connection</button>
     <!-- Hidden inputs retained for fallback compatibility -->
@@ -628,7 +629,7 @@ localStorage.clear();
 
 const LS = k => '';
 const CFG = {
-  ant:'', jiraUrl:'', jiraEmail:'', jiraIssueType:'',
+  ant:'', jiraUrl:'', jiraEmail:'', jiraIssueType:'', jiraReporterEmail:'',
   jiraToken:'', jiraProj:'', jiraBoard:'',
   adoOrg:'', adoProj:'', adoPat:'', adoTeam:'',
   ghOwner:'', ghRepo:'', ghToken:'',
@@ -1085,6 +1086,10 @@ function buildTicketHTML(t,platform,tid){
     <div class="tk-hdr ${hdr}">${platIcon(platform)}<span class="tk-id" id="ticket-id-display">${esc(tid)}</span><span style="font-size:10px;opacity:.6">Bug</span><div class="tk-badges"><span class="sbadge ${sevClass(sev)}">${esc(sev)}</span>${pri?`<span class="pbadge">${esc(pri)}</span>`:''}</div></div>
     <div class="tk-body" id="tk-body">
       <div class="tk-summary">${esc(title)}</div>
+      <div style="font-size:10px;color:var(--t3);margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        ${isJ?`<span>👤 Reporter: <strong style="color:var(--t2)">${esc(CFG.jiraReporterEmail||CFG.jiraEmail||'—')}</strong></span>`:''}
+        <span>🏷️ Platform: <strong style="color:var(--t2)">${platform==='jira'?'Jira':platform==='azure_devops'?'Azure DevOps':'GitHub'}</strong></span>
+      </div>
       ${comps.length||labels.length?`<div class="tk-sec"><div class="tags-row">${comps.map(c=>`<span class="tag tag-c">${esc(c)}</span>`).join('')}${labels.map(l=>`<span class="tag">${esc(l)}</span>`).join('')}</div></div>`:''}
       <div class="tk-sec"><div class="tk-sec-lbl">Description</div><div class="tk-desc">${esc(t.description||t.body||'').replace(/\n/g,'<br>')}</div></div>
       <div class="tk-sec"><div class="tk-sec-lbl">Steps to reproduce</div><ul class="steps-list">${renderSteps(steps)}</ul></div>
@@ -1283,7 +1288,7 @@ async function api(endpoint, body) {
   if (!r.ok) throw new Error(d.error || `Server ${r.status}`);
   return d;
 }
-function jiraCfg() { return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'' }; }
+function jiraCfg() { return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'' }; }
 function adoCfg()  { return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam }; }
 function ghCfg()   { return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken }; }
 
@@ -1617,7 +1622,7 @@ async function acceptTestCases(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:900,messages:[{role:'user',content:`Generate exactly 4 Gherkin test cases for this bug. Return JSON only, no extra text:
 {"cases":[
-  {"type":"Positive","summary":"[Type] Short summary max 60 chars","description":"One line description","gherkin":"Scenario: ...\n  Given ...\n  When ...\n  Then ..."},
+  {"type":"Positive","summary":"Short summary max 55 chars (no TC_ prefix needed)","description":"One line description","gherkin":"Scenario: ...\n  Given ...\n  When ...\n  Then ..."},
   {"type":"Negative","summary":"...","description":"...","gherkin":"..."},
   {"type":"Edge Case","summary":"...","description":"...","gherkin":"..."},
   {"type":"Regression","summary":"...","description":"...","gherkin":"..."}
@@ -1785,7 +1790,7 @@ function resetSessionOnLoad() {
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
       <div class="msg ai">${aiAv()}<div><div class="msg-bub">
-        <strong>AI Defect Agent v4.1</strong> — Ready. Describe a defect below.<br><br>
+        <strong>AI Defect Agent v4.3</strong> — Ready. Describe a defect below.<br><br>
         <span style="color:var(--t2);font-size:12px">⭐ Severity scorer · 🧪 Test cases · 🔍 Root cause · 📋 Templates · 💬 Comments · 🔔 Notifications · 🏃 Sprint · 🎤 Voice · 📤 Export · 📊 Dashboard</span>
       </div></div></div>`;
   }
