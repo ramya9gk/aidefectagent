@@ -2,7 +2,7 @@
 <html data-theme="dark" lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AI Defect Agent v3.3</title>
+<title>AI Defect Agent v3.4</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -406,7 +406,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
   <div class="sb-top">
     <div class="logo">
       <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
-      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v3.3 · CORS Fixed · Fresh Start</div></div>
+      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v3.4 · Platform Selector · CORS Fixed</div></div>
     </div>
     <div class="ppills">
       <div class="ppill" id="pill-jira"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M16 2L2 17l14 13 14-13L16 2z" fill="#2d84ff"/><path d="M16 9.5L9.5 17 16 23l6.5-6L16 9.5z" fill="white"/></svg>Jira</div>
@@ -563,6 +563,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
           <span class="ex-chip" onclick="setEx(2)">Dashboard crash</span>
           <span class="ex-chip" onclick="setEx(3)">API 404 error</span>
         </div>
+        <select id="platform-override" style="background:var(--s3);border:1px solid var(--b3);border-radius:7px;padding:4px 8px;font-size:11px;color:var(--t1);font-family:'DM Sans',sans-serif;cursor:pointer;outline:none;flex-shrink:0" title="Force platform (overrides auto-routing)">
+          <option value="auto">🤖 Auto</option>
+          <option value="jira">🔵 Jira</option>
+          <option value="azure_devops">🔷 ADO</option>
+          <option value="github">⚫ GitHub</option>
+        </select>
         <button class="send-btn" id="send-btn" onclick="sendDefect()" aria-label="Generate ticket from defect description">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z"/></svg>
           Generate
@@ -1395,7 +1401,9 @@ async function sendDefect(){
     const tb=d1.content.find(b=>b.type==='tool_use');
     if(!tb){rmThink();const t=d1.content.find(b=>b.type==='text')?.text||'Please provide more details.';chatHist.push({role:'assistant',content:t});addMsg('ai',t);return;}
     advStep(1);
-    const platform=T2P(tb.name);
+    // Platform override: use manual selection if not 'auto'
+    const override = document.getElementById('platform-override')?.value || 'auto';
+    const platform = override !== 'auto' ? override : T2P(tb.name);
     highlightPill(platform==='azure_devops'?'ado':platform==='github'?'gh':'jira');
     advStep(2);
     curTicket={...tb.input,_platform:platform};
@@ -1517,7 +1525,7 @@ function resetSessionOnLoad() {
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
       <div class="msg ai">${aiAv()}<div><div class="msg-bub">
-        <strong>AI Defect Agent v3.3</strong> — Ready. Describe a defect below.<br><br>
+        <strong>AI Defect Agent v3.4</strong> — Ready. Describe a defect below.<br><br>
         <span style="color:var(--t2);font-size:12px">⭐ Severity scorer · 🧪 Test cases · 🔍 Root cause · 📋 Templates · 💬 Comments · 🔔 Notifications · 🏃 Sprint · 🎤 Voice · 📤 Export · 📊 Dashboard</span>
       </div></div></div>`;
   }
@@ -1525,6 +1533,10 @@ function resetSessionOnLoad() {
   // Reset input field
   const din = document.getElementById('din');
   if (din) din.value = '';
+
+  // Reset platform selector to Auto
+  const platformSel = document.getElementById('platform-override');
+  if (platformSel) platformSel.value = 'auto';
 
   // Reset bulk panel
   const bulkIn = document.getElementById('bulk-in');
