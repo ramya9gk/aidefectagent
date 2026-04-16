@@ -17,6 +17,18 @@
     "api/notify.js": {
       "memory": 256,
       "maxDuration": 30
+    },
+    "api/attach.js": {
+      "memory": 512,
+      "maxDuration": 30
+    },
+    "api/testcase.js": {
+      "memory": 512,
+      "maxDuration": 60
+    },
+    "api/claude.js": {
+      "memory": 256,
+      "maxDuration": 60
     }
   },
   "headers": [

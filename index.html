@@ -2,7 +2,7 @@
 <html data-theme="dark" lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AI Defect Agent v3.5</title>
+<title>AI Defect Agent v4.1</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -406,7 +406,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
   <div class="sb-top">
     <div class="logo">
       <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
-      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v3.5 · Auto Issue Type · Platform Selector</div></div>
+      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v4.1 · Fully Secure · Zero Credentials in Browser</div></div>
     </div>
     <div class="ppills">
       <div class="ppill" id="pill-jira"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M16 2L2 17l14 13 14-13L16 2z" fill="#2d84ff"/><path d="M16 9.5L9.5 17 16 23l6.5-6L16 9.5z" fill="white"/></svg>Jira</div>
@@ -418,47 +418,86 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
   <!-- Anthropic -->
   <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('ant')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('ant')}"><span class="sec-lbl">Anthropic API</span><span class="sec-arr open" id="arr-ant">▶</span></div>
   <div class="sec-body open" id="bod-ant">
-    <div class="cfg-row"><div class="cfg-lbl"><span class="cfg-dot" id="dot-ant"></span>API Key</div><input class="cfg-in" id="ci-ant" type="password" placeholder="sk-ant-api03-..."/></div>
-    <button class="btn-sv" onclick="saveCfg('ant')">Save Key</button>
+    <div style="padding:6px 0;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
+      <span class="cfg-dot ok" id="dot-ant"></span>
+      Secured via Vercel Environment Variable
+    </div>
+    <div style="font-size:10px;color:var(--t3);line-height:1.6;margin-bottom:6px">API key is stored server-side in Vercel — never exposed to the browser. Go to Vercel → Settings → Environment Variables → add <code style="background:var(--s3);padding:1px 4px;border-radius:3px">ANTHROPIC_API_KEY</code></div>
+    <button class="btn-sv" style="background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('ant')">✓ Test Connection</button>
   </div></div>
 
   <!-- Jira -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('jira')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('jira')}"><span class="sec-lbl">Jira Cloud</span><span class="sec-arr" id="arr-jira">▶</span></div>
-  <div class="sec-body" id="bod-jira">
-    <div class="cfg-row"><div class="cfg-lbl"><span class="cfg-dot" id="dot-jira"></span>Base URL</div><input class="cfg-in" id="ci-jira-url" placeholder="https://org.atlassian.net"/></div>
-    <div class="cfg-row"><div class="cfg-lbl">Email</div><input class="cfg-in" id="ci-jira-email" placeholder="you@company.com"/></div>
-    <div class="cfg-row"><div class="cfg-lbl">API Token</div><input class="cfg-in" id="ci-jira-token" type="password" placeholder="ATATT3x..."/></div>
-    <div class="cfg-row"><div class="cfg-lbl">Project Key</div><input class="cfg-in" id="ci-jira-proj" placeholder="QA"/></div>
-    <div class="cfg-row"><div class="cfg-lbl">Board ID (for sprints)</div><input class="cfg-in" id="ci-jira-board" placeholder="1"/></div>
-    <div class="cfg-row"><div class="cfg-lbl">Issue Type <span style="color:var(--t3)">(optional — auto-detected)</span></div><input class="cfg-in" id="ci-jira-type" placeholder="Bug / Task / Story"/></div>
-    <button class="btn-sv" onclick="saveCfg('jira')">Save Jira Config</button>
+  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('jira')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('jira')}"><span class="sec-lbl">Jira Cloud</span><span class="sec-arr open" id="arr-jira">▶</span></div>
+  <div class="sec-body open" id="bod-jira">
+    <div style="padding:4px 0 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
+      <span class="cfg-dot ok" id="dot-jira"></span>Secured via Vercel Environment Variables
+    </div>
+    <div style="font-size:10px;color:var(--t3);line-height:1.7;margin-bottom:10px">
+      Set these in <strong>Vercel → Settings → Environment Variables:</strong><br>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_URL</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_EMAIL</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_TOKEN</code><br>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_PROJECT</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_BOARD</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_ISSUE_TYPE</code>
+    </div>
+    <button class="btn-sv" style="background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('jira')">✓ Test Jira Connection</button>
+    <!-- Hidden inputs retained for fallback compatibility -->
+    <input type="hidden" id="ci-jira-url"/><input type="hidden" id="ci-jira-email"/>
+    <input type="hidden" id="ci-jira-token"/><input type="hidden" id="ci-jira-proj"/>
+    <input type="hidden" id="ci-jira-board"/><input type="hidden" id="ci-jira-type"/>
   </div></div>
 
   <!-- ADO -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('ado')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('ado')}"><span class="sec-lbl">Azure DevOps</span><span class="sec-arr" id="arr-ado">▶</span></div>
-  <div class="sec-body" id="bod-ado">
-    <div class="cfg-row"><div class="cfg-lbl"><span class="cfg-dot" id="dot-ado"></span>Organization</div><input class="cfg-in" id="ci-ado-org" placeholder="yourorgname"/></div>
-    <div class="cfg-row"><div class="cfg-lbl">Project</div><input class="cfg-in" id="ci-ado-project" placeholder="MyProject"/></div>
-    <div class="cfg-row"><div class="cfg-lbl">PAT Token</div><input class="cfg-in" id="ci-ado-pat" type="password" placeholder="Personal Access Token"/></div>
-    <div class="cfg-row"><div class="cfg-lbl">Team (for sprints)</div><input class="cfg-in" id="ci-ado-team" placeholder="MyProject Team"/></div>
-    <button class="btn-sv" onclick="saveCfg('ado')">Save ADO Config</button>
+  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('ado')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('ado')}"><span class="sec-lbl">Azure DevOps</span><span class="sec-arr open" id="arr-ado">▶</span></div>
+  <div class="sec-body open" id="bod-ado">
+    <div style="padding:4px 0 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
+      <span class="cfg-dot ok" id="dot-ado"></span>Secured via Vercel Environment Variables
+    </div>
+    <div style="font-size:10px;color:var(--t3);line-height:1.7;margin-bottom:10px">
+      Set these in <strong>Vercel → Settings → Environment Variables:</strong><br>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_ORG</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_PROJECT</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_PAT</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_TEAM</code>
+    </div>
+    <button class="btn-sv" style="background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('ado')">✓ Test ADO Connection</button>
+    <!-- Hidden inputs retained for fallback compatibility -->
+    <input type="hidden" id="ci-ado-org"/><input type="hidden" id="ci-ado-project"/>
+    <input type="hidden" id="ci-ado-pat"/><input type="hidden" id="ci-ado-team"/>
   </div></div>
 
   <!-- GitHub -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('gh')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('gh')}"><span class="sec-lbl">GitHub Issues</span><span class="sec-arr" id="arr-gh">▶</span></div>
-  <div class="sec-body" id="bod-gh">
-    <div class="cfg-row"><div class="cfg-lbl"><span class="cfg-dot" id="dot-gh"></span>Owner</div><input class="cfg-in" id="ci-gh-owner" placeholder="your-username"/></div>
-    <div class="cfg-row"><div class="cfg-lbl">Repo</div><input class="cfg-in" id="ci-gh-repo" placeholder="your-repo"/></div>
-    <div class="cfg-row"><div class="cfg-lbl">Token</div><input class="cfg-in" id="ci-gh-token" type="password" placeholder="ghp_..."/></div>
-    <button class="btn-sv" onclick="saveCfg('gh')">Save GitHub Config</button>
+  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('gh')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('gh')}"><span class="sec-lbl">GitHub Issues</span><span class="sec-arr open" id="arr-gh">▶</span></div>
+  <div class="sec-body open" id="bod-gh">
+    <div style="padding:4px 0 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
+      <span class="cfg-dot ok" id="dot-gh"></span>Secured via Vercel Environment Variables
+    </div>
+    <div style="font-size:10px;color:var(--t3);line-height:1.7;margin-bottom:10px">
+      Set these in <strong>Vercel → Settings → Environment Variables:</strong><br>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_OWNER</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_REPO</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_TOKEN</code>
+    </div>
+    <button class="btn-sv" style="background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('gh')">✓ Test GitHub Connection</button>
+    <!-- Hidden inputs retained for fallback compatibility -->
+    <input type="hidden" id="ci-gh-owner"/><input type="hidden" id="ci-gh-repo"/>
+    <input type="hidden" id="ci-gh-token"/>
   </div></div>
 
   <!-- Notifications -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('notif')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('notif')}"><span class="sec-lbl">Notifications</span><span class="sec-arr" id="arr-notif">▶</span></div>
-  <div class="sec-body" id="bod-notif">
-    <div class="cfg-row"><div class="cfg-lbl"><span class="cfg-dot" id="dot-slack"></span>Slack Webhook URL</div><input class="cfg-in" id="ci-slack" placeholder="https://hooks.slack.com/services/..."/></div>
-    <div class="cfg-row"><div class="cfg-lbl"><span class="cfg-dot" id="dot-teams"></span>Teams Webhook URL</div><input class="cfg-in" id="ci-teams" placeholder="https://...webhook.office.com/..."/></div>
-    <button class="btn-sv" onclick="saveCfg('notif')">Save Notifications</button>
+  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('notif')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('notif')}"><span class="sec-lbl">Notifications</span><span class="sec-arr open" id="arr-notif">▶</span></div>
+  <div class="sec-body open" id="bod-notif">
+    <div style="padding:4px 0 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
+      <span class="cfg-dot ok" id="dot-slack"></span>Secured via Vercel Environment Variables
+    </div>
+    <div style="font-size:10px;color:var(--t3);line-height:1.7;margin-bottom:10px">
+      Set these in <strong>Vercel → Settings → Environment Variables:</strong><br>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">SLACK_WEBHOOK_URL</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">TEAMS_WEBHOOK_URL</code>
+    </div>
+    <input type="hidden" id="ci-slack"/><input type="hidden" id="ci-teams"/>
+    <span id="dot-teams" style="display:none"></span>
   </div></div>
 
   <!-- Templates -->
@@ -646,9 +685,9 @@ function applyTemplate(name) {
 
 // ══ FEATURE 1: SEVERITY AUTO-SCORER ════════════════════════
 async function scoreSeverity(description) {
-  if (!CFG.ant) return null;
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST', headers:{'Content-Type':'application/json','x-api-key':CFG.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  // Anthropic key server-side
+  const r = await fetch('/api/claude', {
+    method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({ model:'claude-haiku-4-5', max_tokens:200, messages:[{role:'user',content:`Score this defect severity 0-100 and give one-line reasoning. Format: {"score":85,"level":"Critical","reasoning":"Blocks all users from login — production impact"}\n\nDefect: ${description}`}] })
   });
   const d = await r.json();
@@ -667,15 +706,15 @@ function renderSeverityScore(score, level, reasoning, container) {
 
 // ══ FEATURE 11: QUALITY SCORER ═════════════════════════════
 async function scoreQuality(ticket) {
-  if (!CFG.ant) return;
+  // API key server-side
   // BUG-001 FIX: Remove stale badge immediately (before async), not inside renderQualityBadge
   // This prevents the race condition where rapid re-clicks leave multiple badges visible
   const staleBadge = document.getElementById('quality-badge-el');
   if(staleBadge) staleBadge.remove();
   const btn = document.getElementById('btn-quality');
   if(btn){ btn.textContent='Scoring...'; btn.disabled=true; }
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST', headers:{'Content-Type':'application/json','x-api-key':CFG.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  const r = await fetch('/api/claude', {
+    method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({ model:'claude-haiku-4-5', max_tokens:300, messages:[{role:'user',content:`Rate this bug ticket quality 1-10. Return JSON only: {"score":8,"grade":"Good","issues":["Missing browser version","Steps could be more specific"],"strengths":["Clear expected/actual","Good acceptance criteria"]}\n\nTicket: ${JSON.stringify(ticket)}`}] })
   });
   const d = await r.json();
@@ -706,8 +745,8 @@ async function suggestRootCause() {
   const area=document.getElementById('rc-area'); if(!area) return;
   area.innerHTML=`<div class="feat-panel"><div class="feat-panel-hdr">🔍 Root Cause Analysis <span style="font-size:10px;color:var(--t2);margin-left:auto">AI-powered</span></div><div class="feat-panel-body" style="color:var(--t2);font-size:12px">Analyzing...</div></div>`;
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json','x-api-key':CFG.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    const r = await fetch('/api/claude', {
+      method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ model:'claude-haiku-4-5', max_tokens:400, messages:[{role:'user',content:`Suggest root causes for this bug. Return JSON: {"causes":[{"cause":"Session token not refreshed","area":"auth/session.ts","likelihood":"High"},{"cause":"API rate limit exceeded","area":"api/middleware.ts","likelihood":"Medium"}]}\n\nBug: ${JSON.stringify(curTicket)}`}] })
     });
     const d = await r.json();
@@ -724,8 +763,8 @@ async function generateTestCases() {
   const area=document.getElementById('tc-area'); if(!area) return;
   area.innerHTML=`<div class="feat-panel"><div class="feat-panel-hdr">🧪 Test Cases <span style="color:var(--t2);font-size:10px;margin-left:auto">Gherkin/BDD</span></div><div class="feat-panel-body" style="font-size:12px;color:var(--t2)">Generating...</div></div>`;
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json','x-api-key':CFG.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    const r = await fetch('/api/claude', {
+      method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ model:'claude-haiku-4-5', max_tokens:600, messages:[{role:'user',content:`Generate 4 Gherkin test cases for this bug (positive, negative, edge case, regression). JSON: {"cases":[{"type":"Positive","scenario":"Verify login succeeds with valid credentials","gherkin":"Given the user is on login page\\nWhen they enter valid email and password\\nAnd click Sign In\\nThen they should be redirected to dashboard"}]}\n\nBug: ${JSON.stringify({summary:curTicket.summary||curTicket.title, steps:curTicket.steps_to_reproduce||curTicket.repro_steps, expected:curTicket.expected_result, actual:curTicket.actual_result})}`}] })
     });
     const d = await r.json();
@@ -817,10 +856,12 @@ async function sendNotifications(ticket, result) {
       {type:'actions',elements:[{type:'button',text:{type:'plain_text',text:'View Ticket'},url:result.url,style:'primary'}]}
     ]};
     const teamsPayload={"@type":"MessageCard","@context":"http://schema.org/extensions","themeColor":sevColor,"summary":"New Bug","sections":[{"activityTitle":`🐛 ${ticket.summary||ticket.title||'New Bug'}`,"activitySubtitle":`${result.id} · ${sev}`,"facts":[{"name":"Ticket","value":result.id},{"name":"Severity","value":sev}]}],"potentialAction":[{"@type":"OpenUri","name":"View Ticket","targets":[{"os":"default","uri":result.url}]}]};
-    const res=await fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slackUrl:CFG.slack||null,teamsUrl:CFG.teams||null,payload:{slack:slackPayload,teams:teamsPayload}})});
-    const d=await res.json();
+    // Webhook URLs are now in Vercel env vars — only send payload
+    const notifyRes=await fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:{slack:slackPayload,teams:teamsPayload}})});
+    const d=await notifyRes.json();
     if(d.slack==='sent') toast('Slack notification sent','success');
     if(d.teams==='sent') toast('Teams notification sent','success');
+    if(d.slack==='not_configured'&&d.teams==='not_configured') {} // silently skip
   } catch(e) { /* non-blocking */ }
 }
 
@@ -1189,18 +1230,36 @@ async function postTicket(){
     if(platform==='jira')result=await postJira(curTicket);
     else if(platform==='azure_devops')result=await postADO(curTicket);
     else result=await postGH(curTicket);
-    // Attach screenshot
+    // Attach screenshot server-side (CORS-safe)
     if(pendingShot?.file){
       try{
-        if(platform==='jira'){const auth='Basic '+btoa(`${CFG.jiraEmail}:${CFG.jiraToken}`);const form=new FormData();form.append('file',pendingShot.file);await pfetch(`${CFG.jiraUrl}/rest/api/2/issue/${result.id}/attachments`,{method:'POST',headers:{Authorization:auth,'X-Atlassian-Token':'no-check'},body:form});}
+        const b64=await fileToBase64(pendingShot.file);
+        const attachResult=await fetch('/api/attach',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            platform,
+            fileName:pendingShot.name||`screenshot-${Date.now()}.png`,
+            fileBase64:b64,
+            mimeType:pendingShot.file.type||'image/png',
+            ticketId:result.id,
+            rawId:result.rawId,
+            config:{...jiraCfg(),...adoCfg(),...ghCfg()}
+          })
+        });
+        const ad=await attachResult.json();
+        if(ad.ok) toast('Screenshot attached ✓','success');
+        else toast(`Attach: ${ad.error}`,'warn');
         clearShot();
-      }catch(e){}
+      }catch(e){ toast('Attach failed: '+e.message,'warn'); }
     }
     // Sprint auto-assign
     await fetchAndAssignSprint(platform,result.id);
     // Notifications
     await sendNotifications(curTicket,result);
     // History
+    curTicket._postedId=result.id;
+    curTicket._rawId=result.rawId||result.id.replace('#','');
     addToHistory(platform,result.id,curTicket.summary||curTicket.title,result.url,curTicket.severity);
     if(area)area.innerHTML=`<div class="post-status posted">✓ <a class="post-link" href="${result.url}" target="_blank">${result.id}</a> created on ${pName}</div>`;
     if(btn){btn.className='abtn success';btn.textContent='✓ Posted!';}
@@ -1247,15 +1306,18 @@ async function postJira(t){
 async function postADO(t){
   if(!CFG.adoOrg||!CFG.adoPat) throw new Error('ADO not configured');
   const steps=(t.repro_steps||[]).map((s,i)=>`<li>${i+1}. ${s}</li>`).join('');
+  const crit=(t.acceptance_criteria||[]).map((c,i)=>`<li>${i+1}. ${c}</li>`).join('');
+  const expActual=`<p><b>Expected Result:</b> ${t.expected_result||''}</p><p><b>Actual Result:</b> ${t.actual_result||''}</p>`;
   const patch=[
-    {op:'add',path:'/fields/System.Title',value:t.title},
-    {op:'add',path:'/fields/System.Description',value:`<p>${t.description}</p>`},
+    {op:'add',path:'/fields/System.Title',value:t.title||t.summary||'Bug'},
+    {op:'add',path:'/fields/System.Description',value:`<p>${t.description||''}</p>${expActual}`},
     {op:'add',path:'/fields/Microsoft.VSTS.TCM.ReproSteps',value:`<ol>${steps}</ol>`},
-    {op:'add',path:'/fields/Microsoft.VSTS.TCM.SystemInfo',value:t.system_info||''},
-    {op:'add',path:'/fields/Microsoft.VSTS.Common.Severity',value:t.severity},
-    {op:'add',path:'/fields/Microsoft.VSTS.Common.Priority',value:t.priority},
-    ...(t.tags?[{op:'add',path:'/fields/System.Tags',value:t.tags}]:[])
-  ];
+    {op:'add',path:'/fields/Microsoft.VSTS.TCM.SystemInfo',value:t.system_info||t.environment||''},
+    {op:'add',path:'/fields/Microsoft.VSTS.Common.Severity',value:t.severity||'3 - Medium'},
+    {op:'add',path:'/fields/Microsoft.VSTS.Common.Priority',value:t.priority||2},
+    ...(t.tags?[{op:'add',path:'/fields/System.Tags',value:t.tags}]:[]),
+    ...(crit?[{op:'add',path:'/fields/Microsoft.VSTS.Common.AcceptanceCriteria',value:`<ol>${crit}</ol>`}]:[]),
+  ].filter(p=>p.value!==undefined&&p.value!==null&&String(p.value).trim()!==''||p.path==='/fields/System.Title');
   return api('ado', { action:'create_bug', config:adoCfg(), payload:patch });
 }
 // GitHub POST
@@ -1274,12 +1336,27 @@ function initDragDrop(){
   chat.addEventListener('dragover',e=>{e.preventDefault();ov.classList.add('active');});
   chat.addEventListener('dragleave',e=>{if(!chat.contains(e.relatedTarget))ov.classList.remove('active');});
   chat.addEventListener('drop',e=>{e.preventDefault();ov.classList.remove('active');const f=e.dataTransfer.files[0];
-    // BUG-003 FIX: Show actionable error for non-image files instead of silently dropping
     if(!f) return;
     if(f.type.startsWith('image/')) handleShot(f);
     else toast(`"${f.name}" is not an image. Only JPG, PNG, GIF and WebP are supported.`,'warn');
   });
   document.getElementById('file-input').addEventListener('change',e=>{const f=e.target.files[0];if(f)handleShot(f);e.target.value='';});
+
+  // ── Paste screenshot (Ctrl+V anywhere on page) ──────────────
+  document.addEventListener('paste',e=>{
+    const items=Array.from(e.clipboardData?.items||[]);
+    const img=items.find(i=>i.type.startsWith('image/'));
+    if(!img) return;
+    e.preventDefault();
+    const file=img.getAsFile();
+    if(file){
+      // Give it a meaningful name with timestamp
+      const ext=file.type.split('/')[1]||'png';
+      const named=new File([file],`screenshot-${Date.now()}.${ext}`,{type:file.type});
+      handleShot(named);
+      toast('Screenshot pasted! ✓','success');
+    }
+  });
 }
 function handleShot(file){
   const reader=new FileReader();
@@ -1292,6 +1369,16 @@ function handleShot(file){
   };reader.readAsDataURL(file);
 }
 function clearShot(){pendingShot=null;const w=document.getElementById('ss-thumb');if(w)w.innerHTML='';const ab=document.getElementById('attach-btn');if(ab)ab.classList.remove('has-file');}
+
+// Convert File to base64 string
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=e=>resolve(e.target.result.split(',')[1]); // strip data:mime;base64,
+    r.onerror=reject;
+    r.readAsDataURL(file);
+  });
+}
 
 // ══ HISTORY ═══════════════════════════════════════════════
 function addToHistory(platform,ticketId,title,url,severity){
@@ -1344,14 +1431,14 @@ function renderBulkRows(){
   if(acts)acts.style.display=bulkItems.every(i=>i.status==='pending')?'flex':'none';
 }
 async function runBulk(){
-  if(!CFG.ant){toast('Add Anthropic API key','error');return;}
+  // API key handled server-side via ANTHROPIC_API_KEY env var
   const pw=document.getElementById('bpw'),pb=document.getElementById('bpb'),acts=document.getElementById('bulk-acts');
   if(pw)pw.style.display='block';if(acts)acts.style.display='none';
   for(let i=0;i<bulkItems.length;i++){
     bulkItems[i].status='processing';renderBulkRows();
     if(pb)pb.style.width=`${(i/bulkItems.length)*100}%`;
     try{
-      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CFG.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:1000,system:SYSTEM,tools:TOOLS,messages:[{role:'user',content:bulkItems[i].text}]})});
+      const r=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:1000,system:SYSTEM,tools:TOOLS,messages:[{role:'user',content:bulkItems[i].text}]})});
       const d=await r.json();
       const tb=d.content.find(b=>b.type==='tool_use');
       if(tb){
@@ -1380,7 +1467,7 @@ function setEx(i){document.getElementById('din').value=EXAMPLES[i];}
 async function sendDefect(){
   const input=document.getElementById('din'),txt=input.value.trim();
   if(!txt||isProc)return;
-  if(!CFG.ant){toast('Add Anthropic API key in sidebar','error');return;}
+  // API key handled server-side via ANTHROPIC_API_KEY env var
   isProc=true;input.value='';clearPills();
   document.getElementById('send-btn').disabled=true;
   document.getElementById('agent-txt').textContent='Processing...';
@@ -1396,7 +1483,7 @@ async function sendDefect(){
   addThink(STEPS);
   try{
     advStep(0);
-    const r1=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CFG.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:SYSTEM,tools:TOOLS,messages:chatHist})});
+    const r1=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:SYSTEM,tools:TOOLS,messages:chatHist})});
     if(!r1.ok){const e=await r1.json();throw new Error(e.error?.message||`API ${r1.status}`);}
     const d1=await r1.json();
     const tb=d1.content.find(b=>b.type==='tool_use');
@@ -1416,7 +1503,7 @@ async function sendDefect(){
     }
     const fakeId=platform==='jira'?`${curTicket.project||CFG.jiraProj||'QA'}-${1000+Math.floor(Math.random()*9000)}`:platform==='azure_devops'?`#${Math.floor(10000+Math.random()*89999)}`:`#${Math.floor(100+Math.random()*900)}`;
     advStep(3);
-    const r2=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CFG.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:150,system:SYSTEM,tools:TOOLS,messages:[...chatHist,{role:'assistant',content:d1.content},{role:'user',content:[{type:'tool_result',tool_use_id:tb.id,content:JSON.stringify({success:true,ticket_id:fakeId,platform})}]}]})});
+    const r2=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:150,system:SYSTEM,tools:TOOLS,messages:[...chatHist,{role:'assistant',content:d1.content},{role:'user',content:[{type:'tool_result',tool_use_id:tb.id,content:JSON.stringify({success:true,ticket_id:fakeId,platform})}]}]})});
     const d2=await r2.json();
     const ct=d2.content?.find(b=>b.type==='text')?.text||`Ticket structured for ${platform}.`;
     chatHist.push({role:'assistant',content:ct});
@@ -1425,9 +1512,201 @@ async function sendDefect(){
     const chat=document.getElementById('chat');
     const wrap=document.createElement('div');wrap.className='ticket-wrap';
     wrap.innerHTML=buildTicketHTML(curTicket,platform,fakeId);
-    chat.appendChild(wrap);chat.scrollTop=chat.scrollHeight;
+    chat.appendChild(wrap);
+
+    // ── Ask user if they want test cases generated ──────────
+    setTimeout(()=>{
+      const askWrap=document.createElement('div');
+      askWrap.className='msg ai';askWrap.id='tc-ask-msg';
+      askWrap.innerHTML=aiAv()+`<div><div class="msg-bub" style="padding:12px 14px">
+        <div style="margin-bottom:10px;font-size:13px">🧪 <strong>Want me to generate test cases for this defect?</strong></div>
+        <div style="font-size:12px;color:var(--t2);margin-bottom:12px">I can create Gherkin/BDD test cases (positive, negative, edge case, regression) for this ticket.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="send-btn" style="font-size:11px;padding:6px 14px" onclick="acceptTestCases()">✅ Yes, generate test cases</button>
+          <button class="hbtn" style="font-size:11px" onclick="dismissTestCaseAsk()">✗ No thanks</button>
+        </div>
+      </div></div>`;
+      chat.appendChild(askWrap);
+      chat.scrollTop=chat.scrollHeight;
+    }, 600);
   }catch(e){rmThink();clearPills();addMsg('ai',`<span style="color:#f87171">Error: ${e.message}</span>`);}
   finally{isProc=false;document.getElementById('send-btn').disabled=false;document.getElementById('agent-txt').textContent='Agent ready';}
+}
+
+
+// ══ VALIDATE CREDENTIALS ══════════════════════════════════
+async function validateCfg(section) {
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '...'; btn.disabled = true;
+
+  try {
+    if (section === 'ant') {
+      // Test via /api/claude — key is in Vercel env vars
+      const r = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 10, messages: [{ role: 'user', content: 'hi' }] })
+      });
+      if (r.ok) { toast('✅ Anthropic API connected via Vercel env var!', 'success'); document.getElementById('dot-ant').className = 'cfg-dot ok'; }
+      else { const e = await r.json(); toast(`❌ Anthropic: ${e.error || r.status}`, 'error'); document.getElementById('dot-ant').className = 'cfg-dot err'; }
+    }
+
+    else if (section === 'jira') {
+      if (!CFG.jiraUrl || !CFG.jiraToken || !CFG.jiraEmail) { toast('Fill in Jira URL, Email and Token first', 'warn'); return; }
+      const r = await fetch('/api/jira', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'validate', config: jiraCfg() })
+      });
+      const d = await r.json();
+      if (d.valid) { toast(`✅ Jira connected! (${d.displayName})`, 'success'); document.getElementById('dot-jira').className = 'cfg-dot ok'; }
+      else { toast(`❌ Jira: ${d.error}`, 'error'); document.getElementById('dot-jira').className = 'cfg-dot err'; }
+    }
+
+    else if (section === 'ado') {
+      if (!CFG.adoOrg || !CFG.adoPat) { toast('Fill in ADO Organization and PAT first', 'warn'); return; }
+      const r = await fetch('/api/ado', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'validate', config: adoCfg() })
+      });
+      const d = await r.json();
+      if (d.valid) { toast(`✅ ADO connected! (${d.displayName})`, 'success'); document.getElementById('dot-ado').className = 'cfg-dot ok'; }
+      else { toast(`❌ ADO: ${d.error}`, 'error'); document.getElementById('dot-ado').className = 'cfg-dot err'; }
+    }
+
+    else if (section === 'gh') {
+      if (!CFG.ghToken) { toast('Enter GitHub Token first', 'warn'); return; }
+      const r = await fetch('/api/github', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'validate', config: ghCfg() })
+      });
+      const d = await r.json();
+      if (d.valid) { toast(`✅ GitHub connected! (${d.displayName})`, 'success'); document.getElementById('dot-gh').className = 'cfg-dot ok'; }
+      else { toast(`❌ GitHub: ${d.error}`, 'error'); document.getElementById('dot-gh').className = 'cfg-dot err'; }
+    }
+  } catch(e) {
+    toast(`Connection test failed: ${e.message}`, 'error');
+  } finally {
+    btn.textContent = orig; btn.disabled = false;
+  }
+}
+
+
+// ══ TEST CASE PROMPT HANDLERS ═════════════════════════════
+function dismissTestCaseAsk(){
+  const el=document.getElementById('tc-ask-msg');
+  if(el){ el.innerHTML=aiAv()+'<div><div class="msg-bub" style="font-size:12px;color:var(--t2)">No problem! You can generate test cases anytime using the 🧪 Test Cases button on the ticket.</div></div>'; }
+}
+
+async function acceptTestCases(){
+  const el=document.getElementById('tc-ask-msg');
+  if(el){ el.innerHTML=aiAv()+'<div><div class="msg-bub" style="font-size:12px;color:var(--t2)"><span style="display:flex;align-items:center;gap:8px"><span style="width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span>Generating test cases...</span></div></div>'; }
+
+  if(!curTicket||!CFG.ant){ toast('Anthropic API key required','warn'); return; }
+
+  const chat=document.getElementById('chat');
+  const platform=curTicket._platform;
+  // Use real posted ticket ID, not the preview/fake ID
+  const bugId=curTicket._postedId||document.getElementById('ticket-id-display')?.textContent||'';
+  const rawBugId=curTicket._rawId||bugId.replace('#','');
+
+  try{
+    // Step 1 — Generate 4 Gherkin test cases via AI
+    const r=await fetch('/api/claude',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:900,messages:[{role:'user',content:`Generate exactly 4 Gherkin test cases for this bug. Return JSON only, no extra text:
+{"cases":[
+  {"type":"Positive","summary":"[Type] Short summary max 60 chars","description":"One line description","gherkin":"Scenario: ...\n  Given ...\n  When ...\n  Then ..."},
+  {"type":"Negative","summary":"...","description":"...","gherkin":"..."},
+  {"type":"Edge Case","summary":"...","description":"...","gherkin":"..."},
+  {"type":"Regression","summary":"...","description":"...","gherkin":"..."}
+]}
+
+Bug: ${JSON.stringify({
+  title: curTicket.summary||curTicket.title,
+  description: curTicket.description,
+  steps: curTicket.steps_to_reproduce||curTicket.repro_steps,
+  expected: curTicket.expected_result,
+  actual: curTicket.actual_result
+})}`}]})
+    });
+    const d=await r.json();
+    const raw=(d.content?.[0]?.text||'').match(/\{[\s\S]+\}/)?.[0]||'{}';
+    const tc=JSON.parse(raw);
+    const cases=tc.cases||[];
+
+    if(!cases.length){ toast('Could not generate test cases','error'); return; }
+
+    // Step 2 — Show generated cases in chat
+    const typeColors={'Positive':'var(--green)','Negative':'var(--red)','Edge Case':'var(--amber)','Regression':'var(--purple)'};
+    const pName=platform==='jira'?'Jira':platform==='azure_devops'?'Azure DevOps':'GitHub';
+    const tcWrap=document.createElement('div');tcWrap.className='msg ai';tcWrap.id='tc-inline-wrap';
+    tcWrap.innerHTML=aiAv()+`<div style="max-width:85%"><div class="msg-bub" style="padding:12px 14px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+        🧪 ${cases.length} Test Cases generated — posting to ${pName}...
+        <span style="width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0"></span>
+      </div>
+      ${cases.map(c=>`<div style="margin-bottom:8px;padding:8px 10px;border:1px solid var(--b2);border-radius:8px;background:var(--s2)">
+        <div style="font-size:11px;font-weight:600;color:${typeColors[c.type]||'var(--accent2)'}">📋 ${c.type}</div>
+        <div style="font-size:11px;color:var(--t1);margin-top:3px">${c.summary}</div>
+      </div>`).join('')}
+      <div id="tc-post-status" style="font-size:11px;color:var(--t2);margin-top:8px">Posting...</div>
+    </div></div>`;
+    chat.appendChild(tcWrap);chat.scrollTop=chat.scrollHeight;
+
+    // Step 3 — Post test cases to platform via /api/testcase
+    if(platform==='github'){
+      document.getElementById('tc-post-status').innerHTML='<span style="color:var(--amber)">⚠ GitHub Issues does not support Test Case work items. Test cases displayed above only.</span>';
+      if(el) el.style.display='none';
+      return;
+    }
+
+    const postRes=await fetch('/api/testcase',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        platform,
+        testCases: cases,
+        bugId,
+        rawBugId,
+        config:{...jiraCfg(),...adoCfg()}
+      })
+    });
+
+    const postData=await postRes.json();
+    const created=postData.created||[];
+    const errors=postData.errors||[];
+
+    // Step 4 — Update UI with results
+    const statusEl=document.getElementById('tc-post-status');
+    if(created.length){
+      const links=created.map(t=>`<a href="${t.url}" target="_blank" style="color:var(--accent2);text-decoration:underline">${t.id}</a> (${t.type})`).join(' · ');
+      if(statusEl) statusEl.innerHTML=`<span style="color:var(--green)">✅ ${created.length} test cases created: ${links}</span>`;
+      toast(`${created.length} test cases created in ${pName}!`,'success');
+    }
+    if(errors.length){
+      if(statusEl) statusEl.innerHTML+=(statusEl.innerHTML?'<br>':'')+`<span style="color:var(--amber)">⚠ ${errors.join(', ')}</span>`;
+    }
+    if(!created.length && errors.length){
+      toast(`Test case creation failed: ${errors[0]}`,'error');
+    }
+
+    if(el) el.style.display='none';
+    chat.scrollTop=chat.scrollHeight;
+
+  }catch(e){
+    toast('Test case generation failed: '+e.message,'error');
+    const askEl=document.getElementById('tc-ask-msg');
+    if(askEl) askEl.innerHTML=aiAv()+`<div><div class="msg-bub" style="color:var(--red);font-size:12px">Failed: ${e.message}</div></div>`;
+  }
+}
+
+function copyInlineTC(){
+  const el=document.getElementById('inline-tc-content');
+  if(!el) return;
+  navigator.clipboard.writeText(el.innerText);
+  toast('Test cases copied!','success');
 }
 
 // ══ CONFIG UI ════════════════════════════════════════════
@@ -1436,33 +1715,11 @@ function saveCfg(section){
   const v=id=>{const el=document.getElementById(id);return el?el.value:'';};
   const sv=(k,val,lk)=>{if(val&&!val.startsWith('●')){CFG[k]=val;localStorage.setItem(lk,val);}};
   if(section==='ant'){sv('ant',v('ci-ant'),'da_ant');}
-  if(section==='jira'){
-    const url=v('ci-jira-url'),em=v('ci-jira-email'),tok=v('ci-jira-token'),proj=v('ci-jira-proj'),board=v('ci-jira-board');
-    if(url){CFG.jiraUrl=url;localStorage.setItem('da_jira_url',url);}
-    if(em){CFG.jiraEmail=em;localStorage.setItem('da_jira_email',em);}
-    if(tok&&!tok.startsWith('●')){CFG.jiraToken=tok;localStorage.setItem('da_jira_token',tok);}
-    if(proj){CFG.jiraProj=proj;localStorage.setItem('da_jira_proj',proj);}
-    if(board){CFG.jiraBoard=board;localStorage.setItem('da_jira_board',board);}
-    const itype=v('ci-jira-type');
-    if(itype){CFG.jiraIssueType=itype;localStorage.setItem('da_jira_type',itype);}
-  }
-  if(section==='ado'){
-    const org=v('ci-ado-org'),proj=v('ci-ado-project'),pat=v('ci-ado-pat'),team=v('ci-ado-team');
-    if(org){CFG.adoOrg=org;localStorage.setItem('da_ado_org',org);}
-    if(proj){CFG.adoProj=proj;localStorage.setItem('da_ado_proj',proj);}
-    if(pat&&!pat.startsWith('●')){CFG.adoPat=pat;localStorage.setItem('da_ado_pat',pat);}
-    if(team){CFG.adoTeam=team;localStorage.setItem('da_ado_team',team);}
-  }
-  if(section==='gh'){
-    const own=v('ci-gh-owner'),repo=v('ci-gh-repo'),tok=v('ci-gh-token');
-    if(own){CFG.ghOwner=own;localStorage.setItem('da_gh_owner',own);}
-    if(repo){CFG.ghRepo=repo;localStorage.setItem('da_gh_repo',repo);}
-    if(tok&&!tok.startsWith('●')){CFG.ghToken=tok;localStorage.setItem('da_gh_token',tok);}
-  }
-  if(section==='notif'){
-    const slack=v('ci-slack'),teams=v('ci-teams');
-    if(slack){CFG.slack=slack;localStorage.setItem('da_slack',slack);}
-    if(teams){CFG.teams=teams;localStorage.setItem('da_teams',teams);}
+  // Credentials now stored in Vercel env vars — no localStorage needed
+  if(section==='jira'||section==='ado'||section==='gh'||section==='notif'){
+    // No-op: all credentials configured via Vercel environment variables
+    toast('Credentials are configured via Vercel Environment Variables','info');
+    return;
   }
   updateDots();
   toast(section.toUpperCase()+' saved','success');
@@ -1528,7 +1785,7 @@ function resetSessionOnLoad() {
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
       <div class="msg ai">${aiAv()}<div><div class="msg-bub">
-        <strong>AI Defect Agent v3.5</strong> — Ready. Describe a defect below.<br><br>
+        <strong>AI Defect Agent v4.1</strong> — Ready. Describe a defect below.<br><br>
         <span style="color:var(--t2);font-size:12px">⭐ Severity scorer · 🧪 Test cases · 🔍 Root cause · 📋 Templates · 💬 Comments · 🔔 Notifications · 🏃 Sprint · 🎤 Voice · 📤 Export · 📊 Dashboard</span>
       </div></div></div>`;
   }

@@ -10,11 +10,16 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { action, config, payload } = req.body;
-  const { adoOrg, adoProj, adoPat, adoTeam } = config || {};
 
-  if (!adoOrg)  return res.status(400).json({ error: 'ADO Organization missing — check sidebar.' });
-  if (!adoPat)  return res.status(400).json({ error: 'ADO PAT Token missing — check sidebar.' });
-  if (!adoProj) return res.status(400).json({ error: 'ADO Project missing — check sidebar.' });
+  // Read from Vercel env vars first, fall back to browser-supplied config
+  const adoOrg  = process.env.ADO_ORG     || config?.adoOrg  || '';
+  const adoProj = process.env.ADO_PROJECT  || config?.adoProj || '';
+  const adoPat  = process.env.ADO_PAT      || config?.adoPat  || '';
+  const adoTeam = process.env.ADO_TEAM     || config?.adoTeam || '';
+
+  if (!adoOrg)  return res.status(400).json({ error: 'ADO_ORG not set. Add to Vercel Environment Variables.' });
+  if (!adoPat)  return res.status(400).json({ error: 'ADO_PAT not set. Add to Vercel Environment Variables.' });
+  if (!adoProj) return res.status(400).json({ error: 'ADO_PROJECT not set. Add to Vercel Environment Variables.' });
 
   const auth = 'Basic ' + Buffer.from(`:${adoPat}`).toString('base64');
   const proj = encodeURIComponent(adoProj);
@@ -110,6 +115,15 @@ export default async function handler(req, res) {
         });
         if (!r.ok) return res.status(r.status).json({ error: `ADO ${r.status}` });
         return res.json({ ok: true });
+      }
+
+      case 'validate': {
+        const r = await adoFetch(`${base}/_apis/projects?api-version=6.0`);
+        if (r._html || r.status === 401) return res.json({ valid: false, error: 'Invalid PAT token or expired.' });
+        if (!r.ok) return res.json({ valid: false, error: `ADO ${r.status}` });
+        const d = await r.json();
+        const projCount = d.count || 0;
+        return res.json({ valid: true, displayName: `${adoOrg} (${projCount} project${projCount !== 1 ? 's' : ''})` });
       }
 
       default:

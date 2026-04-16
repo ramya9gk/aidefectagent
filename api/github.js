@@ -10,9 +10,15 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { action, config, payload } = req.body;
-  const { ghOwner, ghRepo, ghToken } = config || {};
 
-  if (!ghOwner || !ghRepo || !ghToken) return res.status(400).json({ error: 'Missing GitHub credentials' });
+  // Read from Vercel env vars first, fall back to browser-supplied config
+  const ghOwner = process.env.GITHUB_OWNER || config?.ghOwner || '';
+  const ghRepo  = process.env.GITHUB_REPO  || config?.ghRepo  || '';
+  const ghToken = process.env.GITHUB_TOKEN || config?.ghToken  || '';
+
+  if (!ghOwner) return res.status(400).json({ error: 'GITHUB_OWNER not set. Add to Vercel Environment Variables.' });
+  if (!ghRepo)  return res.status(400).json({ error: 'GITHUB_REPO not set. Add to Vercel Environment Variables.' });
+  if (!ghToken) return res.status(400).json({ error: 'GITHUB_TOKEN not set. Add to Vercel Environment Variables.' });
 
   const auth = `token ${ghToken}`;
   const base = `https://api.github.com/repos/${ghOwner}/${ghRepo}`;
@@ -59,6 +65,15 @@ export default async function handler(req, res) {
         if (!r.ok) return res.json({ items: [] });
         const d = await r.json();
         return res.json({ items: (d.items || []).map(i => ({ id: `#${i.number}`, title: i.title, status: i.state, url: i.html_url })) });
+      }
+
+      case 'validate': {
+        const r = await fetch('https://api.github.com/user', {
+          headers: { Authorization: auth, Accept: 'application/vnd.github.v3+json' },
+        });
+        if (!r.ok) return res.json({ valid: false, error: 'Invalid GitHub token.' });
+        const d = await r.json();
+        return res.json({ valid: true, displayName: d.login });
       }
 
       default:

@@ -10,12 +10,19 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { action, config, payload } = req.body;
-  const { jiraUrl, jiraEmail, jiraToken, jiraProj, jiraBoard, jiraIssueType } = config || {};
 
-  if (!jiraUrl)   return res.status(400).json({ error: 'Jira Base URL missing — check sidebar.' });
-  if (!jiraEmail) return res.status(400).json({ error: 'Jira Email missing — check sidebar.' });
-  if (!jiraToken) return res.status(400).json({ error: 'Jira API Token missing — check sidebar.' });
-  if (!jiraProj)  return res.status(400).json({ error: 'Jira Project Key missing — enter DEV in sidebar.' });
+  // Read from Vercel env vars first, fall back to browser-supplied config
+  const jiraUrl    = process.env.JIRA_URL    || config?.jiraUrl    || '';
+  const jiraEmail  = process.env.JIRA_EMAIL  || config?.jiraEmail  || '';
+  const jiraToken  = process.env.JIRA_TOKEN  || config?.jiraToken  || '';
+  const jiraProj   = process.env.JIRA_PROJECT|| config?.jiraProj   || '';
+  const jiraBoard  = process.env.JIRA_BOARD  || config?.jiraBoard  || '';
+  const jiraIssueType = process.env.JIRA_ISSUE_TYPE || config?.jiraIssueType || '';
+
+  if (!jiraUrl)   return res.status(400).json({ error: 'JIRA_URL not set. Add to Vercel Environment Variables.' });
+  if (!jiraEmail) return res.status(400).json({ error: 'JIRA_EMAIL not set. Add to Vercel Environment Variables.' });
+  if (!jiraToken) return res.status(400).json({ error: 'JIRA_TOKEN not set. Add to Vercel Environment Variables.' });
+  if (!jiraProj)  return res.status(400).json({ error: 'JIRA_PROJECT not set. Add to Vercel Environment Variables.' });
 
   const auth = 'Basic ' + Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
   const base = jiraUrl.replace(/\/$/, '');
@@ -149,6 +156,16 @@ export default async function handler(req, res) {
         });
         if (!r.ok) { const e = await r.json(); return res.status(r.status).json({ error: e.message || `Jira ${r.status}` }); }
         return res.json({ ok: true });
+      }
+
+      case 'validate': {
+        // Test if Jira credentials are valid
+        const r = await fetch(`${base}/rest/api/3/myself`, {
+          headers: { Authorization: auth, Accept: 'application/json' },
+        });
+        if (!r.ok) return res.json({ valid: false, error: `Invalid credentials (${r.status}). Check email and API token.` });
+        const d = await r.json();
+        return res.json({ valid: true, displayName: d.displayName || d.emailAddress });
       }
 
       default:
