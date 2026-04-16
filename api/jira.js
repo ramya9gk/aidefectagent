@@ -1,7 +1,5 @@
-// api/jira.js — Vercel Serverless Function
+// api/jira.js — Vercel Serverless Function v3.3
 // ALL Jira API calls run here (server-side). Zero CORS issues.
-// Browser sends: { action, config, payload }
-// Server calls Jira, returns result to browser.
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,30 +12,60 @@ export default async function handler(req, res) {
   const { action, config, payload } = req.body;
   const { jiraUrl, jiraEmail, jiraToken, jiraProj, jiraBoard } = config || {};
 
-  if (!jiraUrl || !jiraEmail || !jiraToken) {
-    return res.status(400).json({ error: 'Missing Jira credentials' });
-  }
+  if (!jiraUrl)   return res.status(400).json({ error: 'Jira Base URL missing — check sidebar config.' });
+  if (!jiraEmail) return res.status(400).json({ error: 'Jira Email missing — check sidebar config.' });
+  if (!jiraToken) return res.status(400).json({ error: 'Jira API Token missing — check sidebar config.' });
+  if (!jiraProj)  return res.status(400).json({ error: 'Jira Project Key missing — enter DEV in sidebar.' });
 
   const auth = 'Basic ' + Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
   const base = jiraUrl.replace(/\/$/, '');
+  const proj = jiraProj.trim().toUpperCase(); // always use configured project key
 
   try {
     switch (action) {
 
       case 'create_issue': {
+        // Always override project key with configured value — AI may generate wrong key
+        const fields = {
+          ...payload.fields,
+          project: { key: proj },  // force correct project key
+          issuetype: { name: 'Bug' },
+        };
+
+        // Validate required fields before calling Jira
+        if (!fields.summary || fields.summary.trim() === '') {
+          return res.status(400).json({ error: 'Summary/title is empty — please generate the ticket first.' });
+        }
+
+        const body = { fields };
+        console.log('Creating Jira issue:', JSON.stringify({ project: proj, summary: fields.summary }));
+
         const r = await fetch(`${base}/rest/api/3/issue`, {
           method: 'POST',
           headers: { Authorization: auth, 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(body),
         });
+
         const d = await r.json();
-        if (!r.ok) return res.status(r.status).json({ error: d.errorMessages?.[0] || d.message || `Jira ${r.status}` });
+        if (!r.ok) {
+          // Return detailed Jira error
+          const errMsg = d.errorMessages?.[0]
+            || Object.entries(d.errors || {}).map(([k,v]) => `${k}: ${v}`).join(', ')
+            || d.message
+            || `Jira ${r.status}`;
+          return res.status(r.status).json({ error: errMsg });
+        }
         return res.json({ id: d.key, url: `${base}/browse/${d.key}` });
       }
 
       case 'add_comment': {
         const { issueKey, comment } = payload;
-        const body = { body: { version: 1, type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: comment }] }] } };
+        const body = {
+          body: {
+            version: 1, type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: comment }] }]
+          }
+        };
         const r = await fetch(`${base}/rest/api/3/issue/${issueKey}/comment`, {
           method: 'POST',
           headers: { Authorization: auth, 'Content-Type': 'application/json', Accept: 'application/json' },
