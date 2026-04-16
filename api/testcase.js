@@ -40,7 +40,7 @@ export default async function handler(req, res) {
             fields: {
               project: { key: proj },
               issuetype: { name: 'Test' },
-              summary: tc.summary,
+              summary: `TC_${tc.summary}`,
               description: {
                 version: 1, type: 'doc',
                 content: [
@@ -143,7 +143,7 @@ export default async function handler(req, res) {
 
           // Step 1 — Create Test Case work item
           const patch = [
-            { op: 'add', path: '/fields/System.Title', value: tc.summary },
+            { op: 'add', path: '/fields/System.Title', value: `TC_${tc.summary}` },
             { op: 'add', path: '/fields/System.Description', value: `<p><strong>${tc.type} Test Case</strong></p><p>${tc.description || ''}</p><pre>${tc.gherkin}</pre>` },
             { op: 'add', path: '/fields/Microsoft.VSTS.TCM.Steps', value: stepsXmlFull },
             { op: 'add', path: '/fields/Microsoft.VSTS.Common.Priority', value: tc.type === 'Regression' ? 1 : tc.type === 'Positive' ? 2 : 3 },
