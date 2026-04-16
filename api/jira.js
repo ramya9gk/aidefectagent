@@ -17,7 +17,8 @@ export default async function handler(req, res) {
   const jiraToken  = process.env.JIRA_TOKEN  || config?.jiraToken  || '';
   const jiraProj   = process.env.JIRA_PROJECT|| config?.jiraProj   || '';
   const jiraBoard  = process.env.JIRA_BOARD  || config?.jiraBoard  || '';
-  const jiraIssueType = process.env.JIRA_ISSUE_TYPE || config?.jiraIssueType || '';
+  const jiraIssueType    = process.env.JIRA_ISSUE_TYPE     || config?.jiraIssueType    || '';
+  const jiraReporterEmail= process.env.JIRA_REPORTER_EMAIL || config?.jiraReporterEmail || jiraEmail;
 
   if (!jiraUrl)   return res.status(400).json({ error: 'JIRA_URL not set. Add to Vercel Environment Variables.' });
   if (!jiraEmail) return res.status(400).json({ error: 'JIRA_EMAIL not set. Add to Vercel Environment Variables.' });
@@ -57,16 +58,38 @@ export default async function handler(req, res) {
     }
   }
 
+  // ── Lookup reporter accountId from email ─────────────────
+  async function getReporterAccountId() {
+    try {
+      const r = await fetch(
+        `${base}/rest/api/3/user/search?query=${encodeURIComponent(jiraReporterEmail)}&maxResults=1`,
+        { headers: { Authorization: auth, Accept: 'application/json' } }
+      );
+      if (!r.ok) return null;
+      const users = await r.json();
+      // Find exact email match
+      const match = users.find(u =>
+        u.emailAddress?.toLowerCase() === jiraReporterEmail.toLowerCase()
+      );
+      return match?.accountId || users[0]?.accountId || null;
+    } catch {
+      return null;
+    }
+  }
+
   try {
     switch (action) {
 
       case 'create_issue': {
         const issueType = await getIssueType();
 
+        const issueReporterAccountId = await getReporterAccountId();
+
         const fields = {
           ...payload.fields,
           project:   { key: proj },       // always use configured project key
           issuetype: { name: issueType },  // auto-detected valid issue type
+          ...(issueReporterAccountId ? { reporter: { id: issueReporterAccountId } } : {}),
         };
 
         if (!fields.summary?.trim()) {
@@ -166,6 +189,13 @@ export default async function handler(req, res) {
         if (!r.ok) return res.json({ valid: false, error: `Invalid credentials (${r.status}). Check email and API token.` });
         const d = await r.json();
         return res.json({ valid: true, displayName: d.displayName || d.emailAddress });
+      }
+
+      case 'get_reporter': {
+        // Return the resolved reporter accountId for sidebar display
+        const accountId = await getReporterAccountId();
+        if (!accountId) return res.json({ found: false, email: jiraReporterEmail, error: 'User not found in Jira' });
+        return res.json({ found: true, accountId, email: jiraReporterEmail });
       }
 
       default:
