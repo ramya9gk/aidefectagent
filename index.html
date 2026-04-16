@@ -2,7 +2,7 @@
 <html data-theme="dark" lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AI Defect Agent v4.3</title>
+<title>AI Defect Agent v4.4</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -406,7 +406,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
   <div class="sb-top">
     <div class="logo">
       <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
-      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v4.3 · Reporter Email · TC_ Prefix · Secure</div></div>
+      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v4.4 · Live Project Selector · Reporter · Secure</div></div>
     </div>
     <div class="ppills">
       <div class="ppill" id="pill-jira"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M16 2L2 17l14 13 14-13L16 2z" fill="#2d84ff"/><path d="M16 9.5L9.5 17 16 23l6.5-6L16 9.5z" fill="white"/></svg>Jira</div>
@@ -429,21 +429,27 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
   <!-- Jira -->
   <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('jira')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('jira')}"><span class="sec-lbl">Jira Cloud</span><span class="sec-arr open" id="arr-jira">▶</span></div>
   <div class="sec-body open" id="bod-jira">
-    <div style="padding:4px 0 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
-      <span class="cfg-dot ok" id="dot-jira"></span>Secured via Vercel Environment Variables
+    <div style="padding:4px 0 6px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
+      <span class="cfg-dot ok" id="dot-jira"></span>Credentials secured via Vercel env vars
     </div>
-    <div style="font-size:10px;color:var(--t3);line-height:1.7;margin-bottom:10px">
-      Set these in <strong>Vercel → Settings → Environment Variables:</strong><br>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_URL</code>
+    <div style="font-size:10px;color:var(--t3);line-height:1.6;margin-bottom:8px">
+      Required: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_URL</code>
       <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_EMAIL</code>
       <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_TOKEN</code><br>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_PROJECT</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_BOARD</code>
+      Optional: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_BOARD</code>
       <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_ISSUE_TYPE</code>
       <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_REPORTER_EMAIL</code>
     </div>
-    <button class="btn-sv" style="background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('jira')">✓ Test Jira Connection</button>
-    <!-- Hidden inputs retained for fallback compatibility -->
+    <div class="cfg-row">
+      <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:9px" id="jira-proj-status">↻ loading...</span></div>
+      <select class="cfg-in" id="jira-proj-select" onchange="CFG.jiraProj=this.value" style="cursor:pointer">
+        <option value="">— select project —</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="btn-sv" style="flex:1;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('jira')">✓ Test Connection</button>
+      <button class="btn-sv" style="flex:0 0 auto;width:70px;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="loadProjects('jira')" title="Refresh project list">↻ Reload</button>
+    </div>
     <input type="hidden" id="ci-jira-url"/><input type="hidden" id="ci-jira-email"/>
     <input type="hidden" id="ci-jira-token"/><input type="hidden" id="ci-jira-proj"/>
     <input type="hidden" id="ci-jira-board"/><input type="hidden" id="ci-jira-type"/>
@@ -452,18 +458,24 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
   <!-- ADO -->
   <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('ado')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('ado')}"><span class="sec-lbl">Azure DevOps</span><span class="sec-arr open" id="arr-ado">▶</span></div>
   <div class="sec-body open" id="bod-ado">
-    <div style="padding:4px 0 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
-      <span class="cfg-dot ok" id="dot-ado"></span>Secured via Vercel Environment Variables
+    <div style="padding:4px 0 6px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
+      <span class="cfg-dot ok" id="dot-ado"></span>Credentials secured via Vercel env vars
     </div>
-    <div style="font-size:10px;color:var(--t3);line-height:1.7;margin-bottom:10px">
-      Set these in <strong>Vercel → Settings → Environment Variables:</strong><br>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_ORG</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_PROJECT</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_PAT</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_TEAM</code>
+    <div style="font-size:10px;color:var(--t3);line-height:1.6;margin-bottom:8px">
+      Required: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_ORG</code>
+      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_PAT</code><br>
+      Optional: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_TEAM</code>
     </div>
-    <button class="btn-sv" style="background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('ado')">✓ Test ADO Connection</button>
-    <!-- Hidden inputs retained for fallback compatibility -->
+    <div class="cfg-row">
+      <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:9px" id="ado-proj-status">↻ loading...</span></div>
+      <select class="cfg-in" id="ado-proj-select" onchange="CFG.adoProj=this.value" style="cursor:pointer">
+        <option value="">— select project —</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="btn-sv" style="flex:1;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('ado')">✓ Test Connection</button>
+      <button class="btn-sv" style="flex:0 0 auto;width:70px;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="loadProjects('ado')" title="Refresh project list">↻ Reload</button>
+    </div>
     <input type="hidden" id="ci-ado-org"/><input type="hidden" id="ci-ado-project"/>
     <input type="hidden" id="ci-ado-pat"/><input type="hidden" id="ci-ado-team"/>
   </div></div>
@@ -1714,6 +1726,65 @@ function copyInlineTC(){
   toast('Test cases copied!','success');
 }
 
+
+// ══ LIVE PROJECT LOADER ═══════════════════════════════════════
+async function loadProjects(platform) {
+  const isJira = platform === 'jira';
+  const selectEl = document.getElementById(isJira ? 'jira-proj-select' : 'ado-proj-select');
+  const statusEl = document.getElementById(isJira ? 'jira-proj-status' : 'ado-proj-status');
+  if (!selectEl) return;
+
+  if (statusEl) { statusEl.textContent = '↻ loading...'; statusEl.style.color = 'var(--accent2)'; }
+
+  try {
+    const r = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform: isJira ? 'jira' : 'azure_devops' })
+    });
+    const d = await r.json();
+
+    if (d.error || !d.projects?.length) {
+      if (statusEl) { statusEl.textContent = d.error || 'No projects found'; statusEl.style.color = 'var(--amber)'; }
+      return;
+    }
+
+    // Populate dropdown
+    const currentVal = isJira ? CFG.jiraProj : CFG.adoProj;
+    selectEl.innerHTML = '<option value="">— select project —</option>' +
+      d.projects.map(p => `<option value="${p.name || p.key}" ${(p.key === currentVal || p.name === currentVal) ? 'selected' : ''}>${p.name} (${p.key})</option>`).join('');
+
+    // Auto-select if only one project OR if env var matches
+    const envProject = isJira
+      ? (d.projects.find(p => p.key === (window.__JIRA_PROJECT__ || '')) || null)
+      : null;
+
+    if (d.projects.length === 1) {
+      selectEl.value = d.projects[0].name || d.projects[0].key;
+      if (isJira) CFG.jiraProj = d.projects[0].key;
+      else CFG.adoProj = d.projects[0].name;
+    }
+
+    // Update CFG when user selects
+    selectEl.onchange = function() {
+      const selected = d.projects.find(p => (p.name || p.key) === this.value);
+      if (isJira) {
+        CFG.jiraProj = selected?.key || this.value;
+      } else {
+        CFG.adoProj = selected?.name || this.value;
+      }
+      updateDots();
+    };
+
+    if (statusEl) { statusEl.textContent = `${d.projects.length} project${d.projects.length>1?'s':''} loaded ✓`; statusEl.style.color = 'var(--green)'; }
+    if (isJira) document.getElementById('dot-jira').className = 'cfg-dot ok';
+    else document.getElementById('dot-ado').className = 'cfg-dot ok';
+
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = 'Load failed: ' + e.message; statusEl.style.color = 'var(--red)'; }
+  }
+}
+
 // ══ CONFIG UI ════════════════════════════════════════════
 function tSec(id){const b=document.getElementById('bod-'+id),a=document.getElementById('arr-'+id);const o=b.classList.toggle('open');a.classList.toggle('open',o);}
 function saveCfg(section){
@@ -1790,7 +1861,7 @@ function resetSessionOnLoad() {
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
       <div class="msg ai">${aiAv()}<div><div class="msg-bub">
-        <strong>AI Defect Agent v4.3</strong> — Ready. Describe a defect below.<br><br>
+        <strong>AI Defect Agent v4.4</strong> — Ready. Describe a defect below.<br><br>
         <span style="color:var(--t2);font-size:12px">⭐ Severity scorer · 🧪 Test cases · 🔍 Root cause · 📋 Templates · 💬 Comments · 🔔 Notifications · 🏃 Sprint · 🎤 Voice · 📤 Export · 📊 Dashboard</span>
       </div></div></div>`;
   }
@@ -1834,6 +1905,12 @@ window.addEventListener('load',()=>{
   initTheme();
   initShortcuts();
   document.getElementById('din').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendDefect();}});
+
+  // Auto-load live project lists from Jira and ADO
+  setTimeout(()=>{
+    loadProjects('jira').catch(()=>{});
+    loadProjects('ado').catch(()=>{});
+  }, 800);
 });
 </script>
 </body>
