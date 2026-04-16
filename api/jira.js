@@ -1,4 +1,4 @@
-// api/jira.js — Vercel Serverless Function v3.3
+// api/jira.js — Vercel Serverless Function v3.4
 // ALL Jira API calls run here (server-side). Zero CORS issues.
 
 export default async function handler(req, res) {
@@ -10,47 +10,74 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { action, config, payload } = req.body;
-  const { jiraUrl, jiraEmail, jiraToken, jiraProj, jiraBoard } = config || {};
+  const { jiraUrl, jiraEmail, jiraToken, jiraProj, jiraBoard, jiraIssueType } = config || {};
 
-  if (!jiraUrl)   return res.status(400).json({ error: 'Jira Base URL missing — check sidebar config.' });
-  if (!jiraEmail) return res.status(400).json({ error: 'Jira Email missing — check sidebar config.' });
-  if (!jiraToken) return res.status(400).json({ error: 'Jira API Token missing — check sidebar config.' });
+  if (!jiraUrl)   return res.status(400).json({ error: 'Jira Base URL missing — check sidebar.' });
+  if (!jiraEmail) return res.status(400).json({ error: 'Jira Email missing — check sidebar.' });
+  if (!jiraToken) return res.status(400).json({ error: 'Jira API Token missing — check sidebar.' });
   if (!jiraProj)  return res.status(400).json({ error: 'Jira Project Key missing — enter DEV in sidebar.' });
 
   const auth = 'Basic ' + Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
   const base = jiraUrl.replace(/\/$/, '');
-  const proj = jiraProj.trim().toUpperCase(); // always use configured project key
+  const proj = jiraProj.trim().toUpperCase();
+
+  // ── Auto-detect valid issue type for this project ──────────
+  async function getIssueType() {
+    // If user configured a specific type, use it
+    if (jiraIssueType && jiraIssueType.trim()) return jiraIssueType.trim();
+
+    try {
+      // Fetch project metadata to get valid issue types
+      const r = await fetch(
+        `${base}/rest/api/3/project/${proj}`,
+        { headers: { Authorization: auth, Accept: 'application/json' } }
+      );
+      if (!r.ok) return 'Task'; // safe fallback
+
+      const d = await r.json();
+      const types = (d.issueTypes || []).map(t => t.name);
+
+      // Priority order: Bug → Story → Task → first available
+      const preferred = ['Bug', 'Story', 'Task', 'Issue', 'Defect'];
+      for (const t of preferred) {
+        if (types.includes(t)) return t;
+      }
+      // Return first non-subtask type
+      const nonSub = (d.issueTypes || []).find(t => !t.subtask);
+      return nonSub?.name || 'Task';
+    } catch {
+      return 'Task';
+    }
+  }
 
   try {
     switch (action) {
 
       case 'create_issue': {
-        // Always override project key with configured value — AI may generate wrong key
+        const issueType = await getIssueType();
+
         const fields = {
           ...payload.fields,
-          project: { key: proj },  // force correct project key
-          issuetype: { name: 'Bug' },
+          project:   { key: proj },       // always use configured project key
+          issuetype: { name: issueType },  // auto-detected valid issue type
         };
 
-        // Validate required fields before calling Jira
-        if (!fields.summary || fields.summary.trim() === '') {
-          return res.status(400).json({ error: 'Summary/title is empty — please generate the ticket first.' });
+        if (!fields.summary?.trim()) {
+          return res.status(400).json({ error: 'Summary is empty — generate the ticket first.' });
         }
 
-        const body = { fields };
-        console.log('Creating Jira issue:', JSON.stringify({ project: proj, summary: fields.summary }));
+        console.log(`Creating Jira issue: project=${proj}, type=${issueType}, summary=${fields.summary?.slice(0,50)}`);
 
         const r = await fetch(`${base}/rest/api/3/issue`, {
           method: 'POST',
           headers: { Authorization: auth, 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ fields }),
         });
 
         const d = await r.json();
         if (!r.ok) {
-          // Return detailed Jira error
           const errMsg = d.errorMessages?.[0]
-            || Object.entries(d.errors || {}).map(([k,v]) => `${k}: ${v}`).join(', ')
+            || Object.entries(d.errors || {}).map(([k, v]) => `${k}: ${v}`).join(', ')
             || d.message
             || `Jira ${r.status}`;
           return res.status(r.status).json({ error: errMsg });
@@ -61,10 +88,7 @@ export default async function handler(req, res) {
       case 'add_comment': {
         const { issueKey, comment } = payload;
         const body = {
-          body: {
-            version: 1, type: 'doc',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: comment }] }]
-          }
+          body: { version: 1, type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: comment }] }] }
         };
         const r = await fetch(`${base}/rest/api/3/issue/${issueKey}/comment`, {
           method: 'POST',
@@ -73,6 +97,17 @@ export default async function handler(req, res) {
         });
         if (!r.ok) { const e = await r.json(); return res.status(r.status).json({ error: e.errorMessages?.[0] || `Jira ${r.status}` }); }
         return res.json({ ok: true });
+      }
+
+      case 'get_issue_types': {
+        // Expose available issue types to frontend for sidebar display
+        const r = await fetch(`${base}/rest/api/3/project/${proj}`, {
+          headers: { Authorization: auth, Accept: 'application/json' },
+        });
+        if (!r.ok) return res.json({ types: ['Bug', 'Task', 'Story'] });
+        const d = await r.json();
+        const types = (d.issueTypes || []).filter(t => !t.subtask).map(t => t.name);
+        return res.json({ types });
       }
 
       case 'search_duplicates': {
