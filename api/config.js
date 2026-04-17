@@ -160,7 +160,21 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Invalid admin key' });
       }
       const { orgCode } = req.body;
+
+      // Delete the specific key
       await kvDel(`org:${orgCode}`);
+
+      // Also scan and delete any undefined/corrupt entries
+      if (orgCode === 'undefined' || !orgCode) {
+        const allKeys = await kvKeys('org:*');
+        for (const key of allKeys) {
+          const data = await kvGet(key);
+          if (!data || !data.orgCode || data.orgCode === 'undefined') {
+            await kvDel(key);
+          }
+        }
+      }
+
       return res.json({ ok: true, message: `Org "${orgCode}" deleted` });
     }
 
