@@ -46,10 +46,25 @@ export default async function handler(req, res) {
     switch (action) {
 
       case 'create_bug': {
+        // Sanitize payload — fix Priority (must be int 1-4) and Severity (must be "X - Label")
+        const priMap = {'P0':1,'P1':1,'P2':2,'P3':3,'P4':4,'Critical':1,'High':1,'Medium':2,'Low':3};
+        const sevMap = {'Critical':'1 - Critical','High':'2 - High','Medium':'3 - Medium','Low':'4 - Low',
+                        '1 - Critical':'1 - Critical','2 - High':'2 - High','3 - Medium':'3 - Medium','4 - Low':'4 - Low'};
+        const sanitizedPayload = (payload||[]).map(op => {
+          if (op.path === '/fields/Microsoft.VSTS.Common.Priority') {
+            const n = priMap[op.value] || parseInt(op.value) || 2;
+            return { ...op, value: [1,2,3,4].includes(n) ? n : 2 };
+          }
+          if (op.path === '/fields/Microsoft.VSTS.Common.Severity') {
+            return { ...op, value: sevMap[op.value] || '3 - Medium' };
+          }
+          return op;
+        }).filter(op => op.value !== undefined && op.value !== null && String(op.value).trim() !== '' || op.path === '/fields/System.Title');
+
         const r = await adoFetch(`${base}/${proj}/_apis/wit/workitems/$Bug?api-version=6.0`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json-patch+json', Accept: 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(sanitizedPayload),
         });
         if (r._html || r.status === 401 || r.status === 203) return authErr();
         if (r.status === 404) return res.status(404).json({ error: `Project "${adoProj}" not found in org "${adoOrg}". Check exact spelling.` });
