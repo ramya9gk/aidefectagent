@@ -11,10 +11,20 @@ export default async function handler(req, res) {
 
   const { action, config, payload } = req.body;
 
-  // Read from Vercel env vars first, fall back to browser-supplied config
-  const jiraUrl    = process.env.JIRA_URL    || config?.jiraUrl    || '';
-  const jiraEmail  = process.env.JIRA_EMAIL  || config?.jiraEmail  || '';
-  const jiraToken  = process.env.JIRA_TOKEN  || config?.jiraToken  || '';
+  // Multi-tenant: load from KV if orgCode provided
+  let _org = {};
+  if (config?.orgCode && process.env.KV_REST_API_URL) {
+    try {
+      const _r = await fetch(`${process.env.KV_REST_API_URL}/get/org:${config.orgCode}`, {
+        headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` }
+      });
+      const _d = await _r.json();
+      if (_d.result) _org = JSON.parse(_d.result);
+    } catch(e) {}
+  }
+  const jiraUrl   = _org.jiraUrl   || process.env.JIRA_URL   || config?.jiraUrl   || '';
+  const jiraEmail = _org.jiraEmail || process.env.JIRA_EMAIL  || config?.jiraEmail || '';
+  const jiraToken = _org.jiraToken || process.env.JIRA_TOKEN  || config?.jiraToken || '';
   const jiraProj   = process.env.JIRA_PROJECT|| config?.jiraProj   || '';
   const jiraBoard  = process.env.JIRA_BOARD  || config?.jiraBoard  || '';
   const jiraIssueType    = process.env.JIRA_ISSUE_TYPE     || config?.jiraIssueType    || '';

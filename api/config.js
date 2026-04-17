@@ -1,0 +1,229 @@
+// api/config.js — Read/Write org config from Upstash Redis
+// GET  ?org=xxx        → returns org config (public fields only)
+// POST { action, ... } → admin operations
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const KV_URL   = process.env.KV_REST_API_URL;
+  const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+
+  if (!KV_URL || !KV_TOKEN) {
+    return res.status(500).json({ error: 'Database not configured. Add KV_REST_API_URL and KV_REST_API_TOKEN to Vercel env vars.' });
+  }
+
+  // ── KV helpers ─────────────────────────────────────────────
+  async function kvGet(key) {
+    const r = await fetch(`${KV_URL}/get/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${KV_TOKEN}` }
+    });
+    const d = await r.json();
+    return d.result ? JSON.parse(d.result) : null;
+  }
+
+  async function kvSet(key, value) {
+    const r = await fetch(`${KV_URL}/set/${encodeURIComponent(key)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${KV_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: JSON.stringify(value) })
+    });
+    return r.ok;
+  }
+
+  async function kvDel(key) {
+    const r = await fetch(`${KV_URL}/del/${encodeURIComponent(key)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${KV_TOKEN}` }
+    });
+    return r.ok;
+  }
+
+  async function kvKeys(pattern) {
+    const r = await fetch(`${KV_URL}/keys/${encodeURIComponent(pattern)}`, {
+      headers: { Authorization: `Bearer ${KV_TOKEN}` }
+    });
+    const d = await r.json();
+    return d.result || [];
+  }
+
+  // ── GET: load org config for app ───────────────────────────
+  if (req.method === 'GET') {
+    const org = req.query.org;
+    if (!org) return res.status(400).json({ error: 'org parameter required' });
+
+    const config = await kvGet(`org:${org}`);
+    if (!config) return res.status(404).json({ error: `Organisation "${org}" not found. Check your URL.` });
+
+    // Return safe config — NO tokens exposed to browser
+    // Tokens stay in KV, only metadata returned
+    return res.json({
+      orgName:      config.orgName || org,
+      orgCode:      org,
+      logo:         config.logo || '',
+      jiraUrl:      config.jiraUrl || '',
+      jiraProj:     config.jiraProj || '',
+      adoOrg:       config.adoOrg || '',
+      adoProj:      config.adoProj || '',
+      ghOwner:      config.ghOwner || '',
+      ghRepo:       config.ghRepo || '',
+      hasJira:      !!(config.jiraUrl && config.jiraToken),
+      hasAdo:       !!(config.adoOrg && config.adoPat),
+      hasGitHub:    !!(config.ghOwner && config.ghRepo && config.ghToken),
+      teamsWebhook: config.teamsWebhook || '',
+      plan:         config.plan || 'free',
+      createdAt:    config.createdAt || '',
+    });
+  }
+
+  // ── POST: admin + setup operations ─────────────────────────
+  if (req.method === 'POST') {
+    const { action } = req.body;
+
+    // ── Admin: create org ───────────────────────────────────
+    if (action === 'admin_create_org') {
+      const adminSecret = process.env.ADMIN_SECRET;
+      if (!adminSecret || req.body.adminKey !== adminSecret) {
+        return res.status(401).json({ error: 'Invalid admin key' });
+      }
+
+      const { orgName, orgCode, jiraUrl, jiraEmail, jiraToken, jiraProj,
+              adoOrg, adoPat, adoProj, ghOwner, ghRepo, ghToken,
+              teamsWebhook, plan } = req.body;
+
+      if (!orgCode || !orgName) return res.status(400).json({ error: 'orgCode and orgName required' });
+
+      // Check if org already exists
+      const existing = await kvGet(`org:${orgCode}`);
+      if (existing) return res.status(409).json({ error: `Org "${orgCode}" already exists` });
+
+      const orgData = {
+        orgName, orgCode,
+        jiraUrl:      jiraUrl || '',
+        jiraEmail:    jiraEmail || '',
+        jiraToken:    jiraToken || '',
+        jiraProj:     jiraProj || '',
+        adoOrg:       adoOrg || '',
+        adoPat:       adoPat || '',
+        adoProj:      adoProj || '',
+        ghOwner:      ghOwner || '',
+        ghRepo:       ghRepo || '',
+        ghToken:      ghToken || '',
+        teamsWebhook: teamsWebhook || '',
+        plan:         plan || 'free',
+        createdAt:    new Date().toISOString(),
+        updatedAt:    new Date().toISOString(),
+      };
+
+      await kvSet(`org:${orgCode}`, orgData);
+      return res.json({
+        ok: true,
+        orgCode,
+        url: `/?org=${orgCode}`,
+        setupUrl: `/setup?org=${orgCode}`,
+        message: `Org "${orgName}" created successfully`
+      });
+    }
+
+    // ── Admin: list all orgs ────────────────────────────────
+    if (action === 'admin_list_orgs') {
+      const adminSecret = process.env.ADMIN_SECRET;
+      if (!adminSecret || req.body.adminKey !== adminSecret) {
+        return res.status(401).json({ error: 'Invalid admin key' });
+      }
+
+      const keys = await kvKeys('org:*');
+      const orgs = [];
+      for (const key of keys) {
+        const org = await kvGet(key);
+        if (org) {
+          orgs.push({
+            orgCode:   org.orgCode,
+            orgName:   org.orgName,
+            plan:      org.plan,
+            createdAt: org.createdAt,
+            hasJira:   !!(org.jiraUrl && org.jiraToken),
+            hasAdo:    !!(org.adoOrg && org.adoPat),
+            hasGitHub: !!(org.ghOwner && org.ghRepo && org.ghToken),
+          });
+        }
+      }
+      return res.json({ orgs });
+    }
+
+    // ── Admin: delete org ───────────────────────────────────
+    if (action === 'admin_delete_org') {
+      const adminSecret = process.env.ADMIN_SECRET;
+      if (!adminSecret || req.body.adminKey !== adminSecret) {
+        return res.status(401).json({ error: 'Invalid admin key' });
+      }
+      const { orgCode } = req.body;
+      await kvDel(`org:${orgCode}`);
+      return res.json({ ok: true, message: `Org "${orgCode}" deleted` });
+    }
+
+    // ── Admin: update org ───────────────────────────────────
+    if (action === 'admin_update_org') {
+      const adminSecret = process.env.ADMIN_SECRET;
+      if (!adminSecret || req.body.adminKey !== adminSecret) {
+        return res.status(401).json({ error: 'Invalid admin key' });
+      }
+      const { orgCode, updates } = req.body;
+      const existing = await kvGet(`org:${orgCode}`);
+      if (!existing) return res.status(404).json({ error: 'Org not found' });
+      const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+      await kvSet(`org:${orgCode}`, updated);
+      return res.json({ ok: true, message: 'Org updated' });
+    }
+
+    // ── Client setup: save org credentials ─────────────────
+    if (action === 'setup_org') {
+      const { orgCode, setupKey, jiraUrl, jiraEmail, jiraToken, jiraProj,
+              adoOrg, adoPat, adoProj, ghOwner, ghRepo, ghToken, teamsWebhook } = req.body;
+
+      const existing = await kvGet(`org:${orgCode}`);
+      if (!existing) return res.status(404).json({ error: 'Org not found. Contact your admin.' });
+
+      // Verify setup key matches org code (simple auth)
+      if (setupKey !== orgCode && setupKey !== process.env.ADMIN_SECRET) {
+        return res.status(401).json({ error: 'Invalid setup key' });
+      }
+
+      const updated = {
+        ...existing,
+        jiraUrl:      jiraUrl      || existing.jiraUrl,
+        jiraEmail:    jiraEmail    || existing.jiraEmail,
+        jiraToken:    jiraToken    || existing.jiraToken,
+        jiraProj:     jiraProj     || existing.jiraProj,
+        adoOrg:       adoOrg       || existing.adoOrg,
+        adoPat:       adoPat       || existing.adoPat,
+        adoProj:      adoProj      || existing.adoProj,
+        ghOwner:      ghOwner      || existing.ghOwner,
+        ghRepo:       ghRepo       || existing.ghRepo,
+        ghToken:      ghToken      || existing.ghToken,
+        teamsWebhook: teamsWebhook || existing.teamsWebhook,
+        updatedAt:    new Date().toISOString(),
+      };
+
+      await kvSet(`org:${orgCode}`, updated);
+      return res.json({ ok: true, url: `/?org=${orgCode}`, message: 'Setup complete!' });
+    }
+
+    // ── Get full org config (for API calls) ─────────────────
+    // Called server-to-server only — returns credentials
+    if (action === 'get_org_config') {
+      const { orgCode, internalKey } = req.body;
+      // Only allow internal calls from other API functions
+      if (internalKey !== process.env.ADMIN_SECRET && internalKey !== process.env.ANTHROPIC_API_KEY?.slice(-8)) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const config = await kvGet(`org:${orgCode}`);
+      if (!config) return res.status(404).json({ error: 'Org not found' });
+      return res.json(config);
+    }
+
+    return res.status(400).json({ error: `Unknown action: ${action}` });
+  }
+}

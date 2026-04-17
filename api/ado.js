@@ -11,10 +11,20 @@ export default async function handler(req, res) {
 
   const { action, config, payload } = req.body;
 
-  // Read from Vercel env vars first, fall back to browser-supplied config
-  const adoOrg  = process.env.ADO_ORG     || config?.adoOrg  || '';
-  const adoProj = process.env.ADO_PROJECT  || config?.adoProj || '';
-  const adoPat  = process.env.ADO_PAT      || config?.adoPat  || '';
+  // Multi-tenant: load from KV if orgCode provided
+  let _orgA = {};
+  if (config?.orgCode && process.env.KV_REST_API_URL) {
+    try {
+      const _r = await fetch(`${process.env.KV_REST_API_URL}/get/org:${config.orgCode}`, {
+        headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` }
+      });
+      const _d = await _r.json();
+      if (_d.result) _orgA = JSON.parse(_d.result);
+    } catch(e) {}
+  }
+  const adoOrg  = _orgA.adoOrg  || process.env.ADO_ORG     || config?.adoOrg  || '';
+  const adoProj = _orgA.adoProj || process.env.ADO_PROJECT  || config?.adoProj || '';
+  const adoPat  = _orgA.adoPat  || process.env.ADO_PAT      || config?.adoPat  || '';
   const adoTeam     = process.env.ADO_TEAM         || config?.adoTeam     || '';
   const adoAssignee = process.env.ADO_ASSIGNEE_EMAIL || config?.adoAssignee || '';
 

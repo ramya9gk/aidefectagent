@@ -12,9 +12,21 @@ export default async function handler(req, res) {
   const { action, config, payload } = req.body;
 
   // Read from Vercel env vars first, fall back to browser-supplied config
-  const ghOwner = process.env.GITHUB_OWNER || config?.ghOwner || '';
-  const ghRepo  = process.env.GITHUB_REPO  || config?.ghRepo  || '';
-  const ghToken = process.env.GITHUB_TOKEN || config?.ghToken  || '';
+  // Multi-tenant: load from KV if orgCode provided
+  let orgCfgGh = {};
+  if (config?.orgCode && process.env.KV_REST_API_URL) {
+    try {
+      const kvR = await fetch(`${process.env.KV_REST_API_URL}/get/org:${config.orgCode}`, {
+        headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` }
+      });
+      const kvD = await kvR.json();
+      if (kvD.result) orgCfgGh = JSON.parse(kvD.result);
+    } catch(e) { console.warn('KV lookup failed:', e.message); }
+  }
+
+  const ghOwner = orgCfgGh.ghOwner || process.env.GITHUB_OWNER || config?.ghOwner || '';
+  const ghRepo  = orgCfgGh.ghRepo  || process.env.GITHUB_REPO  || config?.ghRepo  || '';
+  const ghToken = orgCfgGh.ghToken || process.env.GITHUB_TOKEN || config?.ghToken  || '';
 
   if (!ghOwner) return res.status(400).json({ error: 'GITHUB_OWNER not set. Add to Vercel Environment Variables.' });
   if (!ghRepo)  return res.status(400).json({ error: 'GITHUB_REPO not set. Add to Vercel Environment Variables.' });
@@ -27,21 +39,36 @@ export default async function handler(req, res) {
     switch (action) {
 
       case 'create_issue': {
-        const { title, body, labels } = payload;
+        const { title, body, labels, assignees } = payload;
+
         // Auto-create labels (ignore 422 = already exists)
-        for (const label of labels) {
+        for (const label of (labels||[])) {
           await fetch(`${base}/labels`, {
             method: 'POST',
             headers: { Authorization: auth, 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: label, color: 'ededed' }),
           }).catch(() => {});
         }
+
+        // Build issue payload
+        const issuePayload = { title, body, labels: labels||[] };
+        if (assignees && assignees.length > 0) issuePayload.assignees = assignees;
+
         const r = await fetch(`${base}/issues`, {
           method: 'POST',
           headers: { Authorization: auth, 'Content-Type': 'application/json', Accept: 'application/vnd.github.v3+json' },
-          body: JSON.stringify({ title, body, labels }),
+          body: JSON.stringify(issuePayload),
         });
-        if (!r.ok) { const e = await r.json(); return res.status(r.status).json({ error: e.message || `GitHub ${r.status}` }); }
+        if (!r.ok) {
+          const e = await r.json();
+          if (r.status === 404) return res.status(404).json({
+            error: `Repo "${ghOwner}/${ghRepo}" not found. Check GITHUB_OWNER and GITHUB_REPO in Vercel env vars. Repo must exist and token must have repo access.`
+          });
+          if (r.status === 401) return res.status(401).json({
+            error: `GitHub token invalid or expired. Update GITHUB_TOKEN in Vercel env vars.`
+          });
+          return res.status(r.status).json({ error: e.message || `GitHub ${r.status}` });
+        }
         const d = await r.json();
         return res.json({ id: `#${d.number}`, rawId: d.number, url: d.html_url });
       }
