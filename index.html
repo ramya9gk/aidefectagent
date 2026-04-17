@@ -451,6 +451,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
           <option value="">— select project —</option>
         </select>
       </div>
+      <div class="cfg-row">
+        <div class="cfg-lbl">Assignee Email <span style="color:var(--t3);font-size:9px">(optional)</span></div>
+        <input class="cfg-in" id="jira-assignee-input" placeholder="assignee@company.com" oninput="CFG.jiraAssignee=this.value.trim()"/>
+      </div>
       <div style="display:flex;gap:6px;margin-top:8px">
         <button class="btn-sv" style="flex:1;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('jira')">✓ Test</button>
         <button class="btn-sv" style="flex:0 0 auto;width:64px;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="loadProjects('jira')">↻ Reload</button>
@@ -477,6 +481,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
         <select class="cfg-in" id="ado-proj-select" onchange="CFG.adoProj=this.value" style="cursor:pointer">
           <option value="">— select project —</option>
         </select>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-lbl">Assign To <span style="color:var(--t3);font-size:9px">(optional)</span></div>
+        <input class="cfg-in" id="ado-assignee-input" placeholder="Display Name or email" oninput="CFG.adoAssignee=this.value.trim()"/>
       </div>
       <div style="display:flex;gap:6px;margin-top:8px">
         <button class="btn-sv" style="flex:1;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('ado')">✓ Test</button>
@@ -645,7 +653,7 @@ localStorage.clear();
 
 const LS = k => '';
 const CFG = {
-  ant:'', jiraUrl:'', jiraEmail:'', jiraIssueType:'', jiraReporterEmail:'',
+  ant:'', jiraUrl:'', jiraEmail:'', jiraIssueType:'', jiraReporterEmail:'', jiraAssignee:'', adoAssignee:'',
   jiraToken:'', jiraProj:'', jiraBoard:'',
   adoOrg:'', adoProj:'', adoPat:'', adoTeam:'',
   ghOwner:'', ghRepo:'', ghToken:'',
@@ -1320,8 +1328,8 @@ async function api(endpoint, body) {
   if (!r.ok) throw new Error(d.error || `Server ${r.status}`);
   return d;
 }
-function jiraCfg() { return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'' }; }
-function adoCfg()  { const orgEl=document.getElementById('ado-org-input'); if(orgEl&&orgEl.value.trim()) CFG.adoOrg=orgEl.value.trim(); return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam }; }
+function jiraCfg() { const aEl=document.getElementById('jira-assignee-input'); if(aEl&&aEl.value.trim()) CFG.jiraAssignee=aEl.value.trim(); return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'', jiraAssignee: CFG.jiraAssignee||'' }; }
+function adoCfg()  { const orgEl=document.getElementById('ado-org-input'); if(orgEl&&orgEl.value.trim()) CFG.adoOrg=orgEl.value.trim(); const assigneeEl=document.getElementById('ado-assignee-input'); if(assigneeEl&&assigneeEl.value.trim()) CFG.adoAssignee=assigneeEl.value.trim(); return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam, adoAssignee: CFG.adoAssignee||'' }; }
 function ghCfg()   { return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken }; }
 
 // Jira POST
@@ -1337,6 +1345,8 @@ async function postJira(t){
   }
   if(!CFG.jiraProj) throw new Error('Please select a Jira project from the sidebar first');
   console.log('Posting to Jira project:', CFG.jiraProj);
+  // Read assignee from sidebar input
+  const jiraAssignee = CFG.jiraAssignee || document.getElementById('jira-assignee-input')?.value?.trim() || '';
   const payload={fields:{project:{key:CFG.jiraProj},issuetype:{name:'Bug'},summary:t.summary,
     priority:{name:{P0:'Highest',P1:'High',P2:'Medium',P3:'Low'}[t.priority]||'Medium'},
     labels:t.labels||['AI-Generated'],
@@ -1374,6 +1384,9 @@ async function postADO(t){
     {op:'add',path:'/fields/Microsoft.VSTS.TCM.SystemInfo',value:t.system_info||t.environment||''},
     {op:'add',path:'/fields/Microsoft.VSTS.Common.Severity',value:safeSev},
     {op:'add',path:'/fields/Microsoft.VSTS.Common.Priority',value:safePri},
+    ...(CFG.adoAssignee||document.getElementById('ado-assignee-input')?.value?.trim()
+      ? [{op:'add',path:'/fields/System.AssignedTo',value:CFG.adoAssignee||document.getElementById('ado-assignee-input')?.value?.trim()}]
+      : []),
     ...(t.tags?[{op:'add',path:'/fields/System.Tags',value:t.tags}]:[]),
     ...(crit?[{op:'add',path:'/fields/Microsoft.VSTS.Common.AcceptanceCriteria',value:`<ol>${crit}</ol>`}]:[]),
   ].filter(p=>p.value!==undefined&&p.value!==null&&String(p.value).trim()!==''||p.path==='/fields/System.Title');
