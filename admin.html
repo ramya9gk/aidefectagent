@@ -378,10 +378,13 @@ function renderOrgs(orgs) {
       <th>Platforms</th><th>Created</th><th>Actions</th>
     </tr></thead>
     <tbody>
-    ${orgs.map(o => `
+    ${orgs.map((o,i) => {
+      const code = o.orgCode || o.code || `org-${i}`;
+      const name = o.orgName || o.name || 'Unnamed Org';
+      return `
       <tr>
-        <td><div class="org-name">${o.orgName}</div></td>
-        <td><span class="org-code">${o.orgCode}</span></td>
+        <td><div class="org-name">${name}</div></td>
+        <td><span class="org-code">${code}</span></td>
         <td><span style="font-size:11px;color:#7d8699">${o.plan||'free'}</span></td>
         <td><div class="platform-dots">
           <div class="pdot ${o.hasJira?'ok':''}" title="Jira ${o.hasJira?'✅':'❌'}"></div>
@@ -390,11 +393,11 @@ function renderOrgs(orgs) {
         </div></td>
         <td><span style="font-size:11px;color:#4d5a6e">${o.createdAt?o.createdAt.split('T')[0]:'-'}</span></td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="copyOrgUrl('${appUrl}/?org=${o.orgCode}')">📋 App URL</button>
-          <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="copyOrgUrl('${appUrl}/setup?org=${o.orgCode}')">⚙️ Setup URL</button>
-          <button class="btn btn-danger" style="padding:4px 10px;font-size:10px" onclick="deleteOrg('${o.orgCode}','${o.orgName}')">🗑️</button>
+          <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="copyOrgUrl('${appUrl}/?org=${code}')">📋 App URL</button>
+          <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="copyOrgUrl('${appUrl}/setup?org=${code}')">⚙️ Setup URL</button>
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:10px" onclick="deleteOrg('${code}','${name}')">🗑️</button>
         </td>
-      </tr>`).join('')}
+      </tr>`;}).join('')}
     </tbody>
   </table>`;
 }
@@ -452,13 +455,22 @@ async function createOrg() {
 
 async function deleteOrg(orgCode, orgName) {
   if (!confirm(`Delete "${orgName}" (${orgCode})? This cannot be undone.`)) return;
-  const r = await fetch('/api/config', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ action: 'admin_delete_org', adminKey: ADMIN_KEY, orgCode })
-  });
-  if (r.ok) { toast(`${orgName} deleted`, 'info'); loadOrgs(); }
-  else toast('Failed to delete', 'error');
+  try {
+    const r = await fetch('/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'admin_delete_org', adminKey: ADMIN_KEY, orgCode })
+    });
+    const d = await r.json();
+    if (r.ok || d.ok) {
+      toast(`"${orgName}" deleted successfully`, 'success');
+      setTimeout(loadOrgs, 500);
+    } else {
+      toast(d.error || 'Failed to delete', 'error');
+    }
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
 }
 
 function copyUrl() {
