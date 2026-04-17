@@ -1309,10 +1309,17 @@ function ghCfg()   { return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken:
 
 // Jira POST
 async function postJira(t){
-  // Read project key directly from dropdown — most reliable
+  // Read project key from dropdown — extract key from "Name (KEY)" format
   const jiraSel = document.getElementById('jira-proj-select');
-  if(jiraSel && jiraSel.value) CFG.jiraProj = jiraSel.dataset.key || jiraSel.value;
+  if(jiraSel && jiraSel.value) {
+    const opt = jiraSel.options[jiraSel.selectedIndex];
+    // Try data-key first, then extract from "Team Astro (DEV)" format
+    const dataKey = opt?.dataset?.key;
+    const matchKey = jiraSel.value.match(/\(([A-Z0-9]+)\)$/);
+    CFG.jiraProj = dataKey || (matchKey ? matchKey[1] : jiraSel.value);
+  }
   if(!CFG.jiraProj) throw new Error('Please select a Jira project from the sidebar first');
+  console.log('Posting to Jira project:', CFG.jiraProj);
   const payload={fields:{project:{key:CFG.jiraProj},issuetype:{name:'Bug'},summary:t.summary,
     priority:{name:{P0:'Highest',P1:'High',P2:'Medium',P3:'Low'}[t.priority]||'Medium'},
     labels:t.labels||['AI-Generated'],
