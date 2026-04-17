@@ -298,15 +298,15 @@ textarea#din::placeholder{color:var(--t3)}
 .iibtn:hover{color:var(--accent2);background:var(--s3)}
 .iibtn.active{color:var(--red)}
 .iibtn.has-file{color:var(--green)}
-.input-foot{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;border-top:1px solid var(--b1);gap:7px;flex-wrap:wrap}
-.ex-chips{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0;max-width:calc(100% - 160px)}
-.ex-chip{font-size:10px;padding:2px 8px;border:1px solid var(--b2);border-radius:20px;cursor:pointer;color:var(--t2);background:transparent;font-family:'DM Sans',sans-serif;transition:var(--transition);white-space:nowrap}
+.input-foot{display:flex;align-items:center;padding:7px 11px;border-top:1px solid var(--b1);gap:6px;flex-wrap:nowrap;overflow:hidden}
+.ex-chips{display:flex;flex-wrap:nowrap;gap:4px;flex:1;min-width:0;overflow:hidden}
+.ex-chip{font-size:10px;padding:2px 8px;border:1px solid var(--b2);border-radius:20px;cursor:pointer;color:var(--t2);background:transparent;font-family:'DM Sans',sans-serif;transition:var(--transition);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
 .ex-chip:hover{background:var(--s3);color:var(--t1)}
 .send-btn{display:flex;align-items:center;gap:5px;background:var(--accent);border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:500;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;flex-shrink:0}
 .send-btn:hover{opacity:.85}
 .send-btn:disabled{opacity:.4;cursor:not-allowed}
 /* ── Toast ── */
-.toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:200}
+.toast-wrap{position:fixed;bottom:90px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:200}
 .toast{display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid var(--b3);border-radius:10px;padding:9px 13px;font-size:12px;color:var(--t1);animation:toastIn .25s ease;min-width:220px;box-shadow:var(--shadow)}
 .toast.success{border-color:var(--green-bd);background:var(--green-bg);color:var(--green)}
 .toast.error{border-color:var(--red-bd);background:var(--red-bg);color:var(--red)}
