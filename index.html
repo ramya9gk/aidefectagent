@@ -756,7 +756,7 @@ function renderQualityBadge(q) {
 
 // ══ FEATURE 3: ROOT CAUSE SUGGESTER ════════════════════════
 async function suggestRootCause() {
-  if(!curTicket||!CFG.ant) return;
+  if(!curTicket) return; // Anthropic key server-side
   const btn=document.getElementById('btn-rc'); if(btn){btn.disabled=true;btn.textContent='Analyzing...';}
   const area=document.getElementById('rc-area'); if(!area) return;
   area.innerHTML=`<div class="feat-panel"><div class="feat-panel-hdr">🔍 Root Cause Analysis <span style="font-size:10px;color:var(--t2);margin-left:auto">AI-powered</span></div><div class="feat-panel-body" style="color:var(--t2);font-size:12px">Analyzing...</div></div>`;
@@ -774,7 +774,7 @@ async function suggestRootCause() {
 
 // ══ FEATURE 2: TEST CASE GENERATOR ════════════════════════
 async function generateTestCases() {
-  if(!curTicket||!CFG.ant) return;
+  if(!curTicket) return; // Anthropic key server-side
   const btn=document.getElementById('btn-tc'); if(btn){btn.disabled=true;btn.textContent='Generating...';}
   const area=document.getElementById('tc-area'); if(!area) return;
   area.innerHTML=`<div class="feat-panel"><div class="feat-panel-hdr">🧪 Test Cases <span style="color:var(--t2);font-size:10px;margin-left:auto">Gherkin/BDD</span></div><div class="feat-panel-body" style="font-size:12px;color:var(--t2)">Generating...</div></div>`;
@@ -1633,7 +1633,8 @@ async function acceptTestCases(){
   const el=document.getElementById('tc-ask-msg');
   if(el){ el.innerHTML=aiAv()+'<div><div class="msg-bub" style="font-size:12px;color:var(--t2)"><span style="display:flex;align-items:center;gap:8px"><span style="width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span>Generating test cases...</span></div></div>'; }
 
-  if(!curTicket||!CFG.ant){ toast('Anthropic API key required','warn'); return; }
+  if(!curTicket){ toast('Generate a ticket first','warn'); return; }
+  // Anthropic API key is in Vercel env vars — no browser key needed
 
   const chat=document.getElementById('chat');
   const platform=curTicket._platform;
@@ -1839,7 +1840,7 @@ function saveCfg(section){
 }
 function updateDots(){
   const dot=(id,ok)=>{const el=document.getElementById(id);if(el)el.className='cfg-dot'+(ok?' ok':'');};
-  dot('dot-ant',!!CFG.ant);dot('dot-jira',!!(CFG.jiraUrl&&CFG.jiraToken));
+  dot('dot-ant',true); // Always green - key in Vercel env varsdot('dot-jira',!!(CFG.jiraUrl&&CFG.jiraToken));
   dot('dot-ado',!!(CFG.adoOrg&&CFG.adoPat));dot('dot-gh',!!(CFG.ghOwner&&CFG.ghToken));
   dot('dot-slack',!!CFG.slack);dot('dot-teams',!!CFG.teams);
 }
