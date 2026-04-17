@@ -137,16 +137,33 @@ export default async function handler(req, res) {
       const keys = await kvKeys('org:*');
       const orgs = [];
       for (const key of keys) {
-        const org = await kvGet(key);
-        if (org) {
+        try {
+          const org = await kvGet(key);
+          const rawCode = key.replace('org:', '');
+          // Include ALL entries — corrupt ones too so admin can delete
           orgs.push({
-            orgCode:   org.orgCode,
-            orgName:   org.orgName,
-            plan:      org.plan,
-            createdAt: org.createdAt,
-            hasJira:   !!(org.jiraUrl && org.jiraToken),
-            hasAdo:    !!(org.adoOrg && org.adoPat),
-            hasGitHub: !!(org.ghOwner && org.ghRepo && org.ghToken),
+            rawKey:    key,
+            orgCode:   org?.orgCode || rawCode || 'unknown',
+            orgName:   org?.orgName || org?.name || '',
+            plan:      org?.plan || 'free',
+            createdAt: org?.createdAt || '',
+            hasJira:   !!(org?.jiraUrl && org?.jiraToken),
+            hasAdo:    !!(org?.adoOrg && org?.adoPat),
+            hasGitHub: !!(org?.ghOwner && org?.ghRepo && org?.ghToken),
+            isCorrupt: !org || !org.orgCode || org.orgCode === 'undefined',
+          });
+        } catch(e) {
+          // Include unparseable entries so they can be deleted
+          orgs.push({
+            rawKey:    key,
+            orgCode:   key.replace('org:', '') || 'corrupt',
+            orgName:   '',
+            plan:      'free',
+            createdAt: '',
+            hasJira:   false,
+            hasAdo:    false,
+            hasGitHub: false,
+            isCorrupt: true,
           });
         }
       }
@@ -159,9 +176,12 @@ export default async function handler(req, res) {
       if (!adminSecret || req.body.adminKey !== adminSecret) {
         return res.status(401).json({ error: 'Invalid admin key' });
       }
-      const { orgCode } = req.body;
+      const { orgCode, rawKey } = req.body;
 
-      // Try deleting with multiple possible key formats
+      // Try deleting with rawKey first (most reliable)
+      if (rawKey) await kvDel(rawKey);
+
+      // Also try common formats
       await kvDel(`org:${orgCode}`);
       await kvDel(`org:undefined`);
       await kvDel(`org:`);
