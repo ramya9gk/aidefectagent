@@ -148,7 +148,11 @@ input::placeholder{color:#4d5a6e}
     <!-- ── ORGS TAB ── -->
     <div id="tab-orgs" class="section active">
       <div class="card">
-        <div class="card-title"><span>🏢</span> All Organisations <button class="btn btn-secondary" style="margin-left:auto;padding:5px 12px;font-size:11px" onclick="loadOrgs()">↻ Refresh</button></div>
+        <div class="card-title"><span>🏢</span> All Organisations 
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button class="btn btn-danger" style="padding:5px 12px;font-size:11px" onclick="deleteAllCorrupt()">🧹 Clean DB</button>
+          <button class="btn btn-secondary" style="padding:5px 12px;font-size:11px" onclick="loadOrgs()">↻ Refresh</button>
+        </div></div>
         <div id="orgs-list">
           <p style="color:#4d5a6e;font-size:13px;text-align:center;padding:20px">Loading organisations...</p>
         </div>
@@ -387,11 +391,12 @@ function renderOrgs(orgs) {
     </tr></thead>
     <tbody>
     ${orgs.map((o,i) => {
-      const code = o.orgCode || o.code || `org-${i}`;
-      const name = o.orgName || o.name || 'Unnamed Org';
+      const code = o.orgCode && o.orgCode !== 'undefined' ? o.orgCode : (o.code || `org-${i}`);
+      const name = o.orgName && o.orgName !== 'undefined' ? o.orgName : (o.name || 'Unnamed Org');
+      const isCorrupt = !o.orgCode || o.orgCode === 'undefined' || o.orgCode === '';
       return `
-      <tr>
-        <td><div class="org-name">${name}</div></td>
+      <tr style="${isCorrupt ? 'opacity:0.6' : ''}">
+        <td><div class="org-name">${name} ${isCorrupt ? '<span style="font-size:9px;color:#ef4444;background:#ef444420;padding:1px 5px;border-radius:4px;margin-left:4px">corrupt</span>' : ''}</div></td>
         <td><span class="org-code">${code}</span></td>
         <td><span style="font-size:11px;color:#7d8699">${o.plan||'free'}</span></td>
         <td><div class="platform-dots">
@@ -401,9 +406,11 @@ function renderOrgs(orgs) {
         </div></td>
         <td><span style="font-size:11px;color:#4d5a6e">${o.createdAt?o.createdAt.split('T')[0]:'-'}</span></td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
+          ${!isCorrupt ? `
           <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="copyOrgUrl('${appUrl}/?org=${code}')">📋 App URL</button>
           <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="copyOrgUrl('${appUrl}/setup?org=${code}')">⚙️ Setup URL</button>
-          <button class="btn btn-danger" style="padding:4px 10px;font-size:10px" onclick="deleteOrg('${code}','${name}')">🗑️</button>
+          ` : ''}
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:10px" onclick="deleteOrg('${code}','${name}')">🗑️ Delete</button>
         </td>
       </tr>`;}).join('')}
     </tbody>
@@ -458,6 +465,22 @@ async function createOrg() {
   } catch(e) {
     toast('Error: ' + e.message, 'error');
     btn.disabled=false; btn.textContent='🚀 Create Organisation';
+  }
+}
+
+async function deleteAllCorrupt() {
+  if (!confirm('Delete all corrupt/unnamed entries from database?')) return;
+  try {
+    const r = await fetch('/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'admin_delete_org', adminKey: ADMIN_KEY, orgCode: 'undefined' })
+    });
+    const d = await r.json();
+    toast('Database cleaned successfully!', 'success');
+    setTimeout(loadOrgs, 600);
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
   }
 }
 
