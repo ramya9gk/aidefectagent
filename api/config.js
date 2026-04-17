@@ -60,21 +60,30 @@ export default async function handler(req, res) {
     // Return safe config — NO tokens exposed to browser
     // Tokens stay in KV, only metadata returned
     return res.json({
-      orgName:      config.orgName || org,
-      orgCode:      org,
-      logo:         config.logo || '',
-      jiraUrl:      config.jiraUrl || '',
-      jiraProj:     config.jiraProj || '',
-      adoOrg:       config.adoOrg || '',
-      adoProj:      config.adoProj || '',
-      ghOwner:      config.ghOwner || '',
-      ghRepo:       config.ghRepo || '',
-      hasJira:      !!(config.jiraUrl && config.jiraToken),
-      hasAdo:       !!(config.adoOrg && config.adoPat),
-      hasGitHub:    !!(config.ghOwner && config.ghRepo && config.ghToken),
-      teamsWebhook: config.teamsWebhook || '',
-      plan:         config.plan || 'free',
-      createdAt:    config.createdAt || '',
+      orgName:        config.orgName || org,
+      orgCode:        org,
+      logo:           config.logo || '',
+      jiraUrl:        config.jiraUrl || '',
+      jiraProj:       config.jiraProj || '',
+      adoOrg:         config.adoOrg || '',
+      adoProj:        config.adoProj || '',
+      ghOwner:        config.ghOwner || '',
+      ghRepo:         config.ghRepo || '',
+      teamsWebhook:   config.teamsWebhook || '',
+      plan:           config.plan || 'free',
+      createdAt:      config.createdAt || '',
+      // Platform status — what's configured vs what's missing
+      hasJira:        !!(config.jiraUrl && config.jiraToken),
+      hasAdo:         !!(config.adoOrg && config.adoPat),
+      hasGitHub:      !!(config.ghOwner && config.ghRepo && config.ghToken),
+      // What's partially configured (URL set but no token)
+      jiraPartial:    !!(config.jiraUrl && !config.jiraToken),
+      adoPartial:     !!(config.adoOrg && !config.adoPat),
+      ghPartial:      !!(config.ghOwner && !config.ghToken),
+      // What needs setup by client
+      needsJira:      !(config.jiraUrl && config.jiraToken),
+      needsAdo:       !(config.adoOrg && config.adoPat),
+      needsGitHub:    !(config.ghOwner && config.ghRepo && config.ghToken),
     });
   }
 
