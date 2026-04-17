@@ -1,8 +1,16 @@
 <!DOCTYPE html>
 <html data-theme="dark" lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AI Defect Agent v4.7</title>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 72 72%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%234f6ef7%22/><stop offset=%22100%25%22 stop-color=%22%237c3aed%22/></linearGradient></defs><rect width=%2272%22 height=%2272%22 rx=%2216%22 fill=%22url(%23g)%22/><rect x=%2216%22 y=%2236%22 width=%2240%22 height=%2222%22 rx=%225%22 fill=%22%23fff%22 opacity=%22.9%22/><rect x=%2222%22 y=%2227%22 width=%2228%22 height=%2213%22 rx=%224%22 fill=%22%23fff%22 opacity=%22.9%22/><path d=%22M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z%22 fill=%22url(%23g)%22/></svg>"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 72 72%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%234f6ef7%22/><stop offset=%22100%25%22 stop-color=%22%237c3aed%22/></linearGradient></defs><rect width=%2272%22 height=%2272%22 rx=%2216%22 fill=%22url(%23g)%22/><rect x=%2216%22 y=%2236%22 width=%2240%22 height=%2222%22 rx=%225%22 fill=%22%23fff%22 opacity=%22.9%22/><rect x=%2222%22 y=%2227%22 width=%2228%22 height=%2213%22 rx=%224%22 fill=%22%23fff%22 opacity=%22.9%22/><path d=%22M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z%22 fill=%22url(%23g)%22/></svg>"/>
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#4f6ef7"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="BugForge AI"/><meta name="description" content="BugForge AI — Forge structured bug tickets in Jira, ADO and GitHub instantly using AI"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BugForge AI — Smart Bug Ticket Generator</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -524,8 +532,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 <div class="sidebar">
   <div class="sb-top">
     <div class="logo">
-      <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
-      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v4.7 · Platform Tabs · Redesigned UI · Secure</div></div>
+      <div class="logo-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 72 72"><defs><linearGradient id="lbf" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f6ef7"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs><rect width="72" height="72" rx="16" fill="url(#lbf)"/><rect x="16" y="36" width="40" height="22" rx="5" fill="#fff" opacity=".9"/><rect x="22" y="27" width="28" height="13" rx="4" fill="#fff" opacity=".9"/><path d="M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z" fill="url(#lbf)"/></svg></div>
+      <div><div class="logo-name">BugForge AI</div><div class="logo-sub">v4.7 · Forge better bugs. Ship better software.</div></div>
     </div>
     <div class="ppills">
       <div class="ppill" id="pill-jira"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M16 2L2 17l14 13 14-13L16 2z" fill="#2d84ff"/><path d="M16 9.5L9.5 17 16 23l6.5-6L16 9.5z" fill="white"/></svg>Jira</div>
@@ -684,7 +692,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
   <div class="main-hdr">
     <div class="hdr-left">
       <button id="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Open settings" style="display:none;background:transparent;border:none;cursor:pointer;padding:5px;border-radius:8px;color:var(--t2);font-size:18px;line-height:1">☰</button>
-      <div class="hdr-status"><div class="status-dot" aria-hidden="true"></div><span id="agent-txt" role="status" aria-live="polite" aria-atomic="true">Agent ready</span></div>
+      <div class="hdr-status"><div class="status-dot" aria-hidden="true" style="background:#10b981;box-shadow:0 0 8px #10b981;width:8px;height:8px;border-radius:50%;animation:statusPulse 2.5s infinite"></div><span id="agent-txt" role="status" aria-live="polite" aria-atomic="true">Agent ready</span></div>
       <div class="voice-indicator" id="voice-ind"><div class="voice-dot"></div><span>Listening...</span><button onclick="stopVoice()" style="background:none;border:none;color:var(--red);cursor:pointer;margin-left:4px;font-size:12px">Stop</button></div>
     </div>
     <div class="hdr-btns">
@@ -701,7 +709,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
     <div class="drop-ov" id="drop-ov"><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
     <div class="msg ai">
       <div class="msg-av ai"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
-      <div><div class="msg-bub"><strong>AI Defect Agent v3</strong> — 14 new features active.<br><br>
+      <div><div class="msg-bub"><strong>BugForge AI v3</strong> — 14 new features active.<br><br>
         <span style="color:var(--t2);font-size:12px">⭐ Severity auto-scorer · 🧪 Test case generator · 🔍 Root cause · 📋 Templates · 💬 Comment existing · 🔔 Slack/Teams · 🏃 Sprint assign · 🎤 Voice · 📤 Export · 📊 Dashboard · ✅ Quality scorer · 🔗 Link epic · 🌙 Theme · ⌨ Shortcuts</span>
       </div></div>
     </div>
@@ -1052,7 +1060,7 @@ function exportPrint() {
   if(!sessionLog.length){toast('No tickets to print','warn');return;}
   const w=window.open('','_blank');
   const rows=sessionLog.map(e=>`<tr><td>${e.ticketId}</td><td>${e.platform}</td><td>${e.title||''}</td><td>${e.severity}</td><td>${new Date(e.time).toLocaleString()}</td><td><a href="${e.url}" target="_blank">${e.url}</a></td></tr>`).join('');
-  w.document.write(`<!DOCTYPE html><html><head><title>Defect Report</title><style>body{font-family:Arial,sans-serif;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f5f5f5}h1{font-size:18px}</style></head><body><h1>AI Defect Agent — Session Report (${new Date().toLocaleDateString()})</h1><table><thead><tr><th>ID</th><th>Platform</th><th>Title</th><th>Severity</th><th>Created</th><th>URL</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
+  w.document.write(`<!DOCTYPE html><html><head><title>Defect Report</title><style>body{font-family:Arial,sans-serif;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f5f5f5}h1{font-size:18px}</style></head><body><h1>BugForge AI — Session Report (${new Date().toLocaleDateString()})</h1><table><thead><tr><th>ID</th><th>Platform</th><th>Title</th><th>Severity</th><th>Created</th><th>URL</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
   w.document.close(); w.print();
 }
 
@@ -1198,7 +1206,7 @@ const TOOLS=[
    input_schema:{type:'object',required:['title','body','labels','severity','steps_to_reproduce','expected_result','actual_result','environment','acceptance_criteria'],
    properties:{title:{type:'string'},body:{type:'string'},labels:{type:'array',items:{type:'string'}},severity:{type:'string',enum:['Critical','High','Medium','Low']},steps_to_reproduce:{type:'array',items:{type:'string'}},expected_result:{type:'string'},actual_result:{type:'string'},environment:{type:'string'},acceptance_criteria:{type:'array',items:{type:'string'}}}}}
 ];
-const SYSTEM=`You are an AI Defect Agent — Senior QA Automation Engineer. Create perfectly structured bug tickets.
+const SYSTEM=`You are an BugForge AI — Senior QA Automation Engineer. Create perfectly structured bug tickets.
 ROUTING: "Azure DevOps"|"ADO"|"D365"|"Dynamics"|"pipeline"|"PUAT"|"sprint"→create_azure_devops_bug. "GitHub"|"git"|"repo"|"npm"|"Actions"→create_github_issue. Default→create_jira_bug.
 QUALITY: [Module] summary max 80 chars, specific steps, severity Critical=crash/High=major/Medium=partial/Low=cosmetic, 3-5 acceptance criteria. Infer all details. ADO: severity "1 - Critical", priority number 1-4. Call tool immediately.`;
 
@@ -1214,7 +1222,7 @@ function platIcon(p,sz=16){
 }
 
 // ══ CHAT HELPERS ══════════════════════════════════════════
-const aiAv=()=>`<div class="msg-av ai"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>`;
+const aiAv=()=>`<div class="msg-av ai" style="padding:0;overflow:hidden;background:none"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 72 72"><defs><linearGradient id="avbf" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f6ef7"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs><rect width="72" height="72" rx="16" fill="url(#avbf)"/><rect x="16" y="36" width="40" height="22" rx="5" fill="#fff" opacity=".9"/><rect x="22" y="27" width="28" height="13" rx="4" fill="#fff" opacity=".9"/><path d="M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z" fill="url(#avbf)"/></svg></div>`;
 const usrAv=()=>`<div class="msg-av user"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="white" opacity=".7"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="white" stroke-width="1.5" fill="none" opacity=".7"/></svg></div>`;
 function addMsg(role,html){const chat=document.getElementById('chat');const d=document.createElement('div');d.className='msg '+(role==='user'?'user':'ai');d.innerHTML=(role==='user'?usrAv():aiAv())+`<div><div class="msg-bub">${html}</div></div>`;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
 function addThink(steps){const chat=document.getElementById('chat');const d=document.createElement('div');d.className='thinking';d.id='think';d.innerHTML=aiAv()+`<div class="think-box"><div class="think-steps">${steps.map((s,i)=>`<div class="think-step${i===0?' active':''}" id="ts${i}"><div class="si${i===0?' spin':' wait'}" id="si${i}"></div>${s}</div>`).join('')}</div></div>`;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
@@ -1510,7 +1518,7 @@ async function postGH(t){
   // Credentials in Vercel env vars — proceed
   const steps=(t.steps_to_reproduce||[]).map((s,i)=>`${i+1}. ${s}`).join('\n');
   const crit=(t.acceptance_criteria||[]).map(c=>`- [ ] ${c}`).join('\n');
-  const body=`## Description\n${t.body||''}\n\n## Steps to Reproduce\n${steps}\n\n## Expected\n${t.expected_result}\n\n## Actual\n${t.actual_result}\n\n## Environment\n\`\`\`\n${t.environment||''}\n\`\`\`\n${crit?`\n## Acceptance Criteria\n${crit}`:''}\n\n---\n> 🤖 Auto-generated by AI Defect Agent v3`;
+  const body=`## Description\n${t.body||''}\n\n## Steps to Reproduce\n${steps}\n\n## Expected\n${t.expected_result}\n\n## Actual\n${t.actual_result}\n\n## Environment\n\`\`\`\n${t.environment||''}\n\`\`\`\n${crit?`\n## Acceptance Criteria\n${crit}`:''}\n\n---\n> 🤖 Auto-generated by BugForge AI v3`;
   const labels=[...(t.labels||[]),`severity:${(t.severity||'medium').toLowerCase()}`,'bug','ai-generated'];
   return api('github', { action:'create_issue', config:ghCfg(), payload:{ title:t.title, body, labels } });
 }
@@ -2155,7 +2163,7 @@ function resetSessionOnLoad() {
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
       <div class="msg ai">${aiAv()}<div><div class="msg-bub">
-        <strong>AI Defect Agent v4.7</strong> — Ready. Describe a defect below.<br><br>
+        <strong>BugForge AI v4.7</strong> — Ready. Describe a defect below.<br><br>
         <span style="color:var(--t2);font-size:12px">⭐ Severity scorer · 🧪 Test cases · 🔍 Root cause · 📋 Templates · 💬 Comments · 🔔 Notifications · 🏃 Sprint · 🎤 Voice · 📤 Export · 📊 Dashboard</span>
       </div></div></div>`;
   }
