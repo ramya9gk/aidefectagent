@@ -144,7 +144,7 @@ export default async function handler(req, res) {
           orgs.push({
             rawKey:    key,
             orgCode:   org?.orgCode || rawCode || 'unknown',
-            orgName:   org?.orgName || org?.name || '',
+            orgName:   org?.orgName || org?.name || rawCode || 'Unnamed',
             plan:      org?.plan || 'free',
             createdAt: org?.createdAt || '',
             hasJira:   !!(org?.jiraUrl && org?.jiraToken),
@@ -225,8 +225,38 @@ export default async function handler(req, res) {
       const existing = await kvGet(`org:${orgCode}`);
       if (!existing) return res.status(404).json({ error: 'Org not found' });
       const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+      // Ensure orgName and orgCode are always set
+      if (!updated.orgName) updated.orgName = orgCode;
+      if (!updated.orgCode) updated.orgCode = orgCode;
       await kvSet(`org:${orgCode}`, updated);
       return res.json({ ok: true, message: 'Org updated' });
+    }
+
+    // Quick fix: repair existing org missing orgName
+    if (action === 'admin_repair_org') {
+      const adminSecret = process.env.ADMIN_SECRET;
+      if (!adminSecret || req.body.adminKey !== adminSecret) {
+        return res.status(401).json({ error: 'Invalid admin key' });
+      }
+      const keys = await kvKeys('org:*');
+      let fixed = 0;
+      for (const key of keys) {
+        try {
+          const org = await kvGet(key);
+          const rawCode = key.replace('org:', '');
+          if (org && (!org.orgName || !org.orgCode)) {
+            const repaired = {
+              ...org,
+              orgCode: org.orgCode || rawCode,
+              orgName: org.orgName || rawCode,
+              updatedAt: new Date().toISOString()
+            };
+            await kvSet(key, repaired);
+            fixed++;
+          }
+        } catch(e) {}
+      }
+      return res.json({ ok: true, fixed, message: `Repaired ${fixed} organisations` });
     }
 
     // ── Client setup: save org credentials ─────────────────
