@@ -2,7 +2,7 @@
 <html data-theme="dark" lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AI Defect Agent v4.5</title>
+<title>AI Defect Agent v4.7</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -406,7 +406,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
   <div class="sb-top">
     <div class="logo">
       <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
-      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v4.5 · ADO Org Input · Live Projects · Secure</div></div>
+      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v4.7 · Platform Tabs · Smart Post Buttons · Secure</div></div>
     </div>
     <div class="ppills">
       <div class="ppill" id="pill-jira"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M16 2L2 17l14 13 14-13L16 2z" fill="#2d84ff"/><path d="M16 9.5L9.5 17 16 23l6.5-6L16 9.5z" fill="white"/></svg>Jira</div>
@@ -426,82 +426,83 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
     <button class="btn-sv" style="background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('ant')">✓ Test Connection</button>
   </div></div>
 
-  <!-- Jira -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('jira')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('jira')}"><span class="sec-lbl">Jira Cloud</span><span class="sec-arr open" id="arr-jira">▶</span></div>
-  <div class="sec-body open" id="bod-jira">
-    <div style="padding:4px 0 6px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
-      <span class="cfg-dot ok" id="dot-jira"></span>Credentials secured via Vercel env vars
+  <!-- Platform Tabs — Jira / ADO / GitHub -->
+  <div class="sb-sec" style="padding:0">
+    <!-- Tab headers -->
+    <div style="display:flex;border-bottom:1px solid var(--b1);background:var(--s2)">
+      <button id="ptab-jira" onclick="switchPlatformTab('jira')" style="flex:1;padding:9px 4px;font-size:11px;font-weight:600;border:none;background:var(--accent);color:#fff;cursor:pointer;border-radius:8px 0 0 0;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px">🔵 Jira</button>
+      <button id="ptab-ado" onclick="switchPlatformTab('ado')" style="flex:1;padding:9px 4px;font-size:11px;font-weight:600;border:none;background:var(--s3);color:var(--t2);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px;border-left:1px solid var(--b1)">🔷 ADO</button>
+      <button id="ptab-gh" onclick="switchPlatformTab('gh')" style="flex:1;padding:9px 4px;font-size:11px;font-weight:600;border:none;background:var(--s3);color:var(--t2);cursor:pointer;border-radius:0 8px 0 0;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px;border-left:1px solid var(--b1)">⚫ GitHub</button>
     </div>
-    <div style="font-size:10px;color:var(--t3);line-height:1.6;margin-bottom:8px">
-      Required: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_URL</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_EMAIL</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_TOKEN</code><br>
-      Optional: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_BOARD</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_ISSUE_TYPE</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_REPORTER_EMAIL</code>
-    </div>
-    <div class="cfg-row">
-      <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:9px" id="jira-proj-status">↻ loading...</span></div>
-      <select class="cfg-in" id="jira-proj-select" onchange="CFG.jiraProj=this.value" style="cursor:pointer">
-        <option value="">— select project —</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:6px;margin-top:8px">
-      <button class="btn-sv" style="flex:1;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('jira')">✓ Test Connection</button>
-      <button class="btn-sv" style="flex:0 0 auto;width:70px;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="loadProjects('jira')" title="Refresh project list">↻ Reload</button>
-    </div>
-    <input type="hidden" id="ci-jira-url"/><input type="hidden" id="ci-jira-email"/>
-    <input type="hidden" id="ci-jira-token"/><input type="hidden" id="ci-jira-proj"/>
-    <input type="hidden" id="ci-jira-board"/><input type="hidden" id="ci-jira-type"/>
-  </div></div>
 
-  <!-- ADO -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('ado')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('ado')}"><span class="sec-lbl">Azure DevOps</span><span class="sec-arr open" id="arr-ado">▶</span></div>
-  <div class="sec-body open" id="bod-ado">
-    <div style="padding:4px 0 6px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
-      <span class="cfg-dot ok" id="dot-ado"></span>Credentials secured via Vercel env vars
+    <!-- Jira Panel -->
+    <div id="ptab-jira-panel" style="padding:10px 12px">
+      <div style="font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px;margin-bottom:6px">
+        <span class="cfg-dot ok" id="dot-jira"></span>Credentials secured via Vercel env vars
+      </div>
+      <div style="font-size:10px;color:var(--t3);margin-bottom:8px;line-height:1.5">
+        Required: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_URL</code>
+        <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_EMAIL</code>
+        <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_TOKEN</code>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:9px" id="jira-proj-status">↻ loading...</span></div>
+        <select class="cfg-in" id="jira-proj-select" onchange="CFG.jiraProj=this.options[this.selectedIndex]?.dataset?.key||this.value" style="cursor:pointer">
+          <option value="">— select project —</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn-sv" style="flex:1;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('jira')">✓ Test</button>
+        <button class="btn-sv" style="flex:0 0 auto;width:64px;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="loadProjects('jira')">↻ Reload</button>
+      </div>
+      <input type="hidden" id="ci-jira-url"/><input type="hidden" id="ci-jira-email"/>
+      <input type="hidden" id="ci-jira-token"/><input type="hidden" id="ci-jira-proj"/>
+      <input type="hidden" id="ci-jira-board"/><input type="hidden" id="ci-jira-type"/>
     </div>
-    <div style="font-size:10px;color:var(--t3);line-height:1.6;margin-bottom:8px">
-      Only required: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_PAT</code>
-      — Organisation and Project selected below
-    </div>
-    <div class="cfg-row">
-      <div class="cfg-lbl">Organisation <span style="color:var(--accent2);font-size:9px" id="ado-org-status"></span></div>
-      <input class="cfg-in" id="ado-org-input" placeholder="e.g. RSATwithAzure" oninput="CFG.adoOrg=this.value.trim();loadProjects('ado')"/>
-    </div>
-    <div class="cfg-row">
-      <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:9px" id="ado-proj-status">enter org first</span></div>
-      <select class="cfg-in" id="ado-proj-select" onchange="CFG.adoProj=this.value" style="cursor:pointer">
-        <option value="">— select project —</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:6px;margin-top:8px">
-      <button class="btn-sv" style="flex:1;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('ado')">✓ Test Connection</button>
-      <button class="btn-sv" style="flex:0 0 auto;width:70px;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="loadProjects('ado')" title="Refresh project list">↻ Reload</button>
-    </div>
-    <input type="hidden" id="ci-ado-org"/><input type="hidden" id="ci-ado-project"/>
-    <input type="hidden" id="ci-ado-pat"/><input type="hidden" id="ci-ado-team"/>
-  </div></div>
 
-  <!-- GitHub -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('gh')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('gh')}"><span class="sec-lbl">GitHub Issues</span><span class="sec-arr open" id="arr-gh">▶</span></div>
-  <div class="sec-body open" id="bod-gh">
-    <div style="padding:4px 0 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
-      <span class="cfg-dot ok" id="dot-gh"></span>Secured via Vercel Environment Variables
+    <!-- ADO Panel (hidden by default) -->
+    <div id="ptab-ado-panel" style="display:none;padding:10px 12px">
+      <div style="font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px;margin-bottom:6px">
+        <span class="cfg-dot ok" id="dot-ado"></span>Credentials secured via Vercel env vars
+      </div>
+      <div style="font-size:10px;color:var(--t3);margin-bottom:8px;line-height:1.5">
+        Required: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_PAT</code> — Org and Project selected below
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-lbl">Organisation</div>
+        <input class="cfg-in" id="ado-org-input" placeholder="e.g. RSATwithAzure" oninput="CFG.adoOrg=this.value.trim();if(this.value.trim().length>3)loadProjects('ado')"/>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:9px" id="ado-proj-status">enter org first</span></div>
+        <select class="cfg-in" id="ado-proj-select" onchange="CFG.adoProj=this.value" style="cursor:pointer">
+          <option value="">— select project —</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn-sv" style="flex:1;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('ado')">✓ Test</button>
+        <button class="btn-sv" style="flex:0 0 auto;width:64px;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="loadProjects('ado')">↻ Reload</button>
+      </div>
+      <input type="hidden" id="ci-ado-org"/><input type="hidden" id="ci-ado-project"/>
+      <input type="hidden" id="ci-ado-pat"/><input type="hidden" id="ci-ado-team"/>
     </div>
-    <div style="font-size:10px;color:var(--t3);line-height:1.7;margin-bottom:10px">
-      Set these in <strong>Vercel → Settings → Environment Variables:</strong><br>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_OWNER</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_REPO</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_TOKEN</code>
-    </div>
-    <button class="btn-sv" style="background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('gh')">✓ Test GitHub Connection</button>
-    <!-- Hidden inputs retained for fallback compatibility -->
-    <input type="hidden" id="ci-gh-owner"/><input type="hidden" id="ci-gh-repo"/>
-    <input type="hidden" id="ci-gh-token"/>
-  </div></div>
 
-  <!-- Notifications -->
+    <!-- GitHub Panel (hidden by default) -->
+    <div id="ptab-gh-panel" style="display:none;padding:10px 12px">
+      <div style="font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px;margin-bottom:6px">
+        <span class="cfg-dot ok" id="dot-gh"></span>Credentials secured via Vercel env vars
+      </div>
+      <div style="font-size:10px;color:var(--t3);margin-bottom:8px;line-height:1.5">
+        Required: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_OWNER</code>
+        <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_REPO</code>
+        <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_TOKEN</code>
+      </div>
+      <button class="btn-sv" style="width:100%;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('gh')">✓ Test GitHub Connection</button>
+      <input type="hidden" id="ci-gh-owner"/><input type="hidden" id="ci-gh-repo"/>
+      <input type="hidden" id="ci-gh-token"/>
+    </div>
+  </div>
+
+<!-- Notifications -->
   <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('notif')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('notif')}"><span class="sec-lbl">Notifications</span><span class="sec-arr open" id="arr-notif">▶</span></div>
   <div class="sec-body open" id="bod-notif">
     <div style="padding:4px 0 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
@@ -1119,10 +1120,26 @@ function buildTicketHTML(t,platform,tid){
         <button class="abtn" id="btn-edit" onclick="toggleEdit()">✏ Edit</button>
         <button class="abtn info" id="btn-quality" onclick="scoreQuality(JSON.parse(JSON.stringify(curTicket)))">⭐ Quality</button>
         <button class="abtn purple" id="btn-rc" onclick="suggestRootCause()">🔍 Root Cause</button>
-        <button class="abtn" style="color:var(--green);border-color:var(--green-bd);background:var(--green-bg)" id="btn-tc" onclick="generateTestCases()">🧪 Test Cases</button>
+        <button class="abtn" style="color:var(--green);border-color:var(--green-bd);background:var(--green-bg)" id="btn-tc" onclick="generateTestCases()" style="display:none">🧪 Test Cases</button>
         <button class="abtn warn" id="btn-dup" onclick="checkDuplicates()">⚠ Dupes</button>
         <button class="abtn info" onclick="showLinkEpic()">🔗 Link Epic</button>
-        <button class="abtn primary" id="btn-post" onclick="postTicket()">Post to ${isJ?'Jira':isA?'ADO':'GitHub'}</button>
+      </div>
+      <!-- Platform posting buttons — shown after generation, hidden after posting -->
+      <div id="platform-post-btns" style="display:flex;gap:7px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--b1);background:var(--s2);border-radius:0 0 10px 10px">
+        <div style="font-size:11px;color:var(--t2);width:100%;margin-bottom:4px">📤 Post ticket to:</div>
+        <button class="abtn primary" id="btn-post-jira" onclick="postToSpecificPlatform('jira')" style="background:var(--accent);flex:1;min-width:100px">🔵 Post to Jira</button>
+        <button class="abtn primary" id="btn-post-ado" onclick="postToSpecificPlatform('azure_devops')" style="background:#0078d4;flex:1;min-width:100px">🔷 Post to ADO</button>
+        <button class="abtn primary" id="btn-post-gh" onclick="postToSpecificPlatform('github')" style="background:#24292e;flex:1;min-width:100px">⚫ GitHub</button>
+        <button class="abtn primary" id="btn-post-all" onclick="postToSpecificPlatform('all')" style="background:linear-gradient(135deg,var(--accent),#0078d4);flex:1;min-width:100px">🌐 Post to All</button>
+      </div>
+      <!-- Test cases section — hidden until ticket is posted -->
+      <div id="tc-prompt-area" style="display:none;padding:10px 14px;border-top:1px solid var(--b1)">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px">🧪 Generate test cases for this defect?</div>
+        <div style="display:flex;gap:8px">
+          <button class="abtn primary" style="flex:1" onclick="acceptTestCases()">✅ Yes, generate test cases</button>
+          <button class="abtn" onclick="dismissTCPrompt()">✗ No thanks</button>
+        </div>
+        <div id="tc-post-result" style="margin-top:8px;font-size:11px"></div>
       </div>
     </div>
     <div id="json-pane" class="json-pane" style="display:none"></div>
@@ -1545,21 +1562,8 @@ async function sendDefect(){
     wrap.innerHTML=buildTicketHTML(curTicket,platform,fakeId);
     chat.appendChild(wrap);
 
-    // ── Ask user if they want test cases generated ──────────
-    setTimeout(()=>{
-      const askWrap=document.createElement('div');
-      askWrap.className='msg ai';askWrap.id='tc-ask-msg';
-      askWrap.innerHTML=aiAv()+`<div><div class="msg-bub" style="padding:12px 14px">
-        <div style="margin-bottom:10px;font-size:13px">🧪 <strong>Want me to generate test cases for this defect?</strong></div>
-        <div style="font-size:12px;color:var(--t2);margin-bottom:12px">I can create Gherkin/BDD test cases (positive, negative, edge case, regression) for this ticket.</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="send-btn" style="font-size:11px;padding:6px 14px" onclick="acceptTestCases()">✅ Yes, generate test cases</button>
-          <button class="hbtn" style="font-size:11px" onclick="dismissTestCaseAsk()">✗ No thanks</button>
-        </div>
-      </div></div>`;
-      chat.appendChild(askWrap);
-      chat.scrollTop=chat.scrollHeight;
-    }, 600);
+    // Test case prompt now shown inside ticket card after posting
+    // tc-ask-msg removed — using tc-prompt-area instead
   }catch(e){rmThink();clearPills();addMsg('ai',`<span style="color:#f87171">Error: ${e.message}</span>`);}
   finally{isProc=false;document.getElementById('send-btn').disabled=false;document.getElementById('agent-txt').textContent='Agent ready';}
 }
@@ -1847,6 +1851,106 @@ async function loadProjects(platform) {
   }
 }
 
+
+// ══ PLATFORM-SPECIFIC POSTING ════════════════════════════════
+function dismissTCPrompt(){
+  const el=document.getElementById('tc-prompt-area');
+  if(el) el.innerHTML='<div style="font-size:11px;color:var(--t3);padding:4px 0">No problem! You can generate test cases anytime using 🧪 Test Cases button above.</div>';
+}
+
+async function postToSpecificPlatform(platform){
+  if(!curTicket){ toast('No ticket to post','warn'); return; }
+
+  // Disable all post buttons
+  ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
+    const b=document.getElementById(id); if(b) b.disabled=true;
+  });
+
+  const statusArea=document.getElementById('post-status-area');
+  if(statusArea) statusArea.innerHTML='<div class="post-status posting"><span style="width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span> Posting...</div>';
+
+  const platforms = platform==='all' ? ['jira','azure_devops','github'] : [platform];
+  const results = [];
+
+  for(const p of platforms){
+    try{
+      let result;
+      curTicket._platform = p;
+      if(p==='jira') result = await postJira(curTicket);
+      else if(p==='azure_devops') result = await postADO(curTicket);
+      else result = await postGH(curTicket);
+
+      // Store real ticket ID for test case linking
+      curTicket._postedId = result.id;
+      curTicket._rawId = result.rawId || result.id.replace('#','');
+
+      // Sprint + notifications
+      await fetchAndAssignSprint(p, result.id);
+      await sendNotifications(curTicket, result);
+      addToHistory(p, result.id, curTicket.summary||curTicket.title, result.url, curTicket.severity);
+
+      results.push({platform:p, id:result.id, url:result.url, ok:true});
+    } catch(e){
+      results.push({platform:p, error:e.message, ok:false});
+    }
+  }
+
+  // Show results
+  const pNames = {'jira':'Jira','azure_devops':'ADO','github':'GitHub'};
+  const successHTML = results.filter(r=>r.ok).map(r=>
+    `✓ <a class="post-link" href="${r.url}" target="_blank">${r.id}</a> created in ${pNames[r.platform]||r.platform}`
+  ).join(' &nbsp;|&nbsp; ');
+  const errorHTML = results.filter(r=>!r.ok).map(r=>
+    `✗ ${pNames[r.platform]||r.platform}: ${r.error}`
+  ).join('<br>');
+
+  if(statusArea){
+    statusArea.innerHTML = successHTML
+      ? `<div class="post-status posted">${successHTML}</div>${errorHTML?`<div style="color:var(--red);font-size:11px;margin-top:4px">${errorHTML}</div>`:''}`
+      : `<div class="post-status failed">${errorHTML}</div>`;
+  }
+
+  if(results.some(r=>r.ok)){
+    toast(`Ticket created successfully!`,'success');
+    // Hide platform buttons, show test case prompt
+    const postBtns = document.getElementById('platform-post-btns');
+    if(postBtns) postBtns.style.display='none';
+    const tcPrompt = document.getElementById('tc-prompt-area');
+    if(tcPrompt) tcPrompt.style.display='block';
+    // Also hide old tc-ask-msg if visible
+    const tcAsk = document.getElementById('tc-ask-msg');
+    if(tcAsk) tcAsk.style.display='none';
+  } else {
+    // Re-enable buttons on failure
+    ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
+      const b=document.getElementById(id); if(b) b.disabled=false;
+    });
+  }
+}
+
+
+// ══ PLATFORM TAB SWITCHER ════════════════════════════════════
+function switchPlatformTab(tab) {
+  const tabs = ['jira','ado','gh'];
+  const colors = { jira: 'var(--accent)', ado: '#0078d4', gh: '#24292e' };
+
+  tabs.forEach(t => {
+    const btn   = document.getElementById('ptab-'+t);
+    const panel = document.getElementById('ptab-'+t+'-panel');
+    const isActive = t === tab;
+
+    if (btn) {
+      btn.style.background = isActive ? colors[t] : 'var(--s3)';
+      btn.style.color = isActive ? '#fff' : 'var(--t2)';
+      btn.style.fontWeight = isActive ? '700' : '600';
+    }
+    if (panel) panel.style.display = isActive ? 'block' : 'none';
+  });
+
+  // Remember active tab
+  CFG.activePlatformTab = tab;
+}
+
 // ══ CONFIG UI ════════════════════════════════════════════
 function tSec(id){const b=document.getElementById('bod-'+id),a=document.getElementById('arr-'+id);const o=b.classList.toggle('open');a.classList.toggle('open',o);}
 function saveCfg(section){
@@ -1923,7 +2027,7 @@ function resetSessionOnLoad() {
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
       <div class="msg ai">${aiAv()}<div><div class="msg-bub">
-        <strong>AI Defect Agent v4.5</strong> — Ready. Describe a defect below.<br><br>
+        <strong>AI Defect Agent v4.7</strong> — Ready. Describe a defect below.<br><br>
         <span style="color:var(--t2);font-size:12px">⭐ Severity scorer · 🧪 Test cases · 🔍 Root cause · 📋 Templates · 💬 Comments · 🔔 Notifications · 🏃 Sprint · 🎤 Voice · 📤 Export · 📊 Dashboard</span>
       </div></div></div>`;
   }
@@ -1967,6 +2071,9 @@ window.addEventListener('load',()=>{
   initTheme();
   initShortcuts();
   document.getElementById('din').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendDefect();}});
+
+  // Set default active platform tab
+  switchPlatformTab('jira');
 
   // Auto-load live project lists — only after checking API is available
   setTimeout(async ()=>{
