@@ -1356,13 +1356,24 @@ async function postADO(t){
   const steps=(t.repro_steps||[]).map((s,i)=>`<li>${i+1}. ${s}</li>`).join('');
   const crit=(t.acceptance_criteria||[]).map((c,i)=>`<li>${i+1}. ${c}</li>`).join('');
   const expActual=`<p><b>Expected Result:</b> ${t.expected_result||''}</p><p><b>Actual Result:</b> ${t.actual_result||''}</p>`;
+
+  // ADO Priority: must be integer 1-4
+  const priMap={'P0':1,'P1':1,'P2':2,'P3':3,'P4':4,'Critical':1,'High':1,'Medium':2,'Low':3};
+  const priNum = priMap[t.priority] || parseInt(t.priority) || 2;
+  const safePri = [1,2,3,4].includes(priNum) ? priNum : 2;
+
+  // ADO Severity: must be exact string format "1 - Critical", "2 - High", "3 - Medium", "4 - Low"
+  const sevMap={'Critical':'1 - Critical','High':'2 - High','Medium':'3 - Medium','Low':'4 - Low',
+                '1 - Critical':'1 - Critical','2 - High':'2 - High','3 - Medium':'3 - Medium','4 - Low':'4 - Low'};
+  const safeSev = sevMap[t.severity] || '3 - Medium';
+
   const patch=[
     {op:'add',path:'/fields/System.Title',value:t.title||t.summary||'Bug'},
     {op:'add',path:'/fields/System.Description',value:`<p>${t.description||''}</p>${expActual}`},
     {op:'add',path:'/fields/Microsoft.VSTS.TCM.ReproSteps',value:`<ol>${steps}</ol>`},
     {op:'add',path:'/fields/Microsoft.VSTS.TCM.SystemInfo',value:t.system_info||t.environment||''},
-    {op:'add',path:'/fields/Microsoft.VSTS.Common.Severity',value:t.severity||'3 - Medium'},
-    {op:'add',path:'/fields/Microsoft.VSTS.Common.Priority',value:t.priority||2},
+    {op:'add',path:'/fields/Microsoft.VSTS.Common.Severity',value:safeSev},
+    {op:'add',path:'/fields/Microsoft.VSTS.Common.Priority',value:safePri},
     ...(t.tags?[{op:'add',path:'/fields/System.Tags',value:t.tags}]:[]),
     ...(crit?[{op:'add',path:'/fields/Microsoft.VSTS.Common.AcceptanceCriteria',value:`<ol>${crit}</ol>`}]:[]),
   ].filter(p=>p.value!==undefined&&p.value!==null&&String(p.value).trim()!==''||p.path==='/fields/System.Title');
