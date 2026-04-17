@@ -1,6 +1,6 @@
 {
   "name": "ai-defect-agent",
-  "version": "3.3.0",
+  "version": "4.5.0",
   "description": "AI-powered bug ticket generator v3.2 \u2014 CORS Fixed, Fresh Start",
   "private": true,
   "scripts": {
@@ -24,5 +24,6 @@
   ],
   "engines": {
     "node": ">=18.x"
-  }
+  },
+  "type": "module"
 }
