@@ -161,21 +161,38 @@ export default async function handler(req, res) {
       }
       const { orgCode } = req.body;
 
-      // Delete the specific key
+      // Try deleting with multiple possible key formats
       await kvDel(`org:${orgCode}`);
+      await kvDel(`org:undefined`);
+      await kvDel(`org:`);
 
-      // Also scan and delete any undefined/corrupt entries
-      if (orgCode === 'undefined' || !orgCode) {
+      // Scan ALL keys and delete any corrupt/invalid entries
+      try {
         const allKeys = await kvKeys('org:*');
         for (const key of allKeys) {
-          const data = await kvGet(key);
-          if (!data || !data.orgCode || data.orgCode === 'undefined') {
-            await kvDel(key);
+          try {
+            const data = await kvGet(key);
+            // Delete if: no data, no orgCode, orgCode is undefined/empty
+            // OR if key matches what we're trying to delete
+            const keyOrgCode = key.replace('org:', '');
+            if (!data || !data.orgCode || 
+                data.orgCode === 'undefined' || 
+                data.orgCode === '' ||
+                keyOrgCode === orgCode ||
+                keyOrgCode === 'undefined' ||
+                keyOrgCode === '') {
+              await kvDel(key);
+              console.log(`Deleted corrupt/matched key: ${key}`);
+            }
+          } catch(e) {
+            await kvDel(key); // delete if can't parse
           }
         }
+      } catch(e) {
+        console.warn('Scan failed:', e.message);
       }
 
-      return res.json({ ok: true, message: `Org "${orgCode}" deleted` });
+      return res.json({ ok: true, message: `Org deleted successfully` });
     }
 
     // ── Admin: update org ───────────────────────────────────
