@@ -410,7 +410,7 @@ function renderOrgs(orgs) {
           <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="copyOrgUrl('${appUrl}/?org=${code}')">📋 App URL</button>
           <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="copyOrgUrl('${appUrl}/setup?org=${code}')">⚙️ Setup URL</button>
           ` : ''}
-          <button class="btn btn-danger" style="padding:4px 10px;font-size:10px" onclick="deleteOrg('${code}','${name}')">🗑️ Delete</button>
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:10px" onclick="deleteOrg('${code}','${name}','${o.rawKey||''}')">🗑️ Delete</button>
         </td>
       </tr>`;}).join('')}
     </tbody>
@@ -484,13 +484,15 @@ async function deleteAllCorrupt() {
   }
 }
 
-async function deleteOrg(orgCode, orgName) {
-  if (!confirm(`Delete "${orgName}" (${orgCode})? This cannot be undone.`)) return;
+async function deleteOrg(orgCode, orgName, rawKey) {
+  if (!confirm(`Delete "${orgName || orgCode}"? This cannot be undone.`)) return;
+  // Use rawKey if provided (strips the org: prefix for exact deletion)
+  const deleteCode = rawKey ? rawKey.replace('org:', '') : orgCode;
   try {
     const r = await fetch('/api/config', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ action: 'admin_delete_org', adminKey: ADMIN_KEY, orgCode })
+      body: JSON.stringify({ action: 'admin_delete_org', adminKey: ADMIN_KEY, orgCode: deleteCode, rawKey: rawKey })
     });
     const d = await r.json();
     if (r.ok || d.ok) {
