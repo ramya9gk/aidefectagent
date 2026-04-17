@@ -1664,9 +1664,45 @@ Bug: ${JSON.stringify({
 })}`}]})
     });
     const d=await r.json();
-    const raw=(d.content?.[0]?.text||'').match(/\{[\s\S]+\}/)?.[0]||'{}';
-    const tc=JSON.parse(raw);
-    const cases=tc.cases||[];
+    // Robust JSON extraction with multiple fallback strategies
+    let cases = [];
+    try {
+      const text = d.content?.[0]?.text || '';
+      // Strategy 1: extract JSON block
+      let raw = text.match(/\{[\s\S]+\}/)?.[0] || '{}';
+      // Strategy 2: fix common AI JSON issues (trailing commas, unquoted keys)
+      raw = raw.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+      const tc = JSON.parse(raw);
+      cases = tc.cases || [];
+    } catch(jsonErr) {
+      // Strategy 3: Try to extract cases array directly
+      try {
+        const text = d.content?.[0]?.text || '';
+        const arrMatch = text.match(/"cases"\s*:\s*(\[[\s\S]+?\])/);
+        if(arrMatch) cases = JSON.parse(arrMatch[1]);
+      } catch(e2) {
+        // Strategy 4: Build default test cases from ticket data
+        cases = [
+          {type:'Positive', summary:'Verify '+((curTicket?.summary||'feature')).slice(0,50)+' works correctly', description:'Positive test', gherkin:'Scenario: Verify expected behaviour
+  Given the system is ready
+  When the user performs the action
+  Then the expected result occurs'},
+          {type:'Negative', summary:'Verify error handling for '+(curTicket?.summary||'feature').slice(0,40), description:'Negative test', gherkin:'Scenario: Verify error handling
+  Given the system is ready
+  When invalid input is provided
+  Then an error message is shown'},
+          {type:'Edge Case', summary:'Verify edge case for '+(curTicket?.summary||'feature').slice(0,40), description:'Edge case', gherkin:'Scenario: Verify edge case
+  Given boundary conditions exist
+  When the edge case is triggered
+  Then the system handles it gracefully'},
+          {type:'Regression', summary:'Regression: '+(curTicket?.summary||'feature').slice(0,50), description:'Regression test', gherkin:'Scenario: Verify no regression
+  Given the fix is deployed
+  When the previous flow is tested
+  Then no regression is observed'},
+        ];
+        toast('AI returned invalid JSON — using template test cases', 'warn');
+      }
+    }
 
     if(!cases.length){ toast('Could not generate test cases','error'); return; }
 
