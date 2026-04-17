@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 72 72%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%234f6ef7%22/><stop offset=%22100%25%22 stop-color=%22%237c3aed%22/></linearGradient></defs><rect width=%2272%22 height=%2272%22 rx=%2216%22 fill=%22url(%23g)%22/><rect x=%2216%22 y=%2236%22 width=%2240%22 height=%2222%22 rx=%225%22 fill=%22%23fff%22 opacity=%22.9%22/><rect x=%2222%22 y=%2227%22 width=%2228%22 height=%2213%22 rx=%224%22 fill=%22%23fff%22 opacity=%22.9%22/><path d=%22M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z%22 fill=%22url(%23g)%22/></svg>"/>
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 72 72%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%234f6ef7%22/><stop offset=%22100%25%22 stop-color=%22%237c3aed%22/></linearGradient></defs><rect width=%2272%22 height=%2272%22 rx=%2216%22 fill=%22url(%23g)%22/><rect x=%2216%22 y=%2236%22 width=%2240%22 height=%2222%22 rx=%225%22 fill=%22%23fff%22 opacity=%22.9%22/><rect x=%2222%22 y=%2227%22 width=%2228%22 height=%2213%22 rx=%224%22 fill=%22%23fff%22 opacity=%22.9%22/><path d=%22M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z%22 fill=%22url(%23g)%22/></svg>"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%234f6ef7'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='72' height='72' rx='16' fill='url(%23g)'/%3E%3Crect x='16' y='36' width='40' height='22' rx='5' fill='%23fff' opacity='.9'/%3E%3Crect x='22' y='27' width='28' height='13' rx='4' fill='%23fff' opacity='.9'/%3E%3Cpath d='M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z' fill='url(%23g)'/%3E%3C/svg%3E"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%234f6ef7'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='72' height='72' rx='16' fill='url(%23g)'/%3E%3Crect x='16' y='36' width='40' height='22' rx='5' fill='%23fff' opacity='.9'/%3E%3Crect x='22' y='27' width='28' height='13' rx='4' fill='%23fff' opacity='.9'/%3E%3Cpath d='M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z' fill='url(%23g)'/%3E%3C/svg%3E"/>
 <link rel="manifest" href="/manifest.json"/>
 <meta name="theme-color" content="#4f6ef7"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="BugForge AI"/>
 <meta name="description" content="BugForge AI — Setup your organisation"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -16,52 +15,100 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:#080c14;color:#e8edf5;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px}
-.wrap{width:100%;max-width:560px}
-.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:28px;justify-content:center}
-.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#4f6ef7,#7c3aed)}
-.logo svg{width:40px;height:40px}
-h1{font-size:22px;font-weight:700;text-align:center}
-.subtitle{font-size:13px;color:#4d5a6e;text-align:center;margin-top:4px;margin-bottom:28px}
-.card{background:#0d1117;border:1px solid #ffffff10;border-radius:16px;padding:24px;margin-bottom:16px}
-.card-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:#e8edf5}
-.card-title .dot{width:8px;height:8px;border-radius:50%}
+.wrap{width:100%;max-width:580px}
+/* Header */
+.logo-row{display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+h1{font-size:22px;font-weight:700;text-align:center;color:#e8edf5}
+.sub{font-size:12px;color:#4d5a6e;text-align:center;margin:4px 0 24px}
+/* Org banner */
+.org-banner{background:#0d1117;border:1px solid #ffffff10;border-radius:14px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.org-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#4f6ef7,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.org-name{font-size:14px;font-weight:700}
+.org-meta{display:flex;align-items:center;gap:6px;margin-top:3px}
+.org-code{font-size:10px;color:#4f6ef7;font-family:monospace;background:#4f6ef714;padding:2px 7px;border-radius:5px}
+.tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px}
+.tag-free{background:#10b98120;color:#10b981;border:1px solid #10b98140}
+.tag-pro{background:#4f6ef720;color:#4f6ef7;border:1px solid #4f6ef740}
+/* Platform status cards */
+.platform-status{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.ps-card{background:#0d1117;border:1px solid #ffffff10;border-radius:12px;padding:12px;text-align:center;transition:all .2s}
+.ps-card.configured{border-color:#10b98140;background:#10b98108}
+.ps-card.needs-setup{border-color:#f59e0b40;background:#f59e0b08;cursor:default}
+.ps-icon{font-size:20px;margin-bottom:6px}
+.ps-name{font-size:11px;font-weight:700;color:#e8edf5;margin-bottom:3px}
+.ps-status{font-size:10px;display:flex;align-items:center;justify-content:center;gap:4px}
+.ps-status.ok{color:#10b981}
+.ps-status.warn{color:#f59e0b}
+.ps-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ps-dot.ok{background:#10b981;box-shadow:0 0 4px #10b981}
+.ps-dot.warn{background:#f59e0b}
+/* Section cards */
+.section-card{background:#0d1117;border:1px solid #ffffff10;border-radius:14px;overflow:hidden;margin-bottom:12px}
+.section-hdr{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.section-hdr:hover{background:#ffffff04}
+.section-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.section-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot-jira{background:#2d84ff}
 .dot-ado{background:#0078d4}
 .dot-gh{background:#6e7681}
-.form-group{margin-bottom:12px}
-label{display:block;font-size:10px;font-weight:700;color:#4d5a6e;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
-input{width:100%;background:#111827;border:1px solid #ffffff18;border-radius:8px;padding:10px 12px;font-size:12px;color:#e8edf5;font-family:'JetBrains Mono',monospace;outline:none;transition:all .2s}
+.configured-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:#10b981;background:#10b98114;border:1px solid #10b98130;border-radius:8px;padding:4px 10px}
+.needs-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:#f59e0b;background:#f59e0b14;border:1px solid #f59e0b30;border-radius:8px;padding:4px 10px}
+.section-body{padding:0 16px 16px;border-top:1px solid #ffffff08}
+.section-body.hidden{display:none}
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+label{font-size:9px;font-weight:700;color:#4d5a6e;letter-spacing:1px;text-transform:uppercase}
+input{width:100%;background:#111827;border:1px solid #ffffff18;border-radius:8px;padding:9px 11px;font-size:12px;color:#e8edf5;font-family:'JetBrains Mono',monospace;outline:none;transition:all .2s}
 input:focus{border-color:#4f6ef7;box-shadow:0 0 0 3px #4f6ef714}
 input::placeholder{color:#4d5a6e}
-.hint{font-size:10px;color:#4d5a6e;margin-top:4px;line-height:1.5}
+.hint{font-size:10px;color:#4d5a6e;line-height:1.5}
 .hint a{color:#4f6ef7;text-decoration:none}
-.btn{width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;border:none;transition:all .2s;margin-top:4px}
+/* Configured message */
+.configured-msg{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#10b98108;border-radius:10px;margin-top:14px}
+.configured-msg-icon{font-size:20px}
+.configured-msg-text{font-size:12px;color:#10b981;font-weight:500}
+.configured-msg-sub{font-size:11px;color:#4d5a6e;margin-top:2px}
+/* Buttons */
+.btn{width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;border:none;transition:all .2s;margin-top:8px}
 .btn-primary{background:#4f6ef7;color:#fff}
-.btn-primary:hover{opacity:.9;box-shadow:0 4px 14px #4f6ef740}
-.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary:hover{opacity:.9;box-shadow:0 4px 14px #4f6ef740;transform:translateY(-1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important}
+.btn-skip{background:transparent;border:1px solid #ffffff18;color:#4d5a6e;margin-top:6px;font-size:12px}
+.btn-skip:hover{background:#ffffff08;color:#e8edf5}
+/* All done */
+.alldone{background:#10b98108;border:1px solid #10b98140;border-radius:14px;padding:20px;text-align:center;margin-bottom:16px}
+.alldone-icon{font-size:28px;margin-bottom:8px}
+.alldone h3{font-size:15px;font-weight:700;color:#10b981;margin-bottom:4px}
+.alldone p{font-size:12px;color:#4d5a6e}
+/* Success */
 .success-card{background:#10b98114;border:1px solid #10b98140;border-radius:16px;padding:28px;text-align:center;display:none}
-.success-icon{font-size:40px;margin-bottom:12px}
 .success-card h2{font-size:18px;font-weight:700;color:#10b981;margin-bottom:8px}
 .success-card p{font-size:13px;color:#7d8699;margin-bottom:16px}
 .url-box{background:#111827;border:1px solid #4f6ef740;border-radius:10px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#4f6ef7;word-break:break-all;margin-bottom:10px}
-.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700}
-.tag-free{background:#10b98120;color:#10b981;border:1px solid #10b98140}
-.tag-pro{background:#4f6ef720;color:#4f6ef7;border:1px solid #4f6ef740}
-.org-banner{background:#111827;border:1px solid #ffffff10;border-radius:12px;padding:14px;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+/* Error */
 .error-card{background:#ef444414;border:1px solid #ef444440;border-radius:16px;padding:24px;text-align:center;display:none}
+/* Toast */
 .toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:100}
 .toast{padding:10px 16px;border-radius:12px;font-size:12px;font-weight:600;animation:tin .2s ease;box-shadow:0 4px 20px #00000060}
 @keyframes tin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 .toast.success{background:#10b98120;border:1px solid #10b98140;color:#10b981}
 .toast.error{background:#ef444420;border:1px solid #ef444440;color:#ef4444}
+.toast.warn{background:#f59e0b20;border:1px solid #f59e0b40;color:#f59e0b}
+@media(max-width:480px){
+  .form-grid{grid-template-columns:1fr}
+  .platform-status{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 <div class="toast-wrap" id="toasts"></div>
 <div class="wrap">
+
   <!-- Logo -->
   <div class="logo-row">
-    <svg width="40" height="40" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg width="42" height="42" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <defs><linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f6ef7"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
       <rect width="72" height="72" rx="16" fill="url(#sg)"/>
       <rect x="16" y="36" width="40" height="22" rx="5" fill="#fff" opacity=".9"/>
@@ -70,7 +117,7 @@ input::placeholder{color:#4d5a6e}
     </svg>
   </div>
   <h1>BugForge AI Setup</h1>
-  <p class="subtitle">Configure your organisation's credentials</p>
+  <p class="sub" id="setup-subtitle">Loading your organisation...</p>
 
   <!-- Error state -->
   <div class="error-card" id="error-card">
@@ -81,87 +128,87 @@ input::placeholder{color:#4d5a6e}
 
   <!-- Main form -->
   <div id="setup-form" style="display:none">
+
     <!-- Org banner -->
     <div class="org-banner">
-      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4f6ef7,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🏢</div>
+      <div class="org-icon">🏢</div>
       <div>
-        <div style="font-size:14px;font-weight:700" id="setup-orgname">Organisation</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
-          <span style="font-family:monospace;font-size:11px;color:#4f6ef7" id="setup-orgcode"></span>
+        <div class="org-name" id="setup-orgname">Organisation</div>
+        <div class="org-meta">
+          <span class="org-code" id="setup-orgcode"></span>
           <span class="tag tag-free" id="setup-plan">free</span>
         </div>
       </div>
     </div>
 
-    <!-- Jira -->
-    <div class="card">
-      <div class="card-title"><div class="dot dot-jira"></div>Jira Cloud</div>
-      <div class="form-group">
-        <label>Jira Base URL</label>
-        <input id="s-jiraurl" placeholder="https://yourcompany.atlassian.net"/>
-        <div class="hint">Your Atlassian URL — found in the browser when you open Jira</div>
+    <!-- Platform status overview -->
+    <div class="platform-status" id="platform-status"></div>
+
+    <!-- All configured message -->
+    <div class="alldone" id="alldone-msg" style="display:none">
+      <div class="alldone-icon">🎉</div>
+      <h3>All platforms configured by admin!</h3>
+      <p>Your organisation is ready to use BugForge AI</p>
+    </div>
+
+    <!-- ── JIRA SECTION ── -->
+    <div class="section-card" id="jira-section">
+      <div class="section-hdr" onclick="toggleSection('jira')">
+        <div class="section-title">
+          <div class="section-dot dot-jira"></div>
+          Jira Cloud
+        </div>
+        <div id="jira-badge"></div>
       </div>
-      <div class="form-group">
-        <label>Jira Email</label>
-        <input id="s-jiraemail" placeholder="you@company.com" type="email"/>
-        <div class="hint">The email you use to login to Jira</div>
-      </div>
-      <div class="form-group">
-        <label>Jira API Token</label>
-        <input id="s-jiratoken" placeholder="ATATT3x..." type="password"/>
-        <div class="hint">Generate at <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">id.atlassian.com → API Tokens</a></div>
-      </div>
-      <div class="form-group">
-        <label>Jira Project Key</label>
-        <input id="s-jiraproj" placeholder="DEV" style="text-transform:uppercase"/>
-        <div class="hint">The short code of your project e.g. DEV, PROJ, BUG</div>
+      <div class="section-body hidden" id="jira-body">
+        <div id="jira-content"></div>
       </div>
     </div>
 
-    <!-- ADO -->
-    <div class="card">
-      <div class="card-title"><div class="dot dot-ado"></div>Azure DevOps</div>
-      <div class="form-group">
-        <label>ADO Organisation</label>
-        <input id="s-adoorg" placeholder="YourOrgName"/>
-        <div class="hint">From your ADO URL: dev.azure.com/<strong>YourOrgName</strong></div>
+    <!-- ── ADO SECTION ── -->
+    <div class="section-card" id="ado-section">
+      <div class="section-hdr" onclick="toggleSection('ado')">
+        <div class="section-title">
+          <div class="section-dot dot-ado"></div>
+          Azure DevOps
+        </div>
+        <div id="ado-badge"></div>
       </div>
-      <div class="form-group">
-        <label>ADO Personal Access Token</label>
-        <input id="s-adopat" placeholder="Personal Access Token" type="password"/>
-        <div class="hint">Generate at <a href="https://dev.azure.com" target="_blank">dev.azure.com</a> → Profile → Personal Access Tokens → Work Items: Read+Write</div>
-      </div>
-      <div class="form-group">
-        <label>ADO Project Name</label>
-        <input id="s-adoproj" placeholder="YourProjectName"/>
+      <div class="section-body hidden" id="ado-body">
+        <div id="ado-content"></div>
       </div>
     </div>
 
-    <!-- GitHub -->
-    <div class="card">
-      <div class="card-title"><div class="dot dot-gh"></div>GitHub Issues <span style="font-size:10px;color:#4d5a6e;font-weight:400">(optional)</span></div>
-      <div class="form-group">
-        <label>GitHub Username / Org</label>
-        <input id="s-ghowner" placeholder="username or org-name"/>
+    <!-- ── GITHUB SECTION ── -->
+    <div class="section-card" id="gh-section">
+      <div class="section-hdr" onclick="toggleSection('gh')">
+        <div class="section-title">
+          <div class="section-dot dot-gh"></div>
+          GitHub Issues <span style="font-size:10px;color:#4d5a6e;font-weight:400;margin-left:4px">(optional)</span>
+        </div>
+        <div id="gh-badge"></div>
       </div>
-      <div class="form-group">
-        <label>Repository Name</label>
-        <input id="s-ghrepo" placeholder="my-repo"/>
-      </div>
-      <div class="form-group">
-        <label>GitHub Token</label>
-        <input id="s-ghtoken" placeholder="ghp_..." type="password"/>
-        <div class="hint">Generate at <a href="https://github.com/settings/tokens" target="_blank">github.com → Settings → Developer Settings → PAT</a> with repo scope</div>
+      <div class="section-body hidden" id="gh-body">
+        <div id="gh-content"></div>
       </div>
     </div>
 
-    <button class="btn btn-primary" id="save-btn" onclick="saveSetup()">💾 Save & Activate BugForge AI</button>
-    <p style="font-size:11px;color:#4d5a6e;text-align:center;margin-top:12px">🔒 Your credentials are encrypted and stored securely. We never share them.</p>
+    <!-- Save button — only shown if something needs setup -->
+    <div id="save-section" style="display:none">
+      <button class="btn btn-primary" id="save-btn" onclick="saveSetup()">💾 Save & Activate BugForge AI</button>
+      <p style="font-size:11px;color:#4d5a6e;text-align:center;margin-top:10px">🔒 Credentials are encrypted and stored securely. We never share them.</p>
+    </div>
+
+    <!-- Open app button — shown when all configured -->
+    <div id="open-section" style="display:none">
+      <button class="btn btn-primary" onclick="goToApp()">🚀 Open BugForge AI</button>
+    </div>
+
   </div>
 
   <!-- Success state -->
   <div class="success-card" id="success-card">
-    <div class="success-icon">🎉</div>
+    <div style="font-size:40px;margin-bottom:12px">🎉</div>
     <h2>Setup Complete!</h2>
     <p>BugForge AI is ready for your team</p>
     <div style="text-align:left;margin-bottom:16px">
@@ -175,6 +222,8 @@ input::placeholder{color:#4d5a6e}
 <script>
 const params = new URLSearchParams(window.location.search);
 const ORG = params.get('org') || '';
+let orgData = null;
+let hasChanges = false;
 
 function toast(msg, type='info') {
   const w = document.getElementById('toasts');
@@ -185,71 +234,241 @@ function toast(msg, type='info') {
   setTimeout(() => t.remove(), 3500);
 }
 
+function toggleSection(platform) {
+  const body = document.getElementById(`${platform}-body`);
+  if (!body) return;
+  body.classList.toggle('hidden');
+}
+
 async function loadOrg() {
   if (!ORG) {
     document.getElementById('error-card').style.display = 'block';
-    document.getElementById('error-msg').textContent = 'No org code in URL. Contact your admin.';
+    document.getElementById('error-msg').textContent = 'No org code found in URL. Contact your admin.';
     return;
   }
+
   try {
     const r = await fetch(`/api/config?org=${ORG}`);
     const d = await r.json();
+
     if (!r.ok) {
       document.getElementById('error-card').style.display = 'block';
       document.getElementById('error-msg').textContent = d.error || 'Organisation not found.';
       return;
     }
+
+    orgData = d;
     document.getElementById('setup-orgname').textContent = d.orgName;
     document.getElementById('setup-orgcode').textContent = d.orgCode;
     document.getElementById('setup-plan').textContent = d.plan || 'free';
     document.getElementById('setup-plan').className = `tag ${d.plan === 'pro' ? 'tag-pro' : 'tag-free'}`;
-    // Pre-fill if already configured
-    if (d.jiraUrl) document.getElementById('s-jiraurl').value = d.jiraUrl;
-    if (d.jiraProj) document.getElementById('s-jiraproj').value = d.jiraProj;
-    if (d.adoOrg) document.getElementById('s-adoorg').value = d.adoOrg;
-    if (d.adoProj) document.getElementById('s-adoproj').value = d.adoProj;
-    if (d.ghOwner) document.getElementById('s-ghowner').value = d.ghOwner;
-    if (d.ghRepo) document.getElementById('s-ghrepo').value = d.ghRepo;
+
+    // Count what needs setup
+    const needsSetup = (d.needsJira ? 1 : 0) + (d.needsAdo ? 1 : 0) + (d.needsGitHub ? 1 : 0);
+
+    // Update subtitle
+    document.getElementById('setup-subtitle').textContent = needsSetup === 0
+      ? 'Your organisation is fully configured ✅'
+      : `${needsSetup} platform${needsSetup > 1 ? 's' : ''} need${needsSetup === 1 ? 's' : ''} configuration`;
+
+    // Build platform status cards
+    buildPlatformStatus(d);
+
+    // Build each section
+    buildJiraSection(d);
+    buildAdoSection(d);
+    buildGhSection(d);
+
+    // Show/hide save vs open button
+    if (needsSetup === 0) {
+      document.getElementById('alldone-msg').style.display = 'block';
+      document.getElementById('open-section').style.display = 'block';
+      document.getElementById('save-section').style.display = 'none';
+    } else {
+      document.getElementById('save-section').style.display = 'block';
+      document.getElementById('open-section').style.display = 'none';
+    }
+
     document.getElementById('setup-form').style.display = 'block';
+
   } catch(e) {
     document.getElementById('error-card').style.display = 'block';
-    document.getElementById('error-msg').textContent = 'Could not load org. Check your URL.';
+    document.getElementById('error-msg').textContent = 'Connection error. Try again.';
   }
+}
+
+function buildPlatformStatus(d) {
+  const platforms = [
+    { name: 'Jira', icon: '🔵', ok: d.hasJira, partial: d.jiraPartial },
+    { name: 'ADO', icon: '🔷', ok: d.hasAdo, partial: d.adoPartial },
+    { name: 'GitHub', icon: '⚫', ok: d.hasGitHub, partial: d.ghPartial },
+  ];
+  document.getElementById('platform-status').innerHTML = platforms.map(p => `
+    <div class="ps-card ${p.ok ? 'configured' : 'needs-setup'}">
+      <div class="ps-icon">${p.icon}</div>
+      <div class="ps-name">${p.name}</div>
+      <div class="ps-status ${p.ok ? 'ok' : 'warn'}">
+        <div class="ps-dot ${p.ok ? 'ok' : 'warn'}"></div>
+        ${p.ok ? 'Configured' : p.partial ? 'Partial' : 'Not set'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function configuredMsg(platform) {
+  return `<div class="configured-msg">
+    <div class="configured-msg-icon">✅</div>
+    <div>
+      <div class="configured-msg-text">${platform} configured by admin</div>
+      <div class="configured-msg-sub">No action needed — your tickets will post automatically</div>
+    </div>
+  </div>`;
+}
+
+function buildJiraSection(d) {
+  const badge = document.getElementById('jira-badge');
+  const body = document.getElementById('jira-body');
+  const content = document.getElementById('jira-content');
+
+  if (d.hasJira) {
+    badge.innerHTML = '<div class="configured-badge">✅ Configured by admin</div>';
+    content.innerHTML = configuredMsg('Jira');
+  } else {
+    badge.innerHTML = '<div class="needs-badge">⚠ Needs setup</div>';
+    body.classList.remove('hidden'); // auto-expand sections that need setup
+    content.innerHTML = `
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Jira Base URL</label>
+          <input id="s-jiraurl" placeholder="https://yourcompany.atlassian.net" value="${d.jiraUrl||''}"/>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input id="s-jiraemail" placeholder="you@company.com" type="email"/>
+          <div class="hint">Your Atlassian login email</div>
+        </div>
+        <div class="form-group">
+          <label>Project Key</label>
+          <input id="s-jiraproj" placeholder="DEV" value="${d.jiraProj||''}" style="text-transform:uppercase"/>
+        </div>
+        <div class="form-group full">
+          <label>API Token</label>
+          <input id="s-jiratoken" placeholder="ATATT3x..." type="password"/>
+          <div class="hint">Generate at <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">id.atlassian.com → API Tokens</a></div>
+        </div>
+      </div>`;
+  }
+}
+
+function buildAdoSection(d) {
+  const badge = document.getElementById('ado-badge');
+  const body = document.getElementById('ado-body');
+  const content = document.getElementById('ado-content');
+
+  if (d.hasAdo) {
+    badge.innerHTML = '<div class="configured-badge">✅ Configured by admin</div>';
+    content.innerHTML = configuredMsg('Azure DevOps');
+  } else {
+    badge.innerHTML = '<div class="needs-badge">⚠ Needs setup</div>';
+    body.classList.remove('hidden');
+    content.innerHTML = `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Organisation</label>
+          <input id="s-adoorg" placeholder="YourOrgName" value="${d.adoOrg||''}"/>
+          <div class="hint">From dev.azure.com/<strong>YourOrg</strong></div>
+        </div>
+        <div class="form-group">
+          <label>Project</label>
+          <input id="s-adoproj" placeholder="ProjectName" value="${d.adoProj||''}"/>
+        </div>
+        <div class="form-group full">
+          <label>Personal Access Token</label>
+          <input id="s-adopat" placeholder="PAT token..." type="password"/>
+          <div class="hint">Generate at <a href="https://dev.azure.com" target="_blank">dev.azure.com</a> → Profile → PAT → Work Items: Read+Write</div>
+        </div>
+      </div>`;
+  }
+}
+
+function buildGhSection(d) {
+  const badge = document.getElementById('gh-badge');
+  const content = document.getElementById('gh-content');
+
+  if (d.hasGitHub) {
+    badge.innerHTML = '<div class="configured-badge">✅ Configured by admin</div>';
+    content.innerHTML = configuredMsg('GitHub');
+  } else {
+    badge.innerHTML = '<div style="font-size:11px;color:#4d5a6e">Optional</div>';
+    content.innerHTML = `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>GitHub Owner</label>
+          <input id="s-ghowner" placeholder="username or org" value="${d.ghOwner||''}"/>
+        </div>
+        <div class="form-group">
+          <label>Repository</label>
+          <input id="s-ghrepo" placeholder="repo-name" value="${d.ghRepo||''}"/>
+        </div>
+        <div class="form-group full">
+          <label>GitHub Token</label>
+          <input id="s-ghtoken" placeholder="ghp_..." type="password"/>
+          <div class="hint">Generate at <a href="https://github.com/settings/tokens" target="_blank">github.com → Settings → Developer Settings → PAT</a> with repo scope</div>
+        </div>
+      </div>`;
+  }
+}
+
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
 }
 
 async function saveSetup() {
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
+
   try {
+    const body = {
+      action:    'setup_org',
+      orgCode:   ORG,
+      setupKey:  ORG,
+    };
+
+    // Only include fields that have values
+    if (getVal('s-jiraurl'))   body.jiraUrl   = getVal('s-jiraurl');
+    if (getVal('s-jiraemail')) body.jiraEmail = getVal('s-jiraemail');
+    if (getVal('s-jiratoken')) body.jiraToken = getVal('s-jiratoken');
+    if (getVal('s-jiraproj'))  body.jiraProj  = getVal('s-jiraproj');
+    if (getVal('s-adoorg'))    body.adoOrg    = getVal('s-adoorg');
+    if (getVal('s-adopat'))    body.adoPat    = getVal('s-adopat');
+    if (getVal('s-adoproj'))   body.adoProj   = getVal('s-adoproj');
+    if (getVal('s-ghowner'))   body.ghOwner   = getVal('s-ghowner');
+    if (getVal('s-ghrepo'))    body.ghRepo    = getVal('s-ghrepo');
+    if (getVal('s-ghtoken'))   body.ghToken   = getVal('s-ghtoken');
+
     const r = await fetch('/api/config', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        action:     'setup_org',
-        orgCode:    ORG,
-        setupKey:   ORG,
-        jiraUrl:    document.getElementById('s-jiraurl').value.trim(),
-        jiraEmail:  document.getElementById('s-jiraemail').value.trim(),
-        jiraToken:  document.getElementById('s-jiratoken').value.trim(),
-        jiraProj:   document.getElementById('s-jiraproj').value.trim().toUpperCase(),
-        adoOrg:     document.getElementById('s-adoorg').value.trim(),
-        adoPat:     document.getElementById('s-adopat').value.trim(),
-        adoProj:    document.getElementById('s-adoproj').value.trim(),
-        ghOwner:    document.getElementById('s-ghowner').value.trim(),
-        ghRepo:     document.getElementById('s-ghrepo').value.trim(),
-        ghToken:    document.getElementById('s-ghtoken').value.trim(),
-      })
+      body: JSON.stringify(body)
     });
+
     const d = await r.json();
-    if (!r.ok) { toast(d.error || 'Save failed', 'error'); btn.disabled=false; btn.textContent='💾 Save & Activate BugForge AI'; return; }
-    document.getElementById('setup-form').style.display = 'none';
+    if (!r.ok) {
+      toast(d.error || 'Save failed', 'error');
+      btn.disabled = false; btn.textContent = '💾 Save & Activate BugForge AI';
+      return;
+    }
+
     const appUrl = `${window.location.origin}/?org=${ORG}`;
     document.getElementById('success-url').textContent = appUrl;
+    document.getElementById('setup-form').style.display = 'none';
     document.getElementById('success-card').style.display = 'block';
-    toast('Setup complete!', 'success');
+    toast('Setup complete! 🎉', 'success');
+
   } catch(e) {
     toast('Error: ' + e.message, 'error');
-    btn.disabled=false; btn.textContent='💾 Save & Activate BugForge AI';
+    btn.disabled = false; btn.textContent = '💾 Save & Activate BugForge AI';
   }
 }
 
@@ -257,6 +476,7 @@ function goToApp() {
   window.location.href = `/?org=${ORG}`;
 }
 
+// Load on page start
 loadOrg();
 </script>
 </body>
