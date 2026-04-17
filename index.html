@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>AI Defect Agent v4.7</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -343,104 +343,132 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .sec-hdr:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 .cfg-in:focus-visible,.ef-in:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 /* ── Mobile responsive (TC-133 fix) ── */
+/* ══ MOBILE RESPONSIVE ══════════════════════════════════════ */
 @media(max-width:680px){
-  .app{grid-template-columns:1fr}
-  .sidebar{display:none}
-  .main-hdr .hbtn:not(.theme-btn){font-size:10px;padding:4px 7px}
-  .tk-acts{gap:3px}
-  .abtn{font-size:9px;padding:3px 6px}
+  /* Layout */
+  .app{grid-template-columns:1fr;position:relative}
+  
+  /* Sidebar — slide-in drawer on mobile */
+  .sidebar{
+    position:fixed;left:0;top:0;bottom:0;
+    width:280px;z-index:200;
+    transform:translateX(-100%);
+    transition:transform .3s cubic-bezier(.4,0,.2,1);
+    box-shadow:4px 0 24px #00000040;
+  }
+  .sidebar.mobile-open{transform:translateX(0)}
+  
+  /* Mobile overlay behind sidebar */
+  .mobile-overlay{
+    display:none;position:fixed;inset:0;
+    background:#00000060;z-index:199;
+    backdrop-filter:blur(2px);
+  }
+  .mobile-overlay.active{display:block}
+
+  /* Header */
+  .main-hdr{padding:10px 12px}
+  .main-hdr .hbtn:not(.theme-btn){font-size:11px;padding:5px 7px}
+  .hdr-left{gap:8px}
+  .hdr-status span{display:none}
+
+  /* Show sidebar toggle on mobile */
+  #mobile-menu-btn{display:flex !important}
+
+  /* Chat */
+  .chat{padding:12px 10px;gap:10px}
+  .msg-bub{max-width:88%}
+
+  /* Ticket frame */
+  .ticket-frame{border-radius:12px;margin:0}
+  .tf-hdr{padding:12px 14px 10px}
+  .tf-title{font-size:13px}
+  .tf-body{padding:14px}
+  .tf-exp-act{grid-template-columns:1fr}
+  .tf-actions{padding:10px 14px;gap:5px;flex-wrap:wrap}
+  .abtn{font-size:10px;padding:4px 8px}
+
+  /* Platform post buttons — stack on mobile */
+  .platform-btns-grid{grid-template-columns:1fr 1fr}
+  .platform-btn{padding:8px 6px;font-size:10px}
+  .platform-btn.all{font-size:11px;padding:9px}
+
+  /* Input area */
+  .input-area{padding:8px 10px}
+  .input-box{border-radius:12px}
+  #din{padding:10px 12px;font-size:13px;min-height:50px}
+  .ex-chips{display:none}
+  .input-foot{padding:6px 10px}
+  .send-btn{padding:7px 14px;font-size:12px}
+
+  /* Config rows in sidebar */
+  .cfg-in{font-size:12px;padding:7px 10px}
+  .ptab-btn{font-size:10px;padding:6px 3px}
+
+  /* TC prompt */
+  .tc-prompt{padding:10px 12px}
+  .tc-prompt-btns{flex-direction:column}
+
+  /* Post status */
+  .post-status{font-size:11px;padding:8px 10px}
+  
+  /* Ticket actions wrap */
+  .tk-acts{gap:4px;flex-wrap:wrap}
 }
 
-/* ══ UI ENHANCEMENTS v4.7 ══════════════════════════════════ */
-:root {
-  --font-main:'Plus Jakarta Sans',sans-serif;
-  --font-display:'Space Grotesk',sans-serif;
-  --accent-glow:0 0 20px #6366f140;
+/* ── Small phones (< 380px) ── */
+@media(max-width:380px){
+  .platform-btns-grid{grid-template-columns:1fr}
+  .platform-btn.all{grid-column:1}
+  .tf-actions{gap:4px}
+  .abtn{font-size:9px;padding:3px 7px}
 }
-/* Smooth transitions on theme switch */
-*{transition:background-color .2s ease,border-color .2s ease,color .15s ease}
-/* Better scrollbars */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--b3);border-radius:4px}
-::-webkit-scrollbar-thumb:hover{background:var(--b4)}
-/* Sidebar logo */
-.sb-logo{padding:16px 14px 12px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px;flex-shrink:0}
-.sb-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;box-shadow:0 2px 10px #6366f140}
-.sb-logo-text{font-size:13px;font-weight:700;color:var(--t1);line-height:1.2}
-.sb-logo-ver{font-size:9px;color:var(--t3);letter-spacing:.5px}
+
+/* ── v4.7 UI Enhancements ── */
 /* Platform tabs */
 .ptab-header{display:flex;background:var(--s2);padding:5px;gap:3px;border-bottom:1px solid var(--b1)}
-.ptab-btn{flex:1;padding:7px 5px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:7px;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:4px}
+.ptab-btn{flex:1;padding:7px 4px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:7px;transition:var(--transition);font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:4px}
 .ptab-btn:hover{color:var(--t2);background:var(--b2)}
-.ptab-btn.active{color:#fff !important}
+.ptab-btn.active{color:#fff}
 .ptab-btn.active.jira{background:var(--jira)}
 .ptab-btn.active.ado{background:#0078d4}
 .ptab-btn.active.gh{background:#24292e}
-.ptab-panel{padding:11px 13px;display:none}
+.ptab-panel{padding:11px 12px;display:none}
 .ptab-panel.active{display:block}
-/* Platform post buttons grid */
-.platform-post-btns{padding:12px 16px;border-top:1px solid var(--b1);background:var(--s1)}
-.platform-post-label{font-size:9px;font-weight:700;color:var(--t3);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;text-align:center}
-.platform-btns-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.platform-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;border-radius:10px;border:1px solid var(--b2);background:var(--s2);color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;white-space:nowrap}
-.platform-btn:hover{transform:translateY(-2px);box-shadow:0 4px 14px #00000025;color:var(--t1)}
-.platform-btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important;box-shadow:none !important}
+/* Platform post buttons */
+.platform-post-btns{padding:12px 14px;border-top:1px solid var(--b1);background:var(--s2)}
+.platform-post-label{font-size:9px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;text-align:center}
+.platform-btns-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.platform-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;border-radius:9px;border:1px solid var(--b2);background:var(--s3);color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:var(--transition);white-space:nowrap}
+.platform-btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px #00000020}
+.platform-btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important}
 .platform-btn.jira{border-color:var(--jira-bd);color:var(--jira)}
-.platform-btn.jira:hover{background:var(--jira-bg);box-shadow:0 4px 14px #2d84ff25}
+.platform-btn.jira:hover{background:var(--jira-bg)}
 .platform-btn.ado{border-color:#0078d440;color:#0078d4}
-.platform-btn.ado:hover{background:#0078d410;box-shadow:0 4px 14px #0078d425}
-.platform-btn.gh{border-color:var(--gh-bd);color:var(--t2)}
-.platform-btn.gh:hover{background:var(--s3)}
-.platform-btn.all{grid-column:1/-1;border-color:var(--accent-bd,var(--b3));color:var(--accent);font-weight:700}
-.platform-btn.all:hover{background:var(--accent-bg);box-shadow:0 0 16px #6366f130}
+.platform-btn.ado:hover{background:#0078d410}
+.platform-btn.gh{border-color:var(--gh-bd);color:var(--gh)}
+.platform-btn.gh:hover{background:var(--gh-bg)}
+.platform-btn.all{grid-column:1/-1;color:var(--accent);border-color:var(--jira-bd);font-weight:700}
+.platform-btn.all:hover{background:var(--accent-bg)}
 /* TC prompt */
-.tc-prompt{padding:13px 16px;border-top:1px solid var(--b1);background:linear-gradient(135deg,#22c55e08,#6366f108);display:none}
-.tc-prompt-title{font-size:12px;font-weight:700;color:var(--t1);margin-bottom:3px;display:flex;align-items:center;gap:6px}
-.tc-prompt-sub{font-size:11px;color:var(--t2);margin-bottom:10px;line-height:1.5}
+.tc-prompt{padding:12px 14px;border-top:1px solid var(--b1);background:var(--green-bg);display:none}
+.tc-prompt-title{font-size:12px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.tc-prompt-sub{font-size:11px;color:var(--t2);margin-bottom:10px}
 .tc-prompt-btns{display:flex;gap:8px}
-/* Better input focus */
-.cfg-in:focus{border-color:var(--accent) !important;box-shadow:0 0 0 3px #6366f114}
-.cfg-in::placeholder{color:var(--t3)}
-select.cfg-in option{background:var(--s3);color:var(--t1)}
-/* Input card focus glow */
-.input-box:focus-within{border-color:var(--accent) !important;box-shadow:0 0 0 3px #6366f114 !important}
-/* Send button glow */
-.send-btn:hover{opacity:.9;box-shadow:0 4px 14px #6366f140;transform:translateY(-1px)}
-/* Header backdrop */
-.hdr{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-/* Ticket frame shadow */
-.ticket-frame{box-shadow:0 4px 24px #00000030 !important}
-/* Abtn hover lift */
-.abtn:hover{transform:translateY(-1px);box-shadow:0 2px 8px #00000020}
-.abtn.primary:hover{box-shadow:0 4px 14px #6366f140}
 /* Post status */
-.post-status{border-radius:10px;padding:10px 14px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px;margin:8px 0}
+.post-status{border-radius:8px;padding:9px 12px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:7px;margin:6px 0}
 .post-status.posted{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
 .post-status.failed{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
 .post-status.posting{background:var(--accent-bg);border:1px solid var(--b2);color:var(--t2)}
 .post-link{color:var(--accent);font-weight:700;text-decoration:none}
 .post-link:hover{text-decoration:underline}
-/* Cfg dot glow */
-.cfg-dot.ok{box-shadow:0 0 6px var(--green)}
-.cfg-dot.err{box-shadow:0 0 6px var(--red)}
-/* Theme light improvements */
-[data-theme="light"] .msg.ai .msg-bub{background:#ffffff;border-color:#e5e7eb}
-[data-theme="light"] .input-box{background:#ffffff !important;border-color:#d1d9e6 !important}
-[data-theme="light"] .cfg-in{background:#ffffff;border-color:#d1d9e6}
-[data-theme="light"] .ticket-frame{background:#ffffff}
-[data-theme="dark"] #din::placeholder,[data-theme="light"] #din::placeholder{color:var(--t3);font-size:12px}
-/* Pulse animation for status dot */
-@keyframes statusPulse{0%,100%{box-shadow:0 0 6px var(--green)}50%{box-shadow:0 0 12px var(--green),0 0 20px var(--green)}}
-.cfg-dot.ok{animation:statusPulse 2.5s infinite}
-
+/* Light theme input improvements */
+[data-theme="light"] .cfg-in{background:var(--s1);border-color:var(--b3)}
+/* Smooth theme transitions - only on specific elements */
+.sidebar,.main,.hdr,.input-area,.input-box,.msg-bub,.ticket-frame,.cfg-in,.abtn,.send-btn,.platform-btn,.ptab-btn,.toast{transition:background-color .18s ease,border-color .18s ease,color .12s ease}
 </style>
   <script>
-    // Apply saved theme immediately to prevent flash
-    (function(){
-      const t=localStorage.getItem('da_theme')||'dark';
-      document.documentElement.setAttribute('data-theme',t);
-    })();
+    (function(){var t=localStorage.getItem('da_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();
   </script>
 </head>
 <body>
@@ -494,9 +522,10 @@ select.cfg-in option{background:var(--s3);color:var(--t1)}
 <div class="app">
 <!-- ══ SIDEBAR ══ -->
 <div class="sidebar">
-  <div class="sb-logo">
-    <div class="sb-logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
-    <div><div class="sb-logo-text">AI Defect Agent</div><div class="sb-logo-ver">v4.7 · Enterprise Ready</div></div>
+  <div class="sb-top">
+    <div class="logo">
+      <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
+      <div><div class="logo-name">AI Defect Agent</div><div class="logo-sub">v4.7 · Platform Tabs · Redesigned UI · Secure</div></div>
     </div>
     <div class="ppills">
       <div class="ppill" id="pill-jira"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M16 2L2 17l14 13 14-13L16 2z" fill="#2d84ff"/><path d="M16 9.5L9.5 17 16 23l6.5-6L16 9.5z" fill="white"/></svg>Jira</div>
@@ -608,7 +637,8 @@ select.cfg-in option{background:var(--s3);color:var(--t1)}
     </div>
   </div>
 
-<!-- Notifications -->
+
+  <!-- Notifications -->
   <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('notif')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('notif')}"><span class="sec-lbl">Notifications</span><span class="sec-arr open" id="arr-notif">▶</span></div>
   <div class="sec-body open" id="bod-notif">
     <div style="padding:4px 0 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
@@ -653,6 +683,7 @@ select.cfg-in option{background:var(--s3);color:var(--t1)}
   <!-- Header -->
   <div class="main-hdr">
     <div class="hdr-left">
+      <button id="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Open settings" style="display:none;background:transparent;border:none;cursor:pointer;padding:5px;border-radius:8px;color:var(--t2);font-size:18px;line-height:1">☰</button>
       <div class="hdr-status"><div class="status-dot" aria-hidden="true"></div><span id="agent-txt" role="status" aria-live="polite" aria-atomic="true">Agent ready</span></div>
       <div class="voice-indicator" id="voice-ind"><div class="voice-dot"></div><span>Listening...</span><button onclick="stopVoice()" style="background:none;border:none;color:var(--red);cursor:pointer;margin-left:4px;font-size:12px">Stop</button></div>
     </div>
@@ -751,7 +782,7 @@ localStorage.clear();
 
 const LS = k => '';
 const CFG = {
-  ant:'', jiraUrl:'', jiraEmail:'', jiraIssueType:'', jiraReporterEmail:'', jiraAssignee:'', adoAssignee:'', ghAssignee:'', ghLabels:'',
+  ant:'', jiraUrl:'', jiraEmail:'', jiraIssueType:'', jiraReporterEmail:'',
   jiraToken:'', jiraProj:'', jiraBoard:'',
   adoOrg:'', adoProj:'', adoPat:'', adoTeam:'',
   ghOwner:'', ghRepo:'', ghToken:'',
@@ -1076,7 +1107,7 @@ function toggleTheme() {
   const html=document.documentElement;
   const isDark=html.getAttribute('data-theme')==='dark';
   html.setAttribute('data-theme',isDark?'light':'dark');
-  const btn=document.getElementById('theme-btn');if(btn){btn.textContent=isDark?'☀️':'🌙';btn.title=isDark?'Switch to Dark (Ctrl+Shift+T)':'Switch to Light (Ctrl+Shift+T)';}
+  document.getElementById('theme-btn').textContent=isDark?'☀️':'🌙';
   localStorage.setItem('da_theme',isDark?'light':'dark');
 }
 function initTheme() {
@@ -1230,22 +1261,19 @@ function buildTicketHTML(t,platform,tid){
         <button class="abtn warn" id="btn-dup" onclick="checkDuplicates()">⚠ Dupes</button>
         <button class="abtn info" onclick="showLinkEpic()">🔗 Link Epic</button>
       </div>
-      <!-- Platform posting buttons -->
-      <div id="platform-post-btns" class="platform-post-btns">
-        <div class="platform-post-label">Post ticket to</div>
-        <div class="platform-btns-grid">
-          <button class="platform-btn jira" id="btn-post-jira" onclick="postToSpecificPlatform('jira')">🔵 Jira</button>
-          <button class="platform-btn ado" id="btn-post-ado" onclick="postToSpecificPlatform('azure_devops')">🔷 Azure DevOps</button>
-          <button class="platform-btn gh" id="btn-post-gh" onclick="postToSpecificPlatform('github')">⚫ GitHub</button>
-          <button class="platform-btn all" id="btn-post-all" onclick="postToSpecificPlatform('all')">🌐 Post to All Platforms</button>
-        </div>
+      <!-- Platform posting buttons — shown after generation, hidden after posting -->
+      <div id="platform-post-btns" style="display:flex;gap:7px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--b1);background:var(--s2);border-radius:0 0 10px 10px">
+        <div style="font-size:11px;color:var(--t2);width:100%;margin-bottom:4px">📤 Post ticket to:</div>
+        <button class="abtn primary" id="btn-post-jira" onclick="postToSpecificPlatform('jira')" style="background:var(--accent);flex:1;min-width:100px">🔵 Post to Jira</button>
+        <button class="abtn primary" id="btn-post-ado" onclick="postToSpecificPlatform('azure_devops')" style="background:#0078d4;flex:1;min-width:100px">🔷 Post to ADO</button>
+        <button class="abtn primary" id="btn-post-gh" onclick="postToSpecificPlatform('github')" style="background:#24292e;flex:1;min-width:100px">⚫ GitHub</button>
+        <button class="abtn primary" id="btn-post-all" onclick="postToSpecificPlatform('all')" style="background:linear-gradient(135deg,var(--accent),#0078d4);flex:1;min-width:100px">🌐 Post to All</button>
       </div>
-      <!-- Test cases prompt — hidden until ticket posted -->
-      <div id="tc-prompt-area" class="tc-prompt">
-        <div class="tc-prompt-title">🧪 Generate Test Cases?</div>
-        <div class="tc-prompt-sub">Create 4 Gherkin BDD test cases linked to this ticket</div>
-        <div class="tc-prompt-btns">
-          <button class="abtn primary" style="flex:1" onclick="acceptTestCases()">✅ Yes, generate</button>
+      <!-- Test cases section — hidden until ticket is posted -->
+      <div id="tc-prompt-area" style="display:none;padding:10px 14px;border-top:1px solid var(--b1)">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px">🧪 Generate test cases for this defect?</div>
+        <div style="display:flex;gap:8px">
+          <button class="abtn primary" style="flex:1" onclick="acceptTestCases()">✅ Yes, generate test cases</button>
           <button class="abtn" onclick="dismissTCPrompt()">✗ No thanks</button>
         </div>
         <div id="tc-post-result" style="margin-top:8px;font-size:11px"></div>
@@ -1429,9 +1457,9 @@ async function api(endpoint, body) {
   if (!r.ok) throw new Error(d.error || `Server ${r.status}`);
   return d;
 }
-function jiraCfg() { const aEl=document.getElementById('jira-assignee-input'); if(aEl&&aEl.value.trim()) CFG.jiraAssignee=aEl.value.trim(); return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'', jiraAssignee: CFG.jiraAssignee||'' }; }
-function adoCfg()  { const orgEl=document.getElementById('ado-org-input'); if(orgEl&&orgEl.value.trim()) CFG.adoOrg=orgEl.value.trim(); const assigneeEl=document.getElementById('ado-assignee-input'); if(assigneeEl&&assigneeEl.value.trim()) CFG.adoAssignee=assigneeEl.value.trim(); return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam, adoAssignee: CFG.adoAssignee||'' }; }
-function ghCfg()   { const aEl=document.getElementById('gh-assignee-input'); if(aEl&&aEl.value.trim()) CFG.ghAssignee=aEl.value.trim(); const lEl=document.getElementById('gh-labels-input'); if(lEl&&lEl.value.trim()) CFG.ghLabels=lEl.value.trim(); return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken, ghAssignee: CFG.ghAssignee||'', ghLabels: CFG.ghLabels||'' }; }
+function jiraCfg() { return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'' }; }
+function adoCfg()  { const orgEl=document.getElementById('ado-org-input'); if(orgEl&&orgEl.value.trim()) CFG.adoOrg=orgEl.value.trim(); return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam }; }
+function ghCfg()   { return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken }; }
 
 // Jira POST
 async function postJira(t){
@@ -1446,8 +1474,6 @@ async function postJira(t){
   }
   if(!CFG.jiraProj) throw new Error('Please select a Jira project from the sidebar first');
   console.log('Posting to Jira project:', CFG.jiraProj);
-  // Read assignee from sidebar input
-  const jiraAssignee = CFG.jiraAssignee || document.getElementById('jira-assignee-input')?.value?.trim() || '';
   const payload={fields:{project:{key:CFG.jiraProj},issuetype:{name:'Bug'},summary:t.summary,
     priority:{name:{P0:'Highest',P1:'High',P2:'Medium',P3:'Low'}[t.priority]||'Medium'},
     labels:t.labels||['AI-Generated'],
@@ -1467,27 +1493,13 @@ async function postADO(t){
   const steps=(t.repro_steps||[]).map((s,i)=>`<li>${i+1}. ${s}</li>`).join('');
   const crit=(t.acceptance_criteria||[]).map((c,i)=>`<li>${i+1}. ${c}</li>`).join('');
   const expActual=`<p><b>Expected Result:</b> ${t.expected_result||''}</p><p><b>Actual Result:</b> ${t.actual_result||''}</p>`;
-
-  // ADO Priority: must be integer 1-4
-  const priMap={'P0':1,'P1':1,'P2':2,'P3':3,'P4':4,'Critical':1,'High':1,'Medium':2,'Low':3};
-  const priNum = priMap[t.priority] || parseInt(t.priority) || 2;
-  const safePri = [1,2,3,4].includes(priNum) ? priNum : 2;
-
-  // ADO Severity: must be exact string format "1 - Critical", "2 - High", "3 - Medium", "4 - Low"
-  const sevMap={'Critical':'1 - Critical','High':'2 - High','Medium':'3 - Medium','Low':'4 - Low',
-                '1 - Critical':'1 - Critical','2 - High':'2 - High','3 - Medium':'3 - Medium','4 - Low':'4 - Low'};
-  const safeSev = sevMap[t.severity] || '3 - Medium';
-
   const patch=[
     {op:'add',path:'/fields/System.Title',value:t.title||t.summary||'Bug'},
     {op:'add',path:'/fields/System.Description',value:`<p>${t.description||''}</p>${expActual}`},
     {op:'add',path:'/fields/Microsoft.VSTS.TCM.ReproSteps',value:`<ol>${steps}</ol>`},
     {op:'add',path:'/fields/Microsoft.VSTS.TCM.SystemInfo',value:t.system_info||t.environment||''},
-    {op:'add',path:'/fields/Microsoft.VSTS.Common.Severity',value:safeSev},
-    {op:'add',path:'/fields/Microsoft.VSTS.Common.Priority',value:safePri},
-    ...(CFG.adoAssignee||document.getElementById('ado-assignee-input')?.value?.trim()
-      ? [{op:'add',path:'/fields/System.AssignedTo',value:CFG.adoAssignee||document.getElementById('ado-assignee-input')?.value?.trim()}]
-      : []),
+    {op:'add',path:'/fields/Microsoft.VSTS.Common.Severity',value:t.severity||'3 - Medium'},
+    {op:'add',path:'/fields/Microsoft.VSTS.Common.Priority',value:t.priority||2},
     ...(t.tags?[{op:'add',path:'/fields/System.Tags',value:t.tags}]:[]),
     ...(crit?[{op:'add',path:'/fields/Microsoft.VSTS.Common.AcceptanceCriteria',value:`<ol>${crit}</ol>`}]:[]),
   ].filter(p=>p.value!==undefined&&p.value!==null&&String(p.value).trim()!==''||p.path==='/fields/System.Title');
@@ -1498,19 +1510,9 @@ async function postGH(t){
   // Credentials in Vercel env vars — proceed
   const steps=(t.steps_to_reproduce||[]).map((s,i)=>`${i+1}. ${s}`).join('\n');
   const crit=(t.acceptance_criteria||[]).map(c=>`- [ ] ${c}`).join('\n');
-  // Use summary or title — AI may return either field name
-  const ghTitle = t.title || t.summary || 'Bug reported via AI Defect Agent';
-  const ghDesc  = t.description || t.body || t.summary || '';
-  const body=`## Description\n${ghDesc}\n\n## Steps to Reproduce\n${steps}\n\n## Expected\n${t.expected_result||''}\n\n## Actual\n${t.actual_result||''}\n\n## Environment\n\`\`\`\n${t.environment||t.system_info||''}\n\`\`\`\n${crit?`\n## Acceptance Criteria\n${crit}`:''}\n\n---\n> 🤖 Auto-generated by AI Defect Agent v4.7`;
-  // Merge auto labels + extra labels from sidebar
-  const extraLabels = (CFG.ghLabels||document.getElementById('gh-labels-input')?.value||'')
-    .split(',').map(l=>l.trim()).filter(Boolean);
-  const labels=[...(t.labels||[]),`severity:${(t.severity||'medium').toLowerCase()}`,'bug','ai-generated',...extraLabels];
-  const assignees = (CFG.ghAssignee||document.getElementById('gh-assignee-input')?.value?.trim()||'')
-    ? [(CFG.ghAssignee||document.getElementById('gh-assignee-input')?.value?.trim())]
-    : [];
-  if(!ghTitle) throw new Error('Title is missing — please generate the ticket first');
-  return api('github', { action:'create_issue', config:ghCfg(), payload:{ title:ghTitle, body, labels, assignees } });
+  const body=`## Description\n${t.body||''}\n\n## Steps to Reproduce\n${steps}\n\n## Expected\n${t.expected_result}\n\n## Actual\n${t.actual_result}\n\n## Environment\n\`\`\`\n${t.environment||''}\n\`\`\`\n${crit?`\n## Acceptance Criteria\n${crit}`:''}\n\n---\n> 🤖 Auto-generated by AI Defect Agent v3`;
+  const labels=[...(t.labels||[]),`severity:${(t.severity||'medium').toLowerCase()}`,'bug','ai-generated'];
+  return api('github', { action:'create_issue', config:ghCfg(), payload:{ title:t.title, body, labels } });
 }
 
 // ══ SCREENSHOT ════════════════════════════════════════════
@@ -2051,7 +2053,7 @@ async function postToSpecificPlatform(platform){
     const postBtns = document.getElementById('platform-post-btns');
     if(postBtns) postBtns.style.display='none';
     const tcPrompt = document.getElementById('tc-prompt-area');
-    if(tcPrompt) tcPrompt.style.display='block'; // tc-prompt class handles styling
+    if(tcPrompt) tcPrompt.style.display='block';
     // Also hide old tc-ask-msg if visible
     const tcAsk = document.getElementById('tc-ask-msg');
     if(tcAsk) tcAsk.style.display='none';
@@ -2063,8 +2065,6 @@ async function postToSpecificPlatform(platform){
   }
 }
 
-
-// ══ PLATFORM TAB SWITCHER ════════════════════════════════════
 function switchPlatformTab(tab) {
   ['jira','ado','gh'].forEach(t => {
     const btn   = document.getElementById('ptab-'+t);
@@ -2200,9 +2200,6 @@ window.addEventListener('load',()=>{
   initShortcuts();
   document.getElementById('din').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendDefect();}});
 
-  // Set default active platform tab
-  switchPlatformTab('jira');
-
   // Auto-load live project lists — only after checking API is available
   setTimeout(async ()=>{
     try {
@@ -2221,6 +2218,26 @@ window.addEventListener('load',()=>{
       console.log('Projects API not available:', e.message);
     }
   }, 1200);
+});
+
+// ══ MOBILE SIDEBAR ═══════════════════════════════════════════
+function toggleMobileSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('mobile-overlay');
+  if (!sidebar) return;
+  const isOpen = sidebar.classList.contains('mobile-open');
+  sidebar.classList.toggle('mobile-open', !isOpen);
+  if (overlay) overlay.classList.toggle('active', !isOpen);
+  document.body.style.overflow = isOpen ? '' : 'hidden';
+}
+window.addEventListener('resize', function() {
+  if (window.innerWidth > 680) {
+    const sb = document.querySelector('.sidebar');
+    const ov = document.getElementById('mobile-overlay');
+    if (sb) sb.classList.remove('mobile-open');
+    if (ov) ov.classList.remove('active');
+    document.body.style.overflow = '';
+  }
 });
 </script>
 </body>
