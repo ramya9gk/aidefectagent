@@ -15,7 +15,8 @@ export default async function handler(req, res) {
   const adoOrg  = process.env.ADO_ORG     || config?.adoOrg  || '';
   const adoProj = process.env.ADO_PROJECT  || config?.adoProj || '';
   const adoPat  = process.env.ADO_PAT      || config?.adoPat  || '';
-  const adoTeam = process.env.ADO_TEAM     || config?.adoTeam || '';
+  const adoTeam     = process.env.ADO_TEAM         || config?.adoTeam     || '';
+  const adoAssignee = process.env.ADO_ASSIGNEE_EMAIL || config?.adoAssignee || '';
 
   if (!adoOrg)  return res.status(400).json({ error: 'ADO_ORG not set. Add to Vercel Environment Variables.' });
   if (!adoPat)  return res.status(400).json({ error: 'ADO_PAT not set. Add to Vercel Environment Variables.' });
@@ -59,7 +60,18 @@ export default async function handler(req, res) {
             return { ...op, value: sevMap[op.value] || '3 - Medium' };
           }
           return op;
-        }).filter(op => op.value !== undefined && op.value !== null && String(op.value).trim() !== '' || op.path === '/fields/System.Title');
+          if (op.path === '/fields/System.AssignedTo') {
+            // Use env var assignee if set, otherwise keep what was passed
+            const assigneeVal = adoAssignee || op.value || '';
+            return assigneeVal ? { ...op, value: assigneeVal } : null;
+          }
+          return op;
+        }).filter(op => op !== null && (op.value !== undefined && op.value !== null && String(op.value).trim() !== '' || op.path === '/fields/System.Title'));
+
+        // Add assignee from env var if not already in payload
+        if (adoAssignee && !sanitizedPayload.find(op => op.path === '/fields/System.AssignedTo')) {
+          sanitizedPayload.push({ op: 'add', path: '/fields/System.AssignedTo', value: adoAssignee });
+        }
 
         const r = await adoFetch(`${base}/${proj}/_apis/wit/workitems/$Bug?api-version=6.0`, {
           method: 'POST',

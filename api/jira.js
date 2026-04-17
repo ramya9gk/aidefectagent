@@ -18,6 +18,7 @@ export default async function handler(req, res) {
   const jiraProj   = process.env.JIRA_PROJECT|| config?.jiraProj   || '';
   const jiraBoard  = process.env.JIRA_BOARD  || config?.jiraBoard  || '';
   const jiraIssueType    = process.env.JIRA_ISSUE_TYPE     || config?.jiraIssueType    || '';
+  const jiraAssignee     = process.env.JIRA_ASSIGNEE_EMAIL || config?.jiraAssignee     || '';
   const jiraReporterEmail= process.env.JIRA_REPORTER_EMAIL || config?.jiraReporterEmail || jiraEmail;
 
   if (!jiraUrl)   return res.status(400).json({ error: 'JIRA_URL not set. Add to Vercel Environment Variables.' });
@@ -58,6 +59,21 @@ export default async function handler(req, res) {
     }
   }
 
+  // ── Lookup any user accountId from email ─────────────────
+  async function lookupAccountId(email) {
+    if (!email) return null;
+    try {
+      const r = await fetch(
+        `${base}/rest/api/3/user/search?query=${encodeURIComponent(email)}&maxResults=1`,
+        { headers: { Authorization: auth, Accept: 'application/json' } }
+      );
+      if (!r.ok) return null;
+      const users = await r.json();
+      const match = users.find(u => u.emailAddress?.toLowerCase() === email.toLowerCase());
+      return match?.accountId || users[0]?.accountId || null;
+    } catch { return null; }
+  }
+
   // ── Lookup reporter accountId from email ─────────────────
   async function getReporterAccountId() {
     try {
@@ -85,11 +101,14 @@ export default async function handler(req, res) {
 
         const issueReporterAccountId = await getReporterAccountId();
 
+        const issueAssigneeAccountId = await lookupAccountId(jiraAssignee);
+
         const fields = {
           ...payload.fields,
           project:   { key: proj },       // always use configured project key
           issuetype: { name: issueType },  // auto-detected valid issue type
-          ...(issueReporterAccountId ? { reporter: { id: issueReporterAccountId } } : {}),
+          ...(issueReporterAccountId ? { reporter:  { id: issueReporterAccountId } } : {}),
+          ...(issueAssigneeAccountId ? { assignee:  { id: issueAssigneeAccountId } } : {}),
         };
 
         if (!fields.summary?.trim()) {
