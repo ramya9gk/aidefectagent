@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BugForge AI — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#080c14;color:#e8edf5;min-height:100vh}
+.app{max-width:1000px;margin:0 auto;padding:24px 20px}
+/* Header */
+.hdr{display:flex;align-items:center;gap:14px;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid #ffffff10}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#4f6ef7,#7c3aed);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:24px;height:24px}
+.hdr-text h1{font-size:20px;font-weight:700;color:#e8edf5}
+.hdr-text p{font-size:12px;color:#4d5a6e;margin-top:2px}
+.badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:#ef444420;color:#ef4444;border:1px solid #ef444440;margin-left:8px}
+.badge.ok{background:#10b98120;color:#10b981;border-color:#10b98140}
+/* Login */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:60vh}
+.login-card{background:#0d1117;border:1px solid #ffffff10;border-radius:20px;padding:40px;width:100%;max-width:400px;text-align:center}
+.login-icon{font-size:40px;margin-bottom:16px}
+.login-card h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.login-card p{font-size:13px;color:#4d5a6e;margin-bottom:24px}
+/* Cards */
+.card{background:#0d1117;border:1px solid #ffffff10;border-radius:16px;padding:24px;margin-bottom:20px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title span{font-size:18px}
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-size:10px;font-weight:700;color:#4d5a6e;letter-spacing:1px;text-transform:uppercase}
+input,select{background:#111827;border:1px solid #ffffff18;border-radius:8px;padding:9px 12px;font-size:12px;color:#e8edf5;font-family:'JetBrains Mono',monospace;outline:none;transition:all .2s;width:100%}
+input:focus,select:focus{border-color:#4f6ef7;box-shadow:0 0 0 3px #4f6ef714}
+input::placeholder{color:#4d5a6e}
+/* Buttons */
+.btn{padding:10px 20px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;border:none;transition:all .2s}
+.btn-primary{background:#4f6ef7;color:#fff}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 4px 14px #4f6ef740}
+.btn-danger{background:#ef444420;color:#ef4444;border:1px solid #ef444440}
+.btn-danger:hover{background:#ef444430}
+.btn-secondary{background:#1a2235;color:#7d8699;border:1px solid #ffffff18}
+.btn-secondary:hover{background:#1f2b40;color:#e8edf5}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important}
+.btn-row{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+/* Orgs table */
+.orgs-table{width:100%;border-collapse:collapse}
+.orgs-table th{text-align:left;font-size:10px;font-weight:700;color:#4d5a6e;letter-spacing:1px;text-transform:uppercase;padding:8px 12px;border-bottom:1px solid #ffffff10}
+.orgs-table td{padding:12px;border-bottom:1px solid #ffffff08;font-size:12px;vertical-align:middle}
+.orgs-table tr:hover td{background:#ffffff04}
+.org-name{font-weight:600;color:#e8edf5}
+.org-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:#4f6ef7;background:#4f6ef714;padding:2px 8px;border-radius:6px}
+.platform-dots{display:flex;gap:4px}
+.pdot{width:8px;height:8px;border-radius:50%;background:#ffffff15}
+.pdot.ok{background:#10b981;box-shadow:0 0 6px #10b981}
+/* URL box */
+.url-box{background:#111827;border:1px solid #4f6ef740;border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#4f6ef7;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;word-break:break-all}
+/* Toast */
+.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:100}
+.toast{padding:10px 16px;border-radius:12px;font-size:12px;font-weight:600;animation:toastIn .2s ease;box-shadow:0 4px 20px #00000060}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.toast.success{background:#10b98120;border:1px solid #10b98140;color:#10b981}
+.toast.error{background:#ef444420;border:1px solid #ef444440;color:#ef4444}
+.toast.info{background:#4f6ef720;border:1px solid #4f6ef740;color:#4f6ef7}
+/* Sections */
+.section{display:none}
+.section.active{display:block}
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:#0d1117;border:1px solid #ffffff10;border-radius:12px;padding:16px}
+.stat-val{font-size:28px;font-weight:700;color:#4f6ef7}
+.stat-lbl{font-size:11px;color:#4d5a6e;margin-top:4px}
+/* Tab nav */
+.tab-nav{display:flex;gap:4px;margin-bottom:24px;background:#0d1117;padding:4px;border-radius:12px;border:1px solid #ffffff10}
+.tab-btn{flex:1;padding:8px;font-size:12px;font-weight:600;border:none;background:transparent;color:#4d5a6e;cursor:pointer;border-radius:8px;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif}
+.tab-btn.active{background:#4f6ef7;color:#fff}
+/* Divider */
+.divider{border:none;border-top:1px solid #ffffff10;margin:16px 0}
+@media(max-width:600px){
+  .form-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="toast-wrap" id="toasts"></div>
+
+<!-- ── LOGIN ── -->
+<div id="login-section" class="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">🔐</div>
+    <h2>BugForge AI Admin</h2>
+    <p>Enter your admin secret to access the panel</p>
+    <div class="form-group" style="text-align:left;margin-bottom:16px">
+      <label>Admin Secret</label>
+      <input type="password" id="login-key" placeholder="Enter ADMIN_SECRET" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">🔓 Login</button>
+  </div>
+</div>
+
+<!-- ── MAIN PANEL ── -->
+<div id="main-section" style="display:none">
+  <div class="app">
+    <!-- Header -->
+    <div class="hdr">
+      <div class="logo">
+        <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+          <rect width="72" height="72" rx="16" fill="url(#ag)"/>
+          <defs><linearGradient id="ag" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f6ef7"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
+          <rect x="16" y="36" width="40" height="22" rx="5" fill="#fff" opacity=".9"/>
+          <rect x="22" y="27" width="28" height="13" rx="4" fill="#fff" opacity=".9"/>
+          <path d="M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z" fill="url(#ag)"/>
+        </svg>
+      </div>
+      <div class="hdr-text">
+        <h1>BugForge AI <span class="badge ok" id="db-badge">DB Connected</span></h1>
+        <p>Admin Panel — Manage organisations and access</p>
+      </div>
+      <button class="btn btn-secondary" style="margin-left:auto" onclick="doLogout()">Logout</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat"><div class="stat-val" id="stat-orgs">—</div><div class="stat-lbl">Total Orgs</div></div>
+      <div class="stat"><div class="stat-val" id="stat-jira">—</div><div class="stat-lbl">Jira Connected</div></div>
+      <div class="stat"><div class="stat-val" id="stat-ado">—</div><div class="stat-lbl">ADO Connected</div></div>
+      <div class="stat"><div class="stat-val" id="stat-gh">—</div><div class="stat-lbl">GitHub Connected</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('orgs')">🏢 Organisations</button>
+      <button class="tab-btn" onclick="switchTab('create')">➕ Create Org</button>
+      <button class="tab-btn" onclick="switchTab('guide')">📖 Guide</button>
+    </div>
+
+    <!-- ── ORGS TAB ── -->
+    <div id="tab-orgs" class="section active">
+      <div class="card">
+        <div class="card-title"><span>🏢</span> All Organisations <button class="btn btn-secondary" style="margin-left:auto;padding:5px 12px;font-size:11px" onclick="loadOrgs()">↻ Refresh</button></div>
+        <div id="orgs-list">
+          <p style="color:#4d5a6e;font-size:13px;text-align:center;padding:20px">Loading organisations...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CREATE ORG TAB ── -->
+    <div id="tab-create" class="section">
+      <div class="card">
+        <div class="card-title"><span>➕</span> Create New Organisation</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Organisation Name *</label>
+            <input id="c-orgname" placeholder="Alpha Variance Solutions"/>
+          </div>
+          <div class="form-group">
+            <label>Org Code * (URL slug)</label>
+            <input id="c-orgcode" placeholder="alphavariance" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"/>
+          </div>
+          <div class="form-group">
+            <label>Plan</label>
+            <select id="c-plan">
+              <option value="free">Free (50 tickets/month)</option>
+              <option value="pro">Pro (Unlimited)</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <hr class="divider"/>
+            <label style="color:#4f6ef7;font-size:11px">JIRA CREDENTIALS (optional — client can add via setup page)</label>
+          </div>
+          <div class="form-group">
+            <label>Jira URL</label>
+            <input id="c-jiraurl" placeholder="https://company.atlassian.net"/>
+          </div>
+          <div class="form-group">
+            <label>Jira Email</label>
+            <input id="c-jiraemail" placeholder="admin@company.com"/>
+          </div>
+          <div class="form-group">
+            <label>Jira API Token</label>
+            <input id="c-jiratoken" type="password" placeholder="ATATT3x..."/>
+          </div>
+          <div class="form-group">
+            <label>Jira Project Key</label>
+            <input id="c-jiraproj" placeholder="DEV"/>
+          </div>
+          <div class="form-group full">
+            <hr class="divider"/>
+            <label style="color:#0078d4;font-size:11px">AZURE DEVOPS CREDENTIALS (optional)</label>
+          </div>
+          <div class="form-group">
+            <label>ADO Organisation</label>
+            <input id="c-adoorg" placeholder="MyCompany"/>
+          </div>
+          <div class="form-group">
+            <label>ADO PAT Token</label>
+            <input id="c-adopat" type="password" placeholder="Personal Access Token"/>
+          </div>
+          <div class="form-group">
+            <label>ADO Project</label>
+            <input id="c-adoproj" placeholder="MyProject"/>
+          </div>
+          <div class="form-group full">
+            <hr class="divider"/>
+            <label style="color:#6e7681;font-size:11px">GITHUB CREDENTIALS (optional)</label>
+          </div>
+          <div class="form-group">
+            <label>GitHub Owner</label>
+            <input id="c-ghowner" placeholder="username or org"/>
+          </div>
+          <div class="form-group">
+            <label>GitHub Repo</label>
+            <input id="c-ghrepo" placeholder="repository-name"/>
+          </div>
+          <div class="form-group">
+            <label>GitHub Token</label>
+            <input id="c-ghtoken" type="password" placeholder="ghp_..."/>
+          </div>
+          <div class="form-group">
+            <label>Teams Webhook URL (optional)</label>
+            <input id="c-teams" placeholder="https://xxx.webhook.office.com/..."/>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="clearCreateForm()">Clear</button>
+          <button class="btn btn-primary" id="create-btn" onclick="createOrg()">🚀 Create Organisation</button>
+        </div>
+        <!-- Result URL box -->
+        <div id="create-result" style="display:none">
+          <hr class="divider"/>
+          <div style="font-size:12px;color:#10b981;font-weight:600;margin-bottom:8px">✅ Organisation created successfully!</div>
+          <label>App URL (share with users):</label>
+          <div class="url-box" id="result-url">
+            <span id="result-url-text"></span>
+            <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px;flex-shrink:0" onclick="copyUrl()">Copy</button>
+          </div>
+          <label style="margin-top:10px;display:block">Setup URL (share with client to add their credentials):</label>
+          <div class="url-box" id="result-setup-url">
+            <span id="result-setup-url-text"></span>
+            <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px;flex-shrink:0" onclick="copySetupUrl()">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GUIDE TAB ── -->
+    <div id="tab-guide" class="section">
+      <div class="card">
+        <div class="card-title"><span>📖</span> How to onboard a new client</div>
+        <div style="font-size:13px;color:#7d8699;line-height:1.8;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#111827;border-radius:10px;padding:14px">
+            <div style="color:#4f6ef7;font-weight:700;margin-bottom:6px">Step 1 — Create the org</div>
+            <div>Go to the "Create Org" tab, fill in the org name and code. Credentials are optional — client can fill them via the setup page.</div>
+          </div>
+          <div style="background:#111827;border-radius:10px;padding:14px">
+            <div style="color:#4f6ef7;font-weight:700;margin-bottom:6px">Step 2 — Send URLs to client</div>
+            <div>Send them the <strong style="color:#e8edf5">App URL</strong> to use the app, and the <strong style="color:#e8edf5">Setup URL</strong> to configure their Jira/ADO credentials.</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#4f6ef7;margin-top:8px;background:#4f6ef714;padding:8px;border-radius:6px">
+              App URL: https://aidefectagent.vercel.app?org=clientcode<br/>
+              Setup URL: https://aidefectagent.vercel.app/setup?org=clientcode
+            </div>
+          </div>
+          <div style="background:#111827;border-radius:10px;padding:14px">
+            <div style="color:#4f6ef7;font-weight:700;margin-bottom:6px">Step 3 — Client fills credentials</div>
+            <div>Client opens the Setup URL, enters their Jira/ADO/GitHub tokens. They are stored securely in the database — you never see them.</div>
+          </div>
+          <div style="background:#111827;border-radius:10px;padding:14px">
+            <div style="color:#4f6ef7;font-weight:700;margin-bottom:6px">Step 4 — Client starts using</div>
+            <div>Client opens the App URL, creates tickets. All tickets go to THEIR Jira/ADO automatically.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span>🔑</span> Required Vercel Environment Variables</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <tr style="border-bottom:1px solid #ffffff10">
+            <th style="text-align:left;padding:8px;color:#4d5a6e;font-size:10px;letter-spacing:1px">VARIABLE</th>
+            <th style="text-align:left;padding:8px;color:#4d5a6e;font-size:10px;letter-spacing:1px">PURPOSE</th>
+            <th style="text-align:left;padding:8px;color:#4d5a6e;font-size:10px;letter-spacing:1px">STATUS</th>
+          </tr>
+          <tr><td style="padding:8px;font-family:monospace;color:#4f6ef7">KV_REST_API_URL</td><td style="padding:8px;color:#7d8699">Database URL (auto-added by Upstash)</td><td style="padding:8px"><span id="chk-kvurl" style="color:#4d5a6e">checking...</span></td></tr>
+          <tr><td style="padding:8px;font-family:monospace;color:#4f6ef7">KV_REST_API_TOKEN</td><td style="padding:8px;color:#7d8699">Database token (auto-added by Upstash)</td><td style="padding:8px"><span id="chk-kvtoken" style="color:#4d5a6e">checking...</span></td></tr>
+          <tr><td style="padding:8px;font-family:monospace;color:#4f6ef7">ADMIN_SECRET</td><td style="padding:8px;color:#7d8699">Your admin panel password</td><td style="padding:8px"><span id="chk-admin" style="color:#4d5a6e">checking...</span></td></tr>
+          <tr><td style="padding:8px;font-family:monospace;color:#4f6ef7">ANTHROPIC_API_KEY</td><td style="padding:8px;color:#7d8699">AI ticket generation</td><td style="padding:8px"><span style="color:#10b981">✅ Set</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let ADMIN_KEY = '';
+const BASE = '';
+
+function toast(msg, type='info') {
+  const w = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+async function doLogin() {
+  const key = document.getElementById('login-key').value.trim();
+  if (!key) return toast('Enter admin secret', 'error');
+  // Test the key
+  const btn = document.querySelector('.login-card .btn-primary');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  try {
+    const r = await fetch('/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'admin_list_orgs', adminKey: key })
+    });
+    const d = await r.json();
+    if (r.status === 401) { toast('Wrong admin secret', 'error'); btn.disabled=false; btn.textContent='🔓 Login'; return; }
+    ADMIN_KEY = key;
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('main-section').style.display = 'block';
+    renderOrgs(d.orgs || []);
+    loadStats(d.orgs || []);
+    toast('Welcome to BugForge AI Admin!', 'success');
+  } catch(e) {
+    toast('Connection error: ' + e.message, 'error');
+    btn.disabled=false; btn.textContent='🔓 Login';
+  }
+}
+
+function doLogout() {
+  ADMIN_KEY = '';
+  document.getElementById('main-section').style.display = 'none';
+  document.getElementById('login-section').style.display = 'flex';
+  document.getElementById('login-key').value = '';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['orgs','create','guide'][i] === tab);
+  });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'orgs') loadOrgs();
+}
+
+async function loadOrgs() {
+  const r = await fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ action: 'admin_list_orgs', adminKey: ADMIN_KEY })
+  });
+  const d = await r.json();
+  renderOrgs(d.orgs || []);
+  loadStats(d.orgs || []);
+}
+
+function loadStats(orgs) {
+  document.getElementById('stat-orgs').textContent = orgs.length;
+  document.getElementById('stat-jira').textContent = orgs.filter(o => o.hasJira).length;
+  document.getElementById('stat-ado').textContent = orgs.filter(o => o.hasAdo).length;
+  document.getElementById('stat-gh').textContent = orgs.filter(o => o.hasGitHub).length;
+}
+
+function renderOrgs(orgs) {
+  const el = document.getElementById('orgs-list');
+  if (!orgs.length) {
+    el.innerHTML = '<p style="color:#4d5a6e;font-size:13px;text-align:center;padding:30px">No organisations yet. Create your first one!</p>';
+    return;
+  }
+  const appUrl = window.location.origin;
+  el.innerHTML = `<table class="orgs-table">
+    <thead><tr>
+      <th>Organisation</th><th>Code</th><th>Plan</th>
+      <th>Platforms</th><th>Created</th><th>Actions</th>
+    </tr></thead>
+    <tbody>
+    ${orgs.map(o => `
+      <tr>
+        <td><div class="org-name">${o.orgName}</div></td>
+        <td><span class="org-code">${o.orgCode}</span></td>
+        <td><span style="font-size:11px;color:#7d8699">${o.plan||'free'}</span></td>
+        <td><div class="platform-dots">
+          <div class="pdot ${o.hasJira?'ok':''}" title="Jira ${o.hasJira?'✅':'❌'}"></div>
+          <div class="pdot ${o.hasAdo?'ok':''}" title="ADO ${o.hasAdo?'✅':'❌'}"></div>
+          <div class="pdot ${o.hasGitHub?'ok':''}" title="GitHub ${o.hasGitHub?'✅':'❌'}"></div>
+        </div></td>
+        <td><span style="font-size:11px;color:#4d5a6e">${o.createdAt?o.createdAt.split('T')[0]:'-'}</span></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="copyOrgUrl('${appUrl}/?org=${o.orgCode}')">📋 App URL</button>
+          <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="copyOrgUrl('${appUrl}/setup?org=${o.orgCode}')">⚙️ Setup URL</button>
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:10px" onclick="deleteOrg('${o.orgCode}','${o.orgName}')">🗑️</button>
+        </td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function copyOrgUrl(url) {
+  navigator.clipboard.writeText(url).then(() => toast('URL copied! ' + url, 'success'));
+}
+
+async function createOrg() {
+  const orgName = document.getElementById('c-orgname').value.trim();
+  const orgCode = document.getElementById('c-orgcode').value.trim();
+  if (!orgName || !orgCode) return toast('Organisation name and code are required', 'error');
+
+  const btn = document.getElementById('create-btn');
+  btn.disabled = true; btn.textContent = 'Creating...';
+
+  const payload = {
+    action: 'admin_create_org',
+    adminKey: ADMIN_KEY,
+    orgName, orgCode,
+    plan:         document.getElementById('c-plan').value,
+    jiraUrl:      document.getElementById('c-jiraurl').value.trim(),
+    jiraEmail:    document.getElementById('c-jiraemail').value.trim(),
+    jiraToken:    document.getElementById('c-jiratoken').value.trim(),
+    jiraProj:     document.getElementById('c-jiraproj').value.trim().toUpperCase(),
+    adoOrg:       document.getElementById('c-adoorg').value.trim(),
+    adoPat:       document.getElementById('c-adopat').value.trim(),
+    adoProj:      document.getElementById('c-adoproj').value.trim(),
+    ghOwner:      document.getElementById('c-ghowner').value.trim(),
+    ghRepo:       document.getElementById('c-ghrepo').value.trim(),
+    ghToken:      document.getElementById('c-ghtoken').value.trim(),
+    teamsWebhook: document.getElementById('c-teams').value.trim(),
+  };
+
+  try {
+    const r = await fetch('/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!r.ok) { toast(d.error || 'Failed to create org', 'error'); btn.disabled=false; btn.textContent='🚀 Create Organisation'; return; }
+
+    const appUrl = window.location.origin;
+    document.getElementById('result-url-text').textContent = `${appUrl}/?org=${orgCode}`;
+    document.getElementById('result-setup-url-text').textContent = `${appUrl}/setup?org=${orgCode}`;
+    document.getElementById('create-result').style.display = 'block';
+    toast(`✅ ${orgName} created successfully!`, 'success');
+    btn.disabled=false; btn.textContent='🚀 Create Organisation';
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+    btn.disabled=false; btn.textContent='🚀 Create Organisation';
+  }
+}
+
+async function deleteOrg(orgCode, orgName) {
+  if (!confirm(`Delete "${orgName}" (${orgCode})? This cannot be undone.`)) return;
+  const r = await fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ action: 'admin_delete_org', adminKey: ADMIN_KEY, orgCode })
+  });
+  if (r.ok) { toast(`${orgName} deleted`, 'info'); loadOrgs(); }
+  else toast('Failed to delete', 'error');
+}
+
+function copyUrl() {
+  const url = document.getElementById('result-url-text').textContent;
+  navigator.clipboard.writeText(url).then(() => toast('App URL copied!', 'success'));
+}
+
+function copySetupUrl() {
+  const url = document.getElementById('result-setup-url-text').textContent;
+  navigator.clipboard.writeText(url).then(() => toast('Setup URL copied!', 'success'));
+}
+
+function clearCreateForm() {
+  ['c-orgname','c-orgcode','c-jiraurl','c-jiraemail','c-jiratoken','c-jiraproj',
+   'c-adoorg','c-adopat','c-adoproj','c-ghowner','c-ghrepo','c-ghtoken','c-teams']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('create-result').style.display = 'none';
+}
+</script>
+</body>
+</html>

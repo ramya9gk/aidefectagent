@@ -1465,7 +1465,7 @@ async function api(endpoint, body) {
   if (!r.ok) throw new Error(d.error || `Server ${r.status}`);
   return d;
 }
-function jiraCfg() { return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'' }; }
+function jiraCfg() { return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'', orgCode: ORG_CODE||'' }; }
 function adoCfg()  { const orgEl=document.getElementById('ado-org-input'); if(orgEl&&orgEl.value.trim()) CFG.adoOrg=orgEl.value.trim(); return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam }; }
 function ghCfg()   { return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken }; }
 
@@ -2086,6 +2086,55 @@ function switchPlatformTab(tab) {
   });
   CFG.activePlatformTab = tab;
 }
+
+
+// ══ MULTI-TENANT ORG LOADER ══════════════════════════════════
+const ORG_CODE = new URLSearchParams(window.location.search).get('org') || '';
+
+async function loadOrgConfig() {
+  if (!ORG_CODE) return; // No org in URL — use env vars (single-tenant mode)
+  try {
+    const r = await fetch(`/api/config?org=${ORG_CODE}`);
+    if (!r.ok) {
+      const e = await r.json();
+      toast(`Org not found: ${e.error || ORG_CODE}`, 'error');
+      return;
+    }
+    const cfg = await r.json();
+    // Apply org config to app
+    if (cfg.orgName) {
+      document.querySelector('.logo-name') && (document.querySelector('.logo-name').textContent = cfg.orgName);
+      document.title = `${cfg.orgName} — BugForge AI`;
+    }
+    // Pre-fill project dropdowns
+    if (cfg.jiraUrl) CFG.jiraUrl = cfg.jiraUrl;
+    if (cfg.jiraProj) CFG.jiraProj = cfg.jiraProj;
+    if (cfg.adoOrg)  CFG.adoOrg  = cfg.adoOrg;
+    if (cfg.adoProj) CFG.adoProj = cfg.adoProj;
+    if (cfg.ghOwner) CFG.ghOwner = cfg.ghOwner;
+    if (cfg.ghRepo)  CFG.ghRepo  = cfg.ghRepo;
+
+    // Show org banner in header
+    const agentTxt = document.getElementById('agent-txt');
+    if (agentTxt && cfg.orgName) {
+      agentTxt.textContent = `${cfg.orgName} · Agent ready`;
+    }
+
+    // Load projects with org context
+    setTimeout(() => {
+      if (cfg.hasJira)   loadProjects('jira');
+      if (cfg.hasAdo && cfg.adoOrg) loadProjects('ado');
+    }, 500);
+
+    console.log(`✅ BugForge AI loaded for org: ${cfg.orgName}`);
+  } catch(e) {
+    console.warn('Org config load failed:', e.message);
+  }
+}
+
+// Override postJira/postADO/postGH to pass org code
+// so server-side API can fetch credentials from KV
+const _origOrgCode = ORG_CODE;
 
 // ══ CONFIG UI ════════════════════════════════════════════
 function tSec(id){const b=document.getElementById('bod-'+id),a=document.getElementById('arr-'+id);const o=b.classList.toggle('open');a.classList.toggle('open',o);}
