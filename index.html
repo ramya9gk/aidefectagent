@@ -5,303 +5,698 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 72 72%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%234f6ef7%22/><stop offset=%22100%25%22 stop-color=%22%237c3aed%22/></linearGradient></defs><rect width=%2272%22 height=%2272%22 rx=%2216%22 fill=%22url(%23g)%22/><rect x=%2216%22 y=%2236%22 width=%2240%22 height=%2222%22 rx=%225%22 fill=%22%23fff%22 opacity=%22.9%22/><rect x=%2222%22 y=%2227%22 width=%2228%22 height=%2213%22 rx=%224%22 fill=%22%23fff%22 opacity=%22.9%22/><path d=%22M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z%22 fill=%22url(%23g)%22/></svg>"/>
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 72 72%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%234f6ef7%22/><stop offset=%22100%25%22 stop-color=%22%237c3aed%22/></linearGradient></defs><rect width=%2272%22 height=%2272%22 rx=%2216%22 fill=%22url(%23g)%22/><rect x=%2216%22 y=%2236%22 width=%2240%22 height=%2222%22 rx=%225%22 fill=%22%23fff%22 opacity=%22.9%22/><rect x=%2222%22 y=%2227%22 width=%2228%22 height=%2213%22 rx=%224%22 fill=%22%23fff%22 opacity=%22.9%22/><path d=%22M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z%22 fill=%22url(%23g)%22/></svg>"/>
 <link rel="manifest" href="/manifest.json"/>
-<meta name="theme-color" content="#4f6ef7"/>
+<meta name="theme-color" content="#6366f1"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="BugForge AI"/><meta name="description" content="BugForge AI — Forge structured bug tickets in Jira, ADO and GitHub instantly using AI"/>
+<meta name="apple-mobile-web-app-title" content="Bug Sync"/>
+<meta name="description" content="Bug Sync — AI-powered bug ticket generator for Jira, Azure DevOps, GitHub"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>BugForge AI — Smart Bug Ticket Generator</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<title>Bug Sync — AI Bug Ticket Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-<st<style>*{box-sizing:border-box;margin:0;padding:0}
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════════ */
 :root{
-  --accent:#6366f1;--accent2:#818cf8;--accent3:#a5b4fc;
-  --accent-bg:#6366f10f;--accent-bd:#6366f128;
-  --green:#10b981;--green-bg:#10b9810c;--green-bd:#10b98128;
-  --red:#f43f5e;--red-bg:#f43f5e0c;--red-bd:#f43f5e28;
-  --amber:#f59e0b;--amber-bg:#f59e0b0c;--amber-bd:#f59e0b28;
-  --blue:#3b82f6;--blue-bg:#3b82f60c;--blue-bd:#3b82f628;
-  --purple:#8b5cf6;--purple-bg:#8b5cf60c;
-  --jira:#2d84ff;--jira-bg:#2d84ff0e;--jira-bd:#2d84ff30;
-  --ado:#0ea5e9;--ado-bg:#0ea5e90e;--ado-bd:#0ea5e930;
-  --gh:#94a3b8;--gh-bg:#94a3b80e;--gh-bd:#94a3b830;
-  --r:8px;--rl:12px;--rxl:16px;
-  --sidebar-w:272px;
-  --ease-spring:cubic-bezier(.34,1.56,.64,1);
-  --ease-out:cubic-bezier(.4,0,.2,1);
-  --t:.18s;
-  /* ── Fallback dark values (used when data-theme not yet set) ── */
-  --bg:#050709;--s1:#0b0f17;--s2:#0f1520;--s3:#141c2c;--s4:#1a2236;--s5:#202a42;
-  --b0:#ffffff06;--b1:#ffffff0d;--b2:#ffffff15;--b3:#ffffff20;--b4:#ffffff2e;
-  --t1:#eef2ff;--t2:#94a3b8;--t3:#4d5b75;--t4:#2a3248;
-  --shadow-sm:0 2px 8px #00000040;--shadow-md:0 4px 20px #00000060;--shadow-lg:0 8px 40px #00000080;
-  --header-glass:rgba(5,7,9,0.88);
+  --accent:#6366f1;--accent2:#818cf8;--accent-bg:rgba(99,102,241,.12);--accent-bd:rgba(99,102,241,.3);
+  --green:#22c55e;--green-bg:rgba(34,197,94,.12);--green-bd:rgba(34,197,94,.3);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.12);--red-bd:rgba(239,68,68,.3);
+  --amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);--amber-bd:rgba(245,158,11,.3);
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,.12);--blue-bd:rgba(59,130,246,.3);
+  --purple:#a855f7;--purple-bg:rgba(168,85,247,.12);
+  --jira:#4c8dff;--jira-bg:rgba(76,141,255,.12);--jira-bd:rgba(76,141,255,.3);
+  --ado:#29a7ff;--ado-bg:rgba(41,167,255,.12);--ado-bd:rgba(41,167,255,.3);
+  --gh:#8b949e;--gh-bg:rgba(139,148,158,.12);--gh-bd:rgba(139,148,158,.3);
+  --r:10px;--rl:14px;--rxl:18px;
+  --transition:all .18s ease;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.25);
+  --shadow-md:0 8px 28px rgba(0,0,0,.4);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.55);
 }
 [data-theme="dark"]{
-  --bg:#050709;--s1:#0b0f17;--s2:#0f1520;--s3:#141c2c;--s4:#1a2236;--s5:#202a42;
-  --b0:#ffffff06;--b1:#ffffff0d;--b2:#ffffff15;--b3:#ffffff20;--b4:#ffffff2e;
-  --t1:#eef2ff;--t2:#94a3b8;--t3:#4d5b75;--t4:#2a3248;
-  --shadow-sm:0 2px 8px #00000040;--shadow-md:0 4px 20px #00000060;--shadow-lg:0 8px 40px #00000080;
-  --header-glass:rgba(5,7,9,0.88);
+  --bg:#0a0d14;
+  --s1:#12151f;     /* card bg */
+  --s2:#171b27;     /* nested card */
+  --s3:#1d2234;     /* input bg */
+  --s4:#252b41;     /* input hover */
+  --b1:rgba(255,255,255,.05);
+  --b2:rgba(255,255,255,.09);
+  --b3:rgba(255,255,255,.15);
+  --b4:rgba(255,255,255,.22);
+  --t1:#e5e9f5;
+  --t2:#9aa4bf;
+  --t3:#5e6a85;
+  --shadow:var(--shadow-md);
 }
 [data-theme="light"]{
-  --bg:#f6f8fc;--s1:#ffffff;--s2:#f1f5fb;--s3:#e8eef8;--s4:#dde5f5;--s5:#d0daf0;
-  --b0:#00000006;--b1:#0000000f;--b2:#00000018;--b3:#00000024;--b4:#00000032;
-  --t1:#0f172a;--t2:#475569;--t3:#94a3b8;--t4:#cbd5e1;
-  --shadow-sm:0 2px 8px #0000000e;--shadow-md:0 4px 20px #00000014;--shadow-lg:0 8px 40px #0000001e;
-  --header-glass:rgba(246,248,252,0.92);
+  --bg:#f4f5fa;
+  --s1:#ffffff;
+  --s2:#f6f7fb;
+  --s3:#eceef5;
+  --s4:#dfe2ed;
+  --b1:rgba(0,0,0,.06);
+  --b2:rgba(0,0,0,.1);
+  --b3:rgba(0,0,0,.16);
+  --b4:rgba(0,0,0,.22);
+  --t1:#111421;
+  --t2:#4a5268;
+  --t3:#6b7280;
+  --shadow:0 4px 20px rgba(0,0,0,.08);
 }
-html,body{height:100%;height:100dvh;background:var(--bg);color:var(--t1);font-family:'Plus Jakarta Sans',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
-::selection{background:#6366f140;color:var(--t1)}
-::-webkit-scrollbar{width:3px;height:3px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--b3);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--b4)}
-.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;height:100dvh;position:relative;overflow:hidden}
-.sidebar{display:flex;flex-direction:column;background:var(--s1);border-right:1px solid var(--b1);overflow-y:auto;overflow-x:hidden;position:relative}
-.sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:100px;background:linear-gradient(180deg,#6366f108,transparent);pointer-events:none;z-index:0}
-.sb-top{padding:16px 16px 12px;border-bottom:1px solid var(--b1);flex-shrink:0;position:relative;z-index:1}
-.logo{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4f6ef7,#7c3aed);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px #6366f140;flex-shrink:0}
-.logo-icon svg{filter:drop-shadow(0 1px 3px #00000030)}
-.logo-name{font-size:15px;font-weight:800;color:var(--t1);letter-spacing:-.5px}
-.logo-sub{font-size:9px;color:var(--t3);margin-top:1px;letter-spacing:.04em;font-weight:500}
-.ppills{display:flex;gap:4px;flex-wrap:wrap}
-.ppill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--s3);color:var(--t3);display:inline-flex;align-items:center;gap:4px;border:1px solid var(--b1);transition:all var(--t);letter-spacing:.02em}
-.ppill.p-jira{background:var(--jira-bg);color:var(--jira);border-color:var(--jira-bd)}
-.ppill.p-ado{background:var(--ado-bg);color:var(--ado);border-color:var(--ado-bd)}
-.ppill.p-gh{background:var(--gh-bg);color:var(--gh);border-color:var(--gh-bd)}
-.sb-sec{padding:0 16px 14px;border-bottom:1px solid var(--b0)}
-.sec-hdr{font-size:9px;font-weight:800;color:var(--t3);padding:12px 0 7px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;text-transform:uppercase;letter-spacing:1.2px;transition:color var(--t)}
-.sec-hdr:hover{color:var(--t2)}
-.sec-hdr .chev{font-size:9px;transition:transform var(--t);color:var(--t4)}
-.sec-hdr.open .chev{transform:rotate(180deg)}
-.sec-body{overflow:hidden}
-.ptab-header{display:flex;background:var(--s2);padding:3px;gap:2px;border-bottom:1px solid var(--b1)}
-.ptab-btn{flex:1;padding:7px 4px;font-size:11px;font-weight:700;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:7px;transition:all var(--t);font-family:inherit;display:flex;align-items:center;justify-content:center;gap:4px;letter-spacing:.01em}
-.ptab-btn:hover{color:var(--t2);background:var(--b1)}
-.ptab-btn.active{background:var(--accent-bg);color:var(--accent2);box-shadow:inset 0 0 0 1px var(--accent-bd)}
-.ptab-btn.active.jira{background:var(--jira-bg);color:var(--jira);box-shadow:inset 0 0 0 1px var(--jira-bd)}
-.ptab-btn.active.ado{background:var(--ado-bg);color:var(--ado);box-shadow:inset 0 0 0 1px var(--ado-bd)}
-.ptab-btn.active.gh{background:var(--gh-bg);color:var(--gh);box-shadow:inset 0 0 0 1px var(--gh-bd)}
-.ptab-panel{display:none;padding:12px 0 0}
-.ptab-panel.active{display:block}
-.cfg-row{display:flex;flex-direction:column;gap:3px;margin-bottom:9px}
-.cfg-lbl{font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.02em}
-.cfg-in{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--t1);font-family:inherit;outline:none;transition:border-color var(--t),box-shadow var(--t)}
-.cfg-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
-.cfg-in::placeholder{color:var(--t3)}
-.cfg-dot{width:7px;height:7px;border-radius:50%;background:var(--t4);transition:all var(--t);flex-shrink:0}
-.cfg-dot.ok{background:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
-.cfg-dot.err{background:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
-.cfg-row-inline{display:flex;align-items:center;gap:7px}
-.mini-btn-row{display:flex;gap:5px;margin-top:6px}
-.mbtn,.hbtn{font-size:11px;padding:5px 11px;border-radius:8px;border:1px solid var(--b2);background:transparent;color:var(--t2);cursor:pointer;font-family:inherit;font-weight:600;transition:all var(--t);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
-.mbtn:hover,.hbtn:hover{background:var(--s3);color:var(--t1);border-color:var(--b3)}
-.mbtn.ok{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
-.mbtn.ok:hover{background:var(--green);color:#fff}
-.notif-row{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:6px 9px;border-radius:8px;margin-bottom:5px}
-.notif-row.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
-.notif-row.warn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
-.notif-row.neutral{background:var(--s3);color:var(--t2);border:1px solid var(--b1)}
-.tpl-item{padding:7px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--b1);font-size:11px;color:var(--t2);cursor:pointer;transition:all var(--t);display:flex;align-items:center;gap:7px;margin-bottom:4px;font-weight:500}
-.tpl-item:hover{background:var(--s3);color:var(--t1);border-color:var(--b2);transform:translateX(2px)}
-.tpl-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
-.sess-item{font-size:11px;padding:7px 10px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;color:var(--t2);transition:all var(--t);border-left:2px solid transparent;margin-bottom:3px;font-weight:500}
-.sess-item:hover{background:var(--s3);color:var(--t1);border-left-color:var(--accent2)}
-.sess-empty{font-size:11px;color:var(--t3);text-align:center;padding:12px 0;font-style:italic}
-.sess-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.route-item{display:flex;align-items:center;gap:7px;font-size:11px;padding:5px 0;color:var(--t2)}
-.rb{font-size:9px;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
-.rb-jira{background:var(--jira-bg);color:var(--jira)}
-.rb-ado{background:var(--ado-bg);color:var(--ado)}
-.rb-gh{background:var(--gh-bg);color:var(--gh)}
-.rb-default{background:var(--b1);color:var(--t3)}
-.main{display:flex;flex-direction:column;min-height:0;overflow:hidden;background:var(--bg)}
-.main-hdr{padding:10px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--header-glass,var(--s1));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);gap:8px;transition:background .25s;z-index:10}
-.hdr-left{display:flex;align-items:center;gap:8px}
-.hdr-right,.hdr-btns{display:flex;align-items:center;gap:5px}
-.hdr-status{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--t2)}
-.status-dot{width:8px;height:8px;border-radius:50%}
-.chat-area{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:14px;min-height:0;position:relative;background:var(--bg)}
-.chat-area::-webkit-scrollbar{width:3px}
-.chat-area::-webkit-scrollbar-thumb{background:var(--b3);border-radius:3px}
-.drop-ov{display:none;position:absolute;inset:0;background:var(--accent-bg);border:2px dashed var(--accent);border-radius:12px;z-index:50;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:600;color:var(--accent2);backdrop-filter:blur(4px)}
-.msg{display:flex;gap:10px;align-items:flex-start;animation:msgIn .22s var(--ease-out,ease)}
-.msg.user{flex-direction:row-reverse}
-@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.msg-av{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.msg-av.ai{background:linear-gradient(135deg,#4f6ef7,#7c3aed);box-shadow:0 3px 10px #6366f138}
-.msg-av.usr{background:var(--s4);border:1px solid var(--b2);font-size:12px;font-weight:700;color:var(--t2)}
-.msg-bub{max-width:76%;padding:10px 14px;border-radius:4px 14px 14px 14px;font-size:13px;line-height:1.65;border:1px solid var(--b1);background:var(--s2);box-shadow:var(--shadow-sm,0 2px 8px #00000020);color:var(--t1)}
-.msg.user .msg-bub{background:linear-gradient(135deg,#5b6ef5,#7c3aed);border-color:transparent;border-radius:14px 14px 4px 14px;color:#fff;box-shadow:0 4px 14px #6366f138}
-.msg.ai .msg-bub code{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--b1);padding:1px 5px;border-radius:4px}
-.ticket-wrap{animation:slideUp .25s var(--ease-out,ease)}
-@keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-.ticket-frame{border-radius:14px;border:1px solid var(--b2);overflow:hidden;box-shadow:var(--shadow-md,0 4px 20px #00000030);background:var(--s1)}
-.tf-hdr{padding:14px 18px 12px;background:var(--s2);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:8px}
-.tf-hdr-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
-.tf-ticket-id{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--accent2);background:var(--accent-bg);padding:3px 8px;border-radius:6px;border:1px solid var(--accent-bd);white-space:nowrap;flex-shrink:0;letter-spacing:.05em}
-.tf-title{font-size:13px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
-.tf-tabs{display:flex;gap:3px}
-.tf-tab{font-size:10px;font-weight:700;padding:4px 9px;border-radius:6px;border:1px solid var(--b2);background:transparent;color:var(--t3);cursor:pointer;font-family:inherit;transition:all var(--t);letter-spacing:.01em}
-.tf-tab.active,.tf-tab:hover{background:var(--s3);color:var(--t1);border-color:var(--b3)}
-.tf-body{padding:16px 18px;background:var(--s1)}
-.tf-exp-act{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-.tf-field{margin-bottom:10px}
-.tf-label{font-size:9px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;align-items:center;gap:5px}
-.tf-value{font-size:12px;color:var(--t1);line-height:1.6;font-weight:500}
-.tf-value code{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--s3);padding:1px 5px;border-radius:4px}
-.tf-section{border:1px solid var(--b1);border-radius:10px;overflow:hidden;margin-bottom:10px}
-.tf-section-hdr{font-size:9px;font-weight:800;color:var(--t2);padding:7px 12px;background:var(--s2);border-bottom:1px solid var(--b1);text-transform:uppercase;letter-spacing:.8px}
-.tf-section-body{padding:10px 12px;font-size:12px;color:var(--t1);line-height:1.7}
-.tf-actions{padding:12px 18px;border-top:1px solid var(--b1);background:var(--bg);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.abtn{font-size:11px;padding:6px 12px;border-radius:8px;border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;font-family:inherit;font-weight:600;transition:all var(--t);white-space:nowrap;display:flex;align-items:center;gap:4px;letter-spacing:.01em}
-.abtn:hover{background:var(--s3);color:var(--t1);border-color:var(--b3);transform:translateY(-1px)}
-.abtn:active{transform:translateY(0)}
-.abtn.primary{background:linear-gradient(135deg,#5b6ef5,#7c3aed);color:#fff;border-color:transparent;box-shadow:0 3px 10px #6366f128}
-.abtn.primary:hover{opacity:.92;transform:translateY(-1px);box-shadow:0 5px 16px #6366f138}
-.abtn.jira-post{background:var(--jira-bg);color:var(--jira);border-color:var(--jira-bd)}
-.abtn.jira-post:hover{background:var(--jira);color:#fff;box-shadow:0 3px 10px #2d84ff30}
-.abtn.ado-post{background:var(--ado-bg);color:var(--ado);border-color:var(--ado-bd)}
-.abtn.ado-post:hover{background:var(--ado);color:#fff;box-shadow:0 3px 10px #0ea5e930}
-.abtn.gh-post{background:var(--gh-bg);color:var(--gh);border-color:var(--gh-bd)}
-.abtn.gh-post:hover{background:var(--gh);color:#fff;box-shadow:0 3px 10px #94a3b830}
-.abtn.all-post{background:linear-gradient(135deg,#2d84ff,#7c3aed);color:#fff;border:none;box-shadow:0 3px 10px #5b6ef128}
-.abtn.all-post:hover{opacity:.92;transform:translateY(-1px)}
-.sbadge{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.05em;text-transform:uppercase}
-.sbadge.crit,.sbadge.critical{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
-.sbadge.high{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
-.sbadge.med,.sbadge.medium{background:var(--blue-bg);color:#60a5fa;border:1px solid var(--blue-bd)}
-.sbadge.low{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
-.quality-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid var(--b2)}
-.sev-score-bar{height:3px;border-radius:2px;background:var(--b1);overflow:hidden;margin-top:4px}
-.sev-score-fill{height:100%;border-radius:2px;transition:width .5s var(--ease-out,ease)}
-.post-status{padding:9px 14px;border-radius:10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px;margin-top:8px;animation:msgIn .2s ease}
-.post-status.success{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
-.post-status.error{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
-.post-status.posting{background:var(--accent-bg);border:1px solid var(--accent-bd);color:var(--accent2)}
-.tc-prompt{margin-top:8px;padding:14px 16px;background:var(--green-bg);border:1px solid var(--green-bd);border-radius:12px;animation:slideUp .2s ease}
-.tc-prompt p{font-size:13px;color:var(--t1);font-weight:600;margin-bottom:10px}
-.tc-prompt-btns{display:flex;gap:7px;flex-wrap:wrap}
-.think-box{padding:10px 14px;background:var(--s3);border-radius:10px;font-size:11px;border-left:3px solid var(--accent);color:var(--t2)}
-.think-label{font-weight:700;color:var(--accent2);font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.platform-btns-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}
-.platform-btn{padding:8px 10px;border-radius:9px;border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;font-family:inherit;font-weight:600;font-size:11px;transition:all var(--t);display:flex;align-items:center;justify-content:center;gap:5px}
-.platform-btn:hover{background:var(--s3);color:var(--t1);transform:translateY(-1px)}
-.platform-btn.all{grid-column:1/-1;background:var(--accent-bg);color:var(--accent2);border-color:var(--accent-bd);font-size:12px}
-.platform-btn.all:hover{background:linear-gradient(135deg,#5b6ef5,#7c3aed);color:#fff;border-color:transparent;box-shadow:0 4px 14px #6366f130}
-.input-area{border-top:2px solid var(--accent-bd);background:var(--s1);flex-shrink:0;padding:12px 20px 16px;transition:background .25s}
-.input-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.input-label-text{font-size:11px;font-weight:700;color:var(--t2);display:flex;align-items:center;gap:6px}
-.input-label-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;box-shadow:0 0 0 3px var(--accent-bg)}
-.input-label-hint{font-size:10px;color:var(--t3);font-weight:500}
-.input-box{background:var(--s2);border:1px solid var(--b2);border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
-.input-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
-.input-top{display:flex;align-items:flex-start}
-#din{flex:1;background:transparent;border:none;padding:12px 14px;font-size:13px;font-family:inherit;color:var(--t1);resize:none;outline:none;min-height:70px;max-height:140px;line-height:1.6}
-#din::placeholder{color:var(--t3);font-size:12px}
-.input-btns{display:flex;flex-direction:column;gap:3px;padding:8px 8px 8px 0}
-.iibtn{width:30px;height:30px;border-radius:8px;background:transparent;border:1px solid var(--b2);color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all var(--t)}
-.iibtn:hover{background:var(--s3);color:var(--t1);border-color:var(--b3)}
-.iibtn.attached{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
-.iibtn.listening{background:var(--red-bg);border-color:var(--red-bd);color:var(--red);animation:pulse .8s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.input-foot{padding:7px 12px 7px 14px;background:var(--s3);border-top:1px solid var(--b1);display:flex;align-items:center;gap:6px}
-.ex-chips{display:flex;gap:4px;flex:1;overflow:hidden}
-.ex-chip{font-size:10px;padding:3px 9px;border-radius:20px;background:var(--s4);border:1px solid var(--b2);color:var(--t3);cursor:pointer;transition:all var(--t);white-space:nowrap;font-weight:500}
-.ex-chip:hover{background:var(--s5);color:var(--t1);border-color:var(--b3)}
-.send-btn{padding:8px 18px;border-radius:10px;background:linear-gradient(135deg,#5b6ef5,#7c3aed);color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;transition:all var(--t);display:flex;align-items:center;gap:5px;box-shadow:0 3px 12px #6366f130;letter-spacing:.02em;white-space:nowrap;flex-shrink:0}
-.send-btn:hover{opacity:.94;transform:translateY(-1px);box-shadow:0 5px 18px #6366f140}
-.send-btn:active{transform:translateY(0)}
-.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.ss-thumb{display:flex;align-items:center;gap:8px;padding:5px 14px;background:var(--green-bg);border-bottom:1px solid var(--green-bd)}
-.ss-name{font-size:10px;color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:500}
-.ss-rm{margin-left:auto;font-size:10px;color:var(--t3);cursor:pointer;transition:color var(--t);font-weight:600}
-.ss-rm:hover{color:var(--red)}
-#screenshot-warn{display:none;align-items:center;gap:8px;padding:7px 14px;background:var(--amber-bg);border-top:1px solid var(--amber-bd);font-size:11px;color:var(--amber);font-weight:600}
-#voice-ind{display:none;align-items:center;gap:7px;padding:7px 14px;background:var(--red-bg);border-top:1px solid var(--red-bd);font-size:11px;color:var(--red);font-weight:600}
-.voice-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse .8s infinite}
-.existing-form{padding:10px 0 6px}
-.ef-row{display:flex;gap:6px;margin-bottom:6px}
-.bulk-bar{padding:10px 20px;background:var(--s2);border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:8px;font-size:11px;color:var(--t2);font-weight:600}
-.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.toast{padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;font-family:inherit;color:var(--t1);max-width:320px;animation:toastIn .22s cubic-bezier(.34,1.56,.64,1);pointer-events:none;display:flex;align-items:center;gap:8px;backdrop-filter:blur(12px);background:var(--s1);border:1px solid var(--b3);box-shadow:0 4px 20px #00000040}
-@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
-#confirm-overlay{display:none;position:fixed;inset:0;background:#00000070;z-index:8000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.confirm-box{background:var(--s1);border:1px solid var(--b3);border-radius:16px;padding:24px;width:340px;box-shadow:0 8px 40px #00000080;animation:slideUp .22s cubic-bezier(.34,1.56,.64,1)}
-#confirm-title-el{font-size:16px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.02em}
-#confirm-msg-el{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:20px}
-.confirm-btns{display:flex;gap:8px;justify-content:flex-end}
-.dashboard-overlay{position:fixed;inset:0;background:#00000070;z-index:50;display:none;animation:fadeIn .2s ease;backdrop-filter:blur(4px)}
+
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-serif;overflow:hidden;transition:background .3s,color .3s;-webkit-font-smoothing:antialiased}
+
+/* ═══════════════════════════════════════════════════════════════
+   APP SHELL — topbar + workspace
+   ═══════════════════════════════════════════════════════════════ */
+.app{display:grid;grid-template-rows:auto 1fr;height:100vh;position:relative}
+
+.topbar{
+  display:flex;align-items:center;gap:16px;
+  padding:14px 22px;
+  border-bottom:1px solid var(--b1);
+  background:var(--bg);
+  flex-shrink:0;
+  z-index:5;
+}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brand-logo{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,#4f6ef7,#7c3aed);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(99,102,241,.35);
+}
+.brand-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:-.3px;line-height:1.1}
+.brand-sub{font-size:10.5px;color:var(--t2);margin-top:2px;letter-spacing:.2px}
+
+.topbar-spacer{flex:1}
+.topbar-status{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);padding:6px 12px;background:var(--s1);border:1px solid var(--b1);border-radius:20px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:statusPulse 2.5s infinite}
+@keyframes statusPulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.topbar-btns{display:flex;gap:4px;flex-shrink:0;align-items:center}
+.hbtn{
+  background:transparent;border:1px solid var(--b2);border-radius:9px;
+  padding:7px 11px;font-size:11.5px;color:var(--t2);cursor:pointer;
+  font-family:'Inter',sans-serif;transition:var(--transition);
+  white-space:nowrap;display:flex;align-items:center;gap:5px;font-weight:500;
+}
+.hbtn:hover{background:var(--s2);color:var(--t1);border-color:var(--b3)}
+.hbtn.active{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)}
+.hbtn.theme-btn{font-size:14px;padding:7px 10px}
+.hbtn.settings-gear{background:var(--accent-bg);border-color:var(--accent-bd);color:var(--accent2)}
+.hbtn.settings-gear:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ═══════════════════════════════════════════════════════════════
+   WORKSPACE — two cards
+   ═══════════════════════════════════════════════════════════════ */
+.workspace{
+  display:grid;
+  grid-template-columns:minmax(380px,480px) 1fr;
+  gap:20px;padding:20px;
+  overflow:hidden;min-height:0;
+}
+
+.card{
+  background:var(--s1);
+  border:1px solid var(--b1);
+  border-radius:var(--rxl);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+  transition:background .3s,border-color .3s;
+}
+.card-hdr{
+  padding:16px 20px 12px;
+  border-bottom:1px solid var(--b1);
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{
+  font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--t2);
+}
+.card-body{flex:1;overflow-y:auto;min-height:0}
+.card-body::-webkit-scrollbar{width:4px}
+.card-body::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.card-body::-webkit-scrollbar-thumb:hover{background:var(--b3)}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEFT CARD — NEW BUG form
+   ═══════════════════════════════════════════════════════════════ */
+.form-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+
+.field-label{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:12px;font-weight:500;color:var(--t1);margin-bottom:7px;
+}
+.field-hint{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;background:var(--s3);padding:2px 7px;border-radius:5px;border:1px solid var(--b1)}
+.badge-req{font-size:9px;font-weight:700;letter-spacing:.8px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);padding:2px 7px;border-radius:5px}
+
+/* Dropzone */
+.dropzone{
+  border:1.5px dashed var(--b3);border-radius:var(--rl);
+  padding:28px 16px;text-align:center;
+  cursor:pointer;transition:var(--transition);
+  background:var(--s2);
+  position:relative;overflow:hidden;
+  min-height:148px;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+}
+.dropzone:hover{border-color:var(--accent);background:var(--accent-bg)}
+.dropzone.drag-over{border-color:var(--accent);background:var(--accent-bg);transform:scale(1.01)}
+.dropzone.has-file{border-style:solid;border-color:var(--green-bd);background:var(--green-bg);padding:12px}
+.dz-icon{color:var(--t3);opacity:.7}
+.dropzone:hover .dz-icon{color:var(--accent2);opacity:1}
+.dz-title{font-size:13px;color:var(--t1);font-weight:500}
+.dz-sub{font-size:11px;color:var(--t3)}
+.dz-preview{display:flex;align-items:center;gap:10px;width:100%;text-align:left}
+.dz-preview img{width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid var(--b2);flex-shrink:0}
+.dz-preview-info{flex:1;min-width:0}
+.dz-preview-name{font-size:12px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz-preview-size{font-size:10px;color:var(--t2);margin-top:2px}
+.dz-remove{background:var(--s3);border:1px solid var(--b2);color:var(--t2);cursor:pointer;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--transition);flex-shrink:0}
+.dz-remove:hover{color:var(--red);border-color:var(--red-bd);background:var(--red-bg)}
+
+/* Describe textarea */
+.describe-wrap{position:relative}
+.describe-box{
+  width:100%;background:var(--s2);
+  border:1px solid var(--b2);border-radius:var(--rl);
+  padding:12px 14px;
+  font-size:13px;line-height:1.55;color:var(--t1);
+  font-family:'Inter',sans-serif;outline:none;
+  resize:none;min-height:90px;max-height:170px;
+  transition:border-color .15s,background .15s;
+}
+.describe-box:focus{border-color:var(--accent);background:var(--s1)}
+.describe-box::placeholder{color:var(--t3)}
+
+/* Example chips */
+.ex-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ex-chip{
+  font-size:11px;padding:5px 11px;
+  border:1px solid var(--b2);border-radius:20px;
+  cursor:pointer;color:var(--t2);background:var(--s2);
+  font-family:'Inter',sans-serif;transition:var(--transition);white-space:nowrap;
+}
+.ex-chip:hover{background:var(--s3);color:var(--t1);border-color:var(--b3)}
+.ex-chip.active{background:var(--accent-bg);border-color:var(--accent-bd);color:var(--accent2)}
+
+/* Two-column row (Platform + Project) */
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-field{display:flex;flex-direction:column;gap:6px}
+.form-field-lbl{font-size:11px;color:var(--t2);font-weight:500}
+.select-in,.text-in{
+  width:100%;background:var(--s2);
+  border:1px solid var(--b2);border-radius:9px;
+  padding:9px 11px;font-size:12px;color:var(--t1);
+  font-family:'Inter',sans-serif;outline:none;
+  transition:border-color .15s,background .15s;cursor:pointer;
+}
+.select-in:hover,.text-in:hover{border-color:var(--b3)}
+.select-in:focus,.text-in:focus{border-color:var(--accent);background:var(--s1)}
+.select-in::placeholder,.text-in::placeholder{color:var(--t3)}
+
+/* Action buttons row (Voice + Comment) */
+.form-row-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.action-btn{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 12px;border-radius:10px;
+  background:var(--s2);border:1px solid var(--b2);
+  color:var(--t1);font-size:12px;font-weight:500;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:var(--transition);
+}
+.action-btn:hover{background:var(--s3);border-color:var(--b3)}
+.action-btn.active{background:var(--red-bg);border-color:var(--red-bd);color:var(--red)}
+.action-btn.has-file{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
+.action-btn svg{flex-shrink:0}
+
+/* Generate button */
+.generate-btn{
+  width:100%;padding:13px;
+  background:linear-gradient(180deg,#6366f1,#5458e8);
+  border:none;border-radius:11px;color:#fff;
+  font-size:13.5px;font-weight:600;cursor:pointer;
+  font-family:'Inter',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .12s,box-shadow .18s,opacity .15s;
+  box-shadow:0 4px 14px rgba(99,102,241,.35);
+  margin-top:4px;
+}
+.generate-btn:hover{box-shadow:0 6px 22px rgba(99,102,241,.5);transform:translateY(-1px)}
+.generate-btn:active{transform:translateY(0)}
+.generate-btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;transform:none}
+
+/* Form footer */
+.form-footer{
+  padding:12px 20px;border-top:1px solid var(--b1);
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:11px;color:var(--t3);flex-shrink:0;
+}
+.form-footer-clear{
+  background:none;border:none;color:var(--t2);cursor:pointer;
+  font-size:11px;display:flex;align-items:center;gap:4px;
+  padding:4px 8px;border-radius:6px;transition:var(--transition);
+  font-family:'Inter',sans-serif;
+}
+.form-footer-clear:hover{background:var(--s3);color:var(--t1)}
+
+/* ═══════════════════════════════════════════════════════════════
+   RIGHT CARD — Generated Ticket
+   ═══════════════════════════════════════════════════════════════ */
+.ticket-area{
+  flex:1;overflow-y:auto;padding:18px 20px;
+  display:flex;flex-direction:column;gap:12px;
+  min-height:0;position:relative;
+}
+.ticket-area::-webkit-scrollbar{width:4px}
+.ticket-area::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+/* Empty state */
+.empty-state{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;color:var(--t3);padding:40px 24px;gap:14px;
+  min-height:300px;
+}
+.empty-icon{
+  width:64px;height:64px;border-radius:16px;
+  background:var(--s2);border:1px solid var(--b1);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--t3);
+}
+.empty-title{font-size:15px;color:var(--t2);font-weight:500}
+.empty-sub{font-size:12px;color:var(--t3);line-height:1.5;max-width:280px}
+
+/* Drop overlay (when dragging a file over the ticket/card area) */
+.drop-ov{
+  position:absolute;inset:0;
+  background:rgba(99,102,241,.1);backdrop-filter:blur(4px);
+  border:2px dashed var(--accent);border-radius:var(--rl);
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+  z-index:10;pointer-events:none;margin:8px;
+}
+.drop-ov.active{display:flex}
+
+/* ═══════════════════════════════════════════════════════════════
+   MESSAGES (reused from old chat — restyled)
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.dashboard-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--s1);border:1px solid var(--b2);border-radius:16px;padding:24px;width:560px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px #00000080;display:none;animation:slideUp .22s cubic-bezier(.34,1.56,.64,1);z-index:51}
-.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.dash-title{font-size:18px;font-weight:800;letter-spacing:-.03em}
-.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.dash-card{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:14px 16px}
-.dash-val{font-size:28px;font-weight:800;color:var(--t1);margin-bottom:3px;letter-spacing:-.03em}
-.dash-lbl{font-size:11px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.kb-overlay{position:fixed;inset:0;background:#00000070;z-index:50;display:none;backdrop-filter:blur(4px)}
-.kb-box{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--s1);border:1px solid var(--b2);border-radius:16px;padding:24px;width:420px;box-shadow:0 8px 40px #00000080}
-.kb-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--b0);font-size:12px;color:var(--t2)}
-kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--s3);border:1px solid var(--b3);border-radius:5px;padding:2px 7px;color:var(--t1)}
-#mobile-menu-btn{display:none;background:transparent;border:none;cursor:pointer;padding:5px;border-radius:8px;color:var(--t2);font-size:18px;line-height:1;transition:color var(--t)}
-#mobile-menu-btn:hover{color:var(--t1)}
-.mobile-overlay{display:none;position:fixed;inset:0;background:#00000070;z-index:199;backdrop-filter:blur(3px)}
-.mobile-overlay.active{display:block}
-.sidebar-close-btn{display:none;width:100%;padding:8px 14px;background:var(--s3);border:none;border-bottom:1px solid var(--b1);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer;text-align:left;font-family:inherit}
-@keyframes statusPulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.6)}50%{box-shadow:0 0 0 5px rgba(16,185,129,0)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-::selection{background:#6366f140;color:var(--t1)}
-::-webkit-scrollbar{width:3px;height:3px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--b3);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--b4)}
-.spin{display:inline-block;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+.msg{display:flex;gap:10px;align-items:flex-start;animation:fadeUp .25s ease}
+.msg.user{flex-direction:row-reverse}
+.msg-av{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.msg-av.ai{background:var(--accent)}
+.msg-av.user{background:var(--s3);border:1px solid var(--b2)}
+.msg-bub{max-width:84%;padding:10px 14px;border-radius:var(--rl);font-size:13px;line-height:1.6;border:1px solid var(--b1)}
+.msg.ai .msg-bub{background:var(--s2);border-radius:4px var(--rl) var(--rl) var(--rl)}
+.msg.user .msg-bub{background:var(--accent);border-color:transparent;border-radius:var(--rl) 4px var(--rl) var(--rl);color:#fff}
+
+/* Thinking */
+.thinking{display:flex;gap:10px;align-items:flex-start}
+.think-box{background:var(--s2);border:1px solid var(--b2);border-radius:4px var(--rl) var(--rl) var(--rl);padding:12px 14px;min-width:240px}
+.think-steps{display:flex;flex-direction:column;gap:6px}
+.think-step{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2)}
+.think-step.active{color:var(--t1)}
+.think-step.done{color:var(--green)}
+.si{width:16px;height:16px;border-radius:50%;flex-shrink:0}
+.si.spin{border:2px solid var(--accent);border-top-color:transparent;animation:spin .7s linear infinite}
+.si.done{background:var(--green-bg);border:1px solid var(--green)}
+.si.wait{background:var(--b1);border:1px solid var(--b2)}
+
+/* Severity score bar */
+.sev-score-bar{padding:10px 12px;background:var(--s2);border:1px solid var(--b2);border-radius:10px}
+.sev-score-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sev-score-lbl{font-size:11px;color:var(--t2)}
+.sev-score-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500}
+.sev-score-track{height:6px;background:var(--s3);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.sev-score-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.sev-score-reason{font-size:11px;color:var(--t2);line-height:1.5}
+
+/* Ticket card */
+.ticket-wrap{animation:fadeUp .3s ease}
+.ticket-card{background:var(--s1);border:1px solid var(--b2);border-radius:var(--rxl);overflow:hidden}
+.tk-hdr{padding:11px 16px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--b1)}
+.hdr-jira{background:linear-gradient(135deg,#0039a8,#0052cc)}
+.hdr-ado{background:linear-gradient(135deg,#004e8c,#0078d4)}
+.hdr-gh{background:linear-gradient(135deg,#161b22,#21262d)}
+.tk-id{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500}
+.tk-badges{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}
+.sbadge,.pbadge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px}
+.sc{background:rgba(239,68,68,.18);color:#f87171;border:1px solid rgba(239,68,68,.28)}
+.sh{background:rgba(245,158,11,.18);color:#fbbf24;border:1px solid rgba(245,158,11,.28)}
+.sm{background:rgba(59,130,246,.18);color:#60a5fa;border:1px solid rgba(59,130,246,.28)}
+.sl{background:rgba(34,197,94,.18);color:#4ade80;border:1px solid rgba(34,197,94,.28)}
+.pbadge{background:var(--s3);color:var(--t2);border:1px solid var(--b2)}
+.tk-body{padding:14px 16px}
+.tk-sec{margin-bottom:13px}
+.tk-sec:last-child{margin-bottom:0}
+.tk-sec-lbl{font-size:9px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;color:var(--t3);margin-bottom:5px}
+.tk-summary{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;line-height:1.4;margin-bottom:8px}
+.tk-desc{font-size:12px;color:var(--t2);line-height:1.65}
+.steps-list{list-style:none;padding:0;margin:0}
+.step-item{display:flex;gap:9px;padding:4px 0;font-size:12px;color:var(--t2);align-items:flex-start}
+.step-n{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);min-width:20px;flex-shrink:0;padding-top:2px}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.rbox{padding:8px 10px;font-size:12px;line-height:1.55;border-radius:0 7px 7px 0}
+.rbox.exp{background:var(--green-bg);border-left:3px solid var(--green);color:#86efac}
+.rbox.act{background:var(--red-bg);border-left:3px solid var(--red);color:#fca5a5}
+.env-box{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--s3);border:1px solid var(--b1);border-radius:7px;padding:7px 10px;color:var(--t2);line-height:1.8}
+.tags-row{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--b2);color:var(--t2);background:var(--s3)}
+.tag-c{background:var(--jira-bg);border-color:var(--jira-bd);color:var(--jira)}
+.crit-list{list-style:none}
+.crit-item{display:flex;gap:8px;font-size:12px;color:var(--t2);align-items:flex-start;padding:3px 0}
+.crit-chk{width:14px;height:14px;border-radius:50%;background:var(--green-bg);border:1px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+
+/* Quality badge */
+.quality-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:20px;margin:0 16px 10px;border:1px solid}
+.qb-green{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
+.qb-amber{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)}
+.qb-red{background:var(--red-bg);border-color:var(--red-bd);color:var(--red)}
+
+/* Feature panels, root cause, test cases, duplicate */
+.feat-panel{margin:0 16px 12px;border:1px solid var(--b2);border-radius:10px;overflow:hidden;background:var(--s2)}
+.feat-panel-hdr{padding:8px 12px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;border-bottom:1px solid var(--b2);background:var(--s3)}
+.feat-panel-body{padding:12px}
+.rc-item{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--b1);font-size:12px}
+.rc-item:last-child{border-bottom:none}
+.rc-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);min-width:18px;flex-shrink:0;padding-top:1px}
+.rc-content{flex:1}
+.rc-cause{color:var(--t1);margin-bottom:2px;font-weight:500}
+.rc-area{font-size:11px;color:var(--t2)}
+.tc-item{margin-bottom:10px;border:1px solid var(--b2);border-radius:8px;overflow:hidden}
+.tc-item:last-child{margin-bottom:0}
+.tc-scenario{padding:7px 10px;background:var(--s3);font-size:11px;font-weight:500;color:var(--accent2);border-bottom:1px solid var(--b2)}
+.tc-body{padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t2);line-height:1.8;white-space:pre-wrap}
+.dup-panel{margin:0 16px 12px;border:1px solid var(--amber-bd);border-radius:10px;overflow:hidden;background:var(--amber-bg)}
+.dup-hdr{padding:7px 12px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--amber);border-bottom:1px solid var(--amber-bd)}
+.dup-item{display:flex;align-items:center;gap:9px;padding:7px 12px;border-bottom:1px solid var(--amber-bd);font-size:12px}
+.dup-item:last-child{border-bottom:none}
+.dup-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--amber);flex-shrink:0}
+.dup-ttl{flex:1;color:var(--t2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dup-st{font-size:10px;padding:2px 6px;border-radius:20px;background:var(--s3);color:var(--t2);border:1px solid var(--b2);flex-shrink:0}
+.dup-lnk{color:var(--accent2);text-decoration:none;font-size:11px;flex-shrink:0}
+
+/* Edit panel */
+.edit-panel{padding:14px 16px;background:var(--s2);border-top:1px solid var(--b2)}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.ef{display:flex;flex-direction:column;gap:3px}
+.ef.full{grid-column:span 2}
+.ef-lbl{font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--t3)}
+.ef-in{background:var(--s3);border:1px solid var(--b2);border-radius:7px;padding:6px 9px;font-size:12px;color:var(--t1);font-family:'Inter',sans-serif;outline:none;width:100%;transition:border-color .15s}
+.ef-in:focus{border-color:var(--accent)}
+textarea.ef-in{resize:vertical;min-height:55px;line-height:1.5}
+select.ef-in{cursor:pointer}
+.step-row{display:flex;gap:5px;align-items:center}
+.step-row input{flex:1}
+.step-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:0 3px}
+.step-del:hover{color:var(--red)}
+.add-step-btn{font-size:11px;color:var(--accent2);background:none;border:1px dashed var(--b3);border-radius:6px;padding:3px 9px;cursor:pointer;font-family:'Inter',sans-serif;margin-top:2px}
+
+/* Ticket footer */
+.tk-foot{padding:9px 16px;border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;background:var(--bg);gap:8px;flex-wrap:wrap}
+.tf-tabs{display:flex;gap:3px}
+.tf-tab{font-size:11px;padding:3px 9px;border-radius:6px;border:1px solid transparent;cursor:pointer;background:transparent;color:var(--t2);font-family:'Inter',sans-serif;transition:var(--transition)}
+.tf-tab.active{background:var(--s3);border-color:var(--b2);color:var(--t1)}
 .tk-acts{display:flex;gap:5px;flex-wrap:wrap}
+.abtn{display:flex;align-items:center;gap:4px;font-size:10px;padding:4px 9px;border-radius:7px;border:1px solid var(--b2);cursor:pointer;background:transparent;color:var(--t2);font-family:'Inter',sans-serif;transition:var(--transition);white-space:nowrap}
+.abtn:hover{background:var(--s3);color:var(--t1)}
+.abtn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.abtn.primary:hover{opacity:.85}
+.abtn.success{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
+.abtn.warn{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)}
+.abtn.info{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue)}
+.abtn.purple{background:var(--purple-bg);border-color:rgba(168,85,247,.3);color:var(--purple)}
+.abtn:disabled{opacity:.4;cursor:not-allowed}
+.json-pane{font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.7;color:var(--t2);padding:12px 16px;background:var(--bg);max-height:280px;overflow-y:auto;border-top:1px solid var(--b1)}
+
+/* Post status */
+.post-status{border-radius:8px;padding:9px 12px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:7px;margin:6px 16px}
+.post-status.posted{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
+.post-status.failed{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
+.post-status.posting{background:var(--accent-bg);border:1px solid var(--b2);color:var(--t2)}
+.post-link{color:var(--accent);font-weight:700;text-decoration:none}
+.post-link:hover{text-decoration:underline}
+
+/* Platform post buttons */
+.platform-post-btns{padding:12px 14px;border-top:1px solid var(--b1);background:var(--s2)}
+.platform-post-label{font-size:9px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;text-align:center}
+.platform-btns-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.platform-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;border-radius:9px;border:1px solid var(--b2);background:var(--s3);color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--transition);white-space:nowrap}
+.platform-btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.2)}
+.platform-btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important}
+.platform-btn.jira{border-color:var(--jira-bd);color:var(--jira)}
+.platform-btn.jira:hover{background:var(--jira-bg)}
+.platform-btn.ado{border-color:rgba(0,120,212,.3);color:#0078d4}
+.platform-btn.ado:hover{background:rgba(0,120,212,.08)}
+.platform-btn.gh{border-color:var(--gh-bd);color:var(--gh)}
+.platform-btn.gh:hover{background:var(--gh-bg)}
+.platform-btn.all{grid-column:1/-1;color:var(--accent);border-color:var(--jira-bd);font-weight:700}
+.platform-btn.all:hover{background:var(--accent-bg)}
+
+/* TC prompt */
+.tc-prompt{padding:12px 14px;border-top:1px solid var(--b1);background:var(--green-bg);display:none}
+.tc-prompt-title{font-size:12px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.tc-prompt-sub{font-size:11px;color:var(--t2);margin-bottom:10px}
+.tc-prompt-btns{display:flex;gap:8px}
+
+/* ═══════════════════════════════════════════════════════════════
+   COMMENT ON EXISTING — inline panel
+   ═══════════════════════════════════════════════════════════════ */
+.existing-form{
+  padding:14px 16px;background:var(--s2);border-top:1px solid var(--b1);
+  border-bottom-left-radius:var(--rxl);border-bottom-right-radius:var(--rxl);
+}
+.ef-row{display:flex;gap:7px;margin-bottom:7px}
+.ef-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--amber);margin-bottom:8px}
+
+/* ═══════════════════════════════════════════════════════════════
+   BULK PANEL
+   ═══════════════════════════════════════════════════════════════ */
+.bulk-panel{padding:14px 16px;border-top:1px solid var(--b1);flex-shrink:0;background:var(--s2)}
+.bulk-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.bulk-title{font-size:12px;font-weight:500;color:var(--amber)}
+.bulk-rows{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;max-height:120px;overflow-y:auto}
+.bulk-row{display:flex;align-items:center;gap:7px;padding:4px 9px;background:var(--s1);border-radius:6px;border:1px solid var(--b2);font-size:12px;color:var(--t2)}
+.bulk-n{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);min-width:16px}
+.bulk-txt{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.bulk-st{font-size:10px;padding:2px 6px;border-radius:20px;flex-shrink:0}
+.bs-pend{background:var(--s3);color:var(--t3);border:1px solid var(--b2)}
+.bs-proc{background:var(--accent-bg);color:var(--accent2);border:1px solid var(--accent)}
+.bs-done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.bs-err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.bulk-prog{height:3px;background:var(--b2);border-radius:2px;overflow:hidden;margin-bottom:10px}
+.bulk-prog-bar{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+.send-btn{display:flex;align-items:center;gap:5px;background:var(--accent);border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:500;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .15s;flex-shrink:0}
+.send-btn:hover{opacity:.85}
+
+/* Voice indicator */
+.voice-indicator{display:none;align-items:center;gap:8px;padding:6px 12px;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:7px;font-size:12px;color:var(--red);animation:fadeUp .2s;margin-left:8px}
+.voice-indicator.active{display:flex}
+.voice-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:statusPulse .8s infinite}
+
+/* ═══════════════════════════════════════════════════════════════
+   SETTINGS DRAWER (right side) + sidebar-internal styles preserved
+   ═══════════════════════════════════════════════════════════════ */
+.settings-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);
+  backdrop-filter:blur(3px);z-index:100;display:none;
+  animation:fadeIn .2s;
+}
+.settings-overlay.open{display:block}
+
+.settings-drawer{
+  position:fixed;right:0;top:0;bottom:0;
+  width:440px;max-width:92vw;
+  background:var(--s1);border-left:1px solid var(--b2);
+  z-index:101;display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:-20px 0 60px rgba(0,0,0,.4);
+  overflow:hidden;
+}
+.settings-drawer.open{transform:translateX(0)}
+.settings-drawer .sidebar{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  display:flex;flex-direction:column;
+  background:transparent;border:none;
+}
+.settings-drawer .sidebar::-webkit-scrollbar{width:4px}
+.settings-drawer .sidebar::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+.drawer-hdr{
+  padding:18px 20px;border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.drawer-title{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+.drawer-close{
+  background:none;border:none;color:var(--t2);cursor:pointer;
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;transition:var(--transition);
+}
+.drawer-close:hover{background:var(--s2);color:var(--t1)}
+
+/* Sidebar sections (inside drawer) */
+.sb-sec{padding:14px 20px;border-bottom:1px solid var(--b1);flex-shrink:0}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:2px 0}
+.sec-lbl{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--t2)}
+.sec-arr{font-size:10px;color:var(--t3);transition:transform .2s}
+.sec-arr.open{transform:rotate(90deg)}
+.sec-body{display:none;padding-top:10px}
+.sec-body.open{display:block}
+.cfg-row{margin-bottom:9px}
+.cfg-row:last-child{margin-bottom:0}
+.cfg-lbl{font-size:11px;color:var(--t2);margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.cfg-dot{width:6px;height:6px;border-radius:50%;background:var(--t3);flex-shrink:0}
+.cfg-dot.ok{background:var(--green);box-shadow:0 0 6px var(--green)}
+.cfg-dot.err{background:var(--red);box-shadow:0 0 6px var(--red)}
+.cfg-in{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--t1);font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .15s}
+.cfg-in:focus{border-color:var(--accent)}
+.cfg-in::placeholder{color:var(--t3)}
+.btn-sv{width:100%;padding:9px;background:var(--s2);border:1px solid var(--b2);border-radius:9px;color:var(--t1);font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--transition)}
+.btn-sv:hover{background:var(--s3);border-color:var(--b3)}
+
+/* Platform tabs inside drawer */
+.ptab-header{display:flex;background:var(--s2);padding:4px;gap:3px;border-radius:10px;margin-bottom:10px}
+.ptab-btn{flex:1;padding:7px 6px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:7px;transition:var(--transition);font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:4px}
+.ptab-btn:hover{color:var(--t2);background:var(--b2)}
+.ptab-btn.active{color:#fff}
+.ptab-btn.active.jira{background:var(--jira)}
+.ptab-btn.active.ado{background:#0078d4}
+.ptab-btn.active.gh{background:#24292e}
+.ptab-panel{display:none}
+.ptab-panel.active{display:block}
+
+/* Templates */
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.tpl-btn{padding:7px 10px;border:1px solid var(--b2);border-radius:8px;background:var(--s2);color:var(--t2);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;text-align:left;transition:var(--transition)}
+.tpl-btn:hover{background:var(--s3);color:var(--t1);border-color:var(--b3)}
+.tpl-btn.active{background:var(--accent-bg);border-color:var(--accent-bd);color:var(--accent2)}
+
+/* Routing */
+.route-item{display:flex;align-items:flex-start;gap:7px;padding:6px 0;border-bottom:1px solid var(--b1);font-size:12px;color:var(--t2);line-height:1.5}
+.route-item:last-child{border-bottom:none}
+.rb{font-size:9px;font-weight:600;padding:2px 7px;border-radius:5px;flex-shrink:0;margin-top:1px}
+.rb-jira{background:var(--jira-bg);color:var(--jira);border:1px solid var(--jira-bd)}
+.rb-ado{background:var(--ado-bg);color:var(--ado);border:1px solid var(--ado-bd)}
+.rb-gh{background:var(--gh-bg);color:var(--gh);border:1px solid var(--gh-bd)}
+
+/* History */
+.hist-empty{font-size:11px;color:var(--t3);text-align:center;padding:14px 0}
+.hist-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);cursor:pointer}
+.hist-item:last-child{border-bottom:none}
+.hist-item:hover .hist-ttl{color:var(--t1)}
+.hist-plat{width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hist-info{flex:1;min-width:0}
+.hist-id{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500}
+.hist-ttl{font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.hist-time{font-size:10px;color:var(--t3);flex-shrink:0}
+
+/* Platform pills (brand header of old sidebar — now in drawer hdr) */
+.ppills{display:flex;gap:4px;margin-top:10px}
+.ppill{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 4px;border-radius:8px;border:1px solid var(--b2);font-size:10px;font-weight:500;color:var(--t3);transition:var(--transition);background:var(--s2)}
+.ppill.p-jira{background:var(--jira-bg);border-color:var(--jira-bd);color:var(--jira)}
+.ppill.p-ado{background:var(--ado-bg);border-color:var(--ado-bd);color:var(--ado)}
+.ppill.p-gh{background:var(--gh-bg);border-color:var(--gh-bd);color:var(--gh)}
+
+/* ═══════════════════════════════════════════════════════════════
+   KEYBOARD MODAL, DASHBOARD, CONFIRM DIALOG, TOASTS
+   ═══════════════════════════════════════════════════════════════ */
+.kb-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center}
+.kb-modal.open{display:flex}
+.kb-box{background:var(--s1);border:1px solid var(--b3);border-radius:var(--rxl);padding:26px;min-width:400px;max-width:90vw;box-shadow:var(--shadow-lg)}
+.kb-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.kb-close{background:none;border:none;color:var(--t2);cursor:pointer;font-size:18px;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center}
+.kb-close:hover{background:var(--s2);color:var(--t1)}
+.kb-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b1);font-size:13px;color:var(--t2)}
+.kb-row:last-child{border-bottom:none}
+.kb-key{display:flex;gap:4px}
+.key{background:var(--s3);border:1px solid var(--b3);border-radius:5px;padding:2px 7px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t1)}
+
+/* Dashboard */
+.dashboard-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:100;display:none;animation:fadeIn .2s}
+.dashboard-overlay.open{display:block}
+.dashboard-panel{position:fixed;right:0;top:0;bottom:0;width:480px;max-width:92vw;background:var(--s1);border-left:1px solid var(--b2);z-index:101;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;box-shadow:-20px 0 60px rgba(0,0,0,.4)}
+.dashboard-panel.open{transform:translateX(0)}
+.dash-header{padding:18px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.dash-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+.dash-close{background:none;border:none;color:var(--t2);cursor:pointer;font-size:20px;line-height:1;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.dash-close:hover{background:var(--s2);color:var(--t1)}
+.dash-body{padding:20px;flex:1}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.dash-stat{background:var(--s2);border:1px solid var(--b2);border-radius:var(--rl);padding:14px}
+.dash-stat-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;margin-bottom:4px}
+.dash-stat-lbl{font-size:11px;color:var(--t2)}
+.dash-chart-wrap{background:var(--s2);border:1px solid var(--b2);border-radius:var(--rl);padding:14px;margin-bottom:14px}
+.dash-chart-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.9px;color:var(--t3);margin-bottom:12px}
+
+/* Confirm dialog */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:300;display:none;align-items:center;justify-content:center;animation:fadeIn .15s}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:var(--s1);border:1px solid var(--b3);border-radius:var(--rxl);padding:26px;max-width:360px;width:90%;box-shadow:var(--shadow-lg)}
+.confirm-icon{font-size:30px;margin-bottom:12px;text-align:center}
+.confirm-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--t1);margin-bottom:8px;text-align:center}
+.confirm-msg{font-size:12.5px;color:var(--t2);line-height:1.6;text-align:center;margin-bottom:20px}
+.confirm-btns{display:flex;gap:8px;justify-content:center}
+.confirm-btn-cancel{padding:9px 20px;border:1px solid var(--b3);border-radius:9px;background:transparent;color:var(--t2);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--transition)}
+.confirm-btn-cancel:hover{background:var(--s3);color:var(--t1)}
+.confirm-btn-ok{padding:9px 20px;border:none;border-radius:9px;background:var(--red);color:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .15s}
+.confirm-btn-ok:hover{opacity:.85}
+
+/* Toasts */
+.toast-wrap{position:fixed;bottom:22px;right:22px;display:flex;flex-direction:column;gap:8px;z-index:400;pointer-events:none}
+.toast{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--b3);border-radius:11px;padding:10px 14px;font-size:12.5px;color:var(--t1);animation:toastIn .25s ease;min-width:240px;box-shadow:var(--shadow-md);pointer-events:auto}
+.toast.success{border-color:var(--green-bd);background:var(--green-bg);color:var(--green)}
+.toast.error{border-color:var(--red-bd);background:var(--red-bg);color:var(--red)}
+.toast.warn{border-color:var(--amber-bd);background:var(--amber-bg);color:var(--amber)}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+#file-input{display:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Hidden legacy elements we keep for JS compatibility */
+#input-area{display:none !important}
+#bulk-panel.in-drawer{display:block !important}
+
+/* Focus ring (WCAG AA) */
+button:focus-visible,.abtn:focus-visible,.hbtn:focus-visible,.send-btn:focus-visible,.action-btn:focus-visible,.generate-btn:focus-visible,.tpl-btn:focus-visible,.ex-chip:focus-visible,.tf-tab:focus-visible,.sec-hdr:focus-visible,.ptab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.cfg-in:focus-visible,.ef-in:focus-visible,.select-in:focus-visible,.text-in:focus-visible,.describe-box:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+@media(max-width:960px){
+  .workspace{grid-template-columns:1fr;gap:14px;padding:14px}
+  .settings-drawer{width:100%}
+  .dashboard-panel{width:100%}
+}
 @media(max-width:680px){
-  .app{grid-template-columns:1fr;height:100dvh}
-  .sidebar{position:fixed;left:0;top:0;bottom:0;width:88vw;max-width:310px;z-index:200;transform:translateX(-110%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:6px 0 32px #00000060}
-  .sidebar.mobile-open{transform:translateX(0)}
-  .sidebar-close-btn{display:block !important}
-  #mobile-menu-btn{display:flex !important}
-  .main-hdr{padding:8px 14px}
-  .chat-area{padding:14px;gap:10px}
-  .input-area{padding:8px 12px 12px}
-  #din{min-height:52px;max-height:110px;font-size:12px}
-  .ex-chips{display:none}
-  .msg-bub{max-width:90%;font-size:12px}
-  .tf-exp-act{grid-template-columns:1fr}
-  .tf-hdr{flex-wrap:wrap;gap:6px}
-  .platform-btns-grid{grid-template-columns:1fr}
-  .tf-actions{padding:10px 14px;gap:5px}
-  .abtn{font-size:10px;padding:5px 9px}
-  .hdr-btns .hbtn:not(.theme-btn):not(#bulk-btn){display:none}
-  .dashboard-panel{width:92vw;padding:16px}
+  .topbar{padding:12px 14px;gap:10px}
+  .brand-sub{display:none}
+  .topbar-status{display:none}
+  .hbtn:not(.settings-gear):not(.theme-btn){padding:7px 9px;font-size:11px}
+  .workspace{padding:10px;gap:10px}
+  .card-hdr{padding:13px 16px 10px}
+  .form-body{padding:14px 16px;gap:12px}
+  .form-footer{padding:10px 16px}
+  .ticket-area{padding:14px 16px}
+  .form-row-2,.form-row-actions{grid-template-columns:1fr}
 }
-@media(max-width:380px){
-  .send-btn{font-size:11px;padding:7px 12px}
-  .sbadge{font-size:9px;padding:2px 7px}
-  .abtn{font-size:9px}
-}
-</style>lid var(--green-bd);color:var(--green)}
-.post-status.error{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
-.post-status.posting{background:var(--accent-bg);border:1px solid var(--b2);color:var(--accent2)}
-/* Selection */
-::selection{background:#5b6ef540;color:var(--t1)}
-/* ═══════════════════════════════════════════════════════════════ */
 </style>
-  <script>
-    (function(){var t=localStorage.getItem('da_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();
-  </script>
+<script>
+(function(){var t=localStorage.getItem('da_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();
+</script>
 </head>
 <body>
 <input type="file" id="file-input" accept="image/*"/>
 
-<!-- ══ CUSTOM CONFIRM DIALOG (replaces window.confirm — iframe-safe + NVDA/VoiceOver) ══ -->
+<!-- ══ CUSTOM CONFIRM DIALOG ══ -->
 <div class="confirm-overlay" id="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title-el" aria-describedby="confirm-msg-el">
   <div class="confirm-box">
     <div class="confirm-icon" id="confirm-icon-el" aria-hidden="true">⚠️</div>
@@ -324,6 +719,7 @@ kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--s3);b
     <div class="kb-row"><span>Edit ticket</span><span class="kb-key"><span class="key">Ctrl</span><span class="key">E</span></span></div>
     <div class="kb-row"><span>Bulk mode toggle</span><span class="kb-key"><span class="key">Ctrl</span><span class="key">B</span></span></div>
     <div class="kb-row"><span>Open dashboard</span><span class="kb-key"><span class="key">Ctrl</span><span class="key">M</span></span></div>
+    <div class="kb-row"><span>Open settings</span><span class="kb-key"><span class="key">Ctrl</span><span class="key">,</span></span></div>
     <div class="kb-row"><span>Voice input</span><span class="kb-key"><span class="key">Ctrl</span><span class="key">Shift</span><span class="key">V</span></span></div>
     <div class="kb-row"><span>Toggle theme</span><span class="kb-key"><span class="key">Ctrl</span><span class="key">Shift</span><span class="key">T</span></span></div>
     <div class="kb-row"><span>Clear chat</span><span class="kb-key"><span class="key">Ctrl</span><span class="key">L</span></span></div>
@@ -346,271 +742,401 @@ kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--s3);b
   </div>
 </div>
 
+<!-- ══ MAIN APP SHELL ══ -->
 <div class="app">
-<!-- ══ SIDEBAR ══ -->
-<div class="sidebar">
-  <div class="sb-top">
-    <div class="logo">
-      <div class="logo-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 72 72"><defs><linearGradient id="lbf" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f6ef7"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs><rect width="72" height="72" rx="16" fill="url(#lbf)"/><rect x="16" y="36" width="40" height="22" rx="5" fill="#fff" opacity=".9"/><rect x="22" y="27" width="28" height="13" rx="4" fill="#fff" opacity=".9"/><path d="M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z" fill="url(#lbf)"/></svg></div>
-      <div><div class="logo-name">BugForge AI</div><div class="logo-sub">v2026.04.18</div></div>
-    </div>
-    <div class="ppills">
-      <div class="ppill" id="pill-jira"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M16 2L2 17l14 13 14-13L16 2z" fill="#2d84ff"/><path d="M16 9.5L9.5 17 16 23l6.5-6L16 9.5z" fill="white"/></svg>Jira</div>
-      <div class="ppill" id="pill-ado"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M27 6L20 2.5 10.5 10 4 13v7l4.5 1.5L20 29.5 27 26V6z" fill="#29a7ff"/></svg>ADO</div>
-      <div class="ppill" id="pill-gh"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 2C8.27 2 2 8.27 2 16c0 6.19 4 11.43 9.57 13.29.7.13.96-.3.96-.67v-2.36c-3.89.85-4.71-1.87-4.71-1.87-.64-1.62-1.55-2.05-1.55-2.05-1.27-.87.1-.85.1-.85 1.4.1 2.13 1.44 2.13 1.44 1.25 2.14 3.28 1.52 4.08 1.16.12-.9.49-1.52.89-1.87-3.11-.35-6.37-1.55-6.37-6.9 0-1.52.54-2.77 1.44-3.74-.14-.35-.63-1.77.13-3.68 0 0 1.18-.38 3.86 1.44A13.3 13.3 0 0116 8.36c1.19.01 2.38.16 3.5.47 2.67-1.82 3.84-1.44 3.84-1.44.77 1.91.28 3.33.14 3.68.9.97 1.44 2.22 1.44 3.74 0 5.36-3.27 6.54-6.38 6.89.5.43.95 1.28.95 2.59v3.83c0 .37.25.8.96.67C25.99 27.43 30 22.19 30 16 30 8.27 23.73 2 16 2z" fill="#8b949e"/></svg>GitHub</div>
-    </div>
-  </div>
 
-  <!-- Anthropic -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('ant')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('ant')}"><span class="sec-lbl">Anthropic API</span><span class="sec-arr open" id="arr-ant">▶</span></div>
-  <div class="sec-body open" id="bod-ant">
-    <div style="padding:6px 0;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
-      <span class="cfg-dot ok" id="dot-ant"></span>
-      Secured via Vercel Environment Variable
-    </div>
-    <div style="font-size:10px;color:var(--t3);line-height:1.6;margin-bottom:6px">API key is stored server-side in Vercel — never exposed to the browser. Go to Vercel → Settings → Environment Variables → add <code style="background:var(--s3);padding:1px 4px;border-radius:3px">ANTHROPIC_API_KEY</code></div>
-    <button class="btn-sv" style="background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('ant')">✓ Test Connection</button>
-  </div></div>
-
-  <!-- Platform Tabs — Jira / ADO / GitHub -->
-  <div class="sb-sec" style="padding:0">
-    <!-- Tab headers -->
-    <div class="ptab-header">
-      <button id="ptab-jira" class="ptab-btn active jira" onclick="switchPlatformTab('jira')">🔵 Jira</button>
-      <button id="ptab-ado" class="ptab-btn ado" onclick="switchPlatformTab('ado')">🔷 ADO</button>
-      <button id="ptab-gh" class="ptab-btn gh" onclick="switchPlatformTab('gh')">⚫ GitHub</button>
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 72 72">
+          <defs><linearGradient id="lbf" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f6ef7"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
+          <rect width="72" height="72" rx="16" fill="url(#lbf)"/>
+          <rect x="16" y="36" width="40" height="22" rx="5" fill="#fff" opacity=".9"/>
+          <rect x="22" y="27" width="28" height="13" rx="4" fill="#fff" opacity=".9"/>
+          <path d="M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z" fill="url(#lbf)"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Bug Sync</div>
+        <div class="brand-sub">v2026.04.18 · Jira · ADO · GitHub</div>
+      </div>
     </div>
 
-    <!-- Jira Panel -->
-    <div id="ptab-jira-panel" class="ptab-panel active">
-      <div style="font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px;margin-bottom:6px">
-        <span class="cfg-dot ok" id="dot-jira"></span>Credentials secured via Vercel env vars
-      </div>
-      <div style="font-size:10px;color:var(--t3);margin-bottom:8px;line-height:1.5">
-        Required: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_URL</code>
-        <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_EMAIL</code>
-        <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">JIRA_TOKEN</code>
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:9px" id="jira-proj-status">↻ loading...</span></div>
-        <select class="cfg-in" id="jira-proj-select" onchange="CFG.jiraProj=this.options[this.selectedIndex]?.dataset?.key||this.value" style="cursor:pointer">
-          <option value="">— select project —</option>
-        </select>
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-lbl">Assignee Email <span style="color:var(--t3);font-size:9px">(optional)</span></div>
-        <input class="cfg-in" id="jira-assignee-input" placeholder="assignee@company.com" oninput="CFG.jiraAssignee=this.value.trim()"/>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <button class="btn-sv" style="flex:1;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('jira')">✓ Test</button>
-        <button class="btn-sv" style="flex:0 0 auto;width:64px;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="loadProjects('jira')">↻ Reload</button>
-      </div>
-      <input type="hidden" id="ci-jira-url"/><input type="hidden" id="ci-jira-email"/>
-      <input type="hidden" id="ci-jira-token"/><input type="hidden" id="ci-jira-proj"/>
-      <input type="hidden" id="ci-jira-board"/><input type="hidden" id="ci-jira-type"/>
+    <div class="topbar-spacer"></div>
+
+    <div class="topbar-status" aria-live="polite">
+      <div class="status-dot" aria-hidden="true"></div>
+      <span id="agent-txt" role="status" aria-atomic="true">Agent ready</span>
     </div>
 
-    <!-- ADO Panel (hidden by default) -->
-    <div id="ptab-ado-panel" class="ptab-panel">
-      <div style="font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px;margin-bottom:6px">
-        <span class="cfg-dot ok" id="dot-ado"></span>Credentials secured via Vercel env vars
-      </div>
-      <div style="font-size:10px;color:var(--t3);margin-bottom:8px;line-height:1.5">
-        Required: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">ADO_PAT</code> — Org and Project selected below
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-lbl">Organisation</div>
-        <input class="cfg-in" id="ado-org-input" placeholder="e.g. RSATwithAzure" oninput="CFG.adoOrg=this.value.trim();if(this.value.trim().length>3)loadProjects('ado')"/>
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:9px" id="ado-proj-status">enter org first</span></div>
-        <select class="cfg-in" id="ado-proj-select" onchange="CFG.adoProj=this.value" style="cursor:pointer">
-          <option value="">— select project —</option>
-        </select>
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-lbl">Assign To <span style="color:var(--t3);font-size:9px">(optional)</span></div>
-        <input class="cfg-in" id="ado-assignee-input" placeholder="Display Name or email" oninput="CFG.adoAssignee=this.value.trim()"/>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <button class="btn-sv" style="flex:1;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="validateCfg('ado')">✓ Test</button>
-        <button class="btn-sv" style="flex:0 0 auto;width:64px;background:var(--s3);color:var(--t2);border:1px solid var(--b3)" onclick="loadProjects('ado')">↻ Reload</button>
-      </div>
-      <input type="hidden" id="ci-ado-org"/><input type="hidden" id="ci-ado-project"/>
-      <input type="hidden" id="ci-ado-pat"/><input type="hidden" id="ci-ado-team"/>
+    <div class="voice-indicator" id="voice-ind" role="status" aria-live="polite">
+      <div class="voice-dot"></div>
+      <span>Listening...</span>
+      <button onclick="stopVoice()" style="background:none;border:none;color:var(--red);cursor:pointer;margin-left:4px;font-size:12px;font-weight:600">Stop</button>
     </div>
 
-    <!-- GitHub Panel (hidden by default) -->
-    <div id="ptab-gh-panel" class="ptab-panel">
-      <div style="font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px;margin-bottom:6px">
-        <span class="cfg-dot ok" id="dot-gh"></span>Credentials secured via Vercel env vars
+    <div class="topbar-btns">
+      <button class="hbtn theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme (Ctrl+Shift+T)" aria-label="Toggle theme">🌙</button>
+      <button class="hbtn" onclick="openDash()" title="Metrics (Ctrl+M)" aria-label="Open metrics dashboard">📊</button>
+      <button class="hbtn" id="bulk-btn" onclick="toggleBulk()" title="Bulk mode (Ctrl+B)" aria-label="Toggle bulk mode">⚡ Bulk</button>
+      <button class="hbtn" onclick="showKB()" title="Keyboard shortcuts (?)" aria-label="Show keyboard shortcuts">⌨</button>
+      <button class="hbtn" onclick="clearChat()" title="Clear (Ctrl+L)" aria-label="Clear chat">Clear</button>
+      <button class="hbtn settings-gear" onclick="openSettings()" title="Settings (Ctrl+,)" aria-label="Open settings">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Settings
+      </button>
+    </div>
+  </header>
+
+  <!-- ══ WORKSPACE: form + ticket ══ -->
+  <main class="workspace">
+
+    <!-- ═══ LEFT CARD: NEW BUG form ═══ -->
+    <section class="card" aria-labelledby="newbug-heading">
+      <div class="card-hdr">
+        <h2 class="card-title" id="newbug-heading">New Bug</h2>
       </div>
-      <div style="font-size:10px;color:var(--t3);margin-bottom:8px;line-height:1.5">
-        Required: <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_OWNER</code>
-        <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_REPO</code>
-        <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">GITHUB_TOKEN</code>
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-lbl">Assignee <span style="color:var(--t3);font-size:9px">(optional — GitHub username)</span></div>
-        <input class="cfg-in" id="gh-assignee-input" placeholder="github-username" oninput="CFG.ghAssignee=this.value.trim()"/>
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-lbl">Extra Labels <span style="color:var(--t3);font-size:9px">(optional — comma separated)</span></div>
-        <input class="cfg-in" id="gh-labels-input" placeholder="frontend, sprint-1" oninput="CFG.ghLabels=this.value.trim()"/>
-      </div>
-      <button class="btn-sv" style="width:100%;background:var(--s3);color:var(--t2);border:1px solid var(--b3);margin-top:8px" onclick="validateCfg('gh')">✓ Test GitHub Connection</button>
-      <input type="hidden" id="ci-gh-owner"/><input type="hidden" id="ci-gh-repo"/>
-      <input type="hidden" id="ci-gh-token"/>
-    </div>
-  </div>
 
+      <div class="card-body">
+        <div class="form-body">
 
-  <!-- Notifications -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('notif')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('notif')}"><span class="sec-lbl">Notifications</span><span class="sec-arr open" id="arr-notif">▶</span></div>
-  <div class="sec-body open" id="bod-notif">
-    <div style="padding:4px 0 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px">
-      <span class="cfg-dot ok" id="dot-slack"></span>Secured via Vercel Environment Variables
-    </div>
-    <div style="font-size:10px;color:var(--t3);line-height:1.7;margin-bottom:10px">
-      Set these in <strong>Vercel → Settings → Environment Variables:</strong><br>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">SLACK_WEBHOOK_URL</code>
-      <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:9px">TEAMS_WEBHOOK_URL</code>
-    </div>
-    <input type="hidden" id="ci-slack"/><input type="hidden" id="ci-teams"/>
-    <span id="dot-teams" style="display:none"></span>
-  </div></div>
+          <!-- Screenshot dropzone -->
+          <div>
+            <div class="field-label">
+              <span>Screenshot</span>
+              <span class="badge-req">REQUIRED</span>
+            </div>
+            <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()" tabindex="0" role="button" aria-label="Upload screenshot — drop, paste or click" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('file-input').click()}">
+              <svg class="dz-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <div class="dz-title">Drop, paste, or click</div>
+              <div class="dz-sub">PNG or JPG, up to 5 MB</div>
+            </div>
+            <!-- Legacy thumb container (kept for JS compat) — hidden, we render into dropzone itself -->
+            <div id="ss-thumb" style="display:none"></div>
+          </div>
 
-  <!-- Templates -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('tpl')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('tpl')}"><span class="sec-lbl">Quick Templates</span><span class="sec-arr" id="arr-tpl">▶</span></div>
-  <div class="sec-body" id="bod-tpl">
-    <div class="tpl-grid" id="tpl-grid"></div>
-  </div></div>
+          <!-- Describe textarea -->
+          <div>
+            <div class="field-label">
+              <span>Describe the bug</span>
+              <span class="field-hint">Enter to generate</span>
+            </div>
+            <div class="describe-wrap">
+              <textarea id="din" class="describe-box" aria-label="Describe your defect" aria-multiline="true" placeholder="Example: Login page crashes on Chrome v120 after entering OTP. Include platform, browser version, steps to reproduce, expected vs actual result."></textarea>
+            </div>
+          </div>
 
-  <!-- Routing -->
-  <div class="sb-sec"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('route')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('route')}"><span class="sec-lbl">Routing Rules</span><span class="sec-arr" id="arr-route">▶</span></div>
-  <div class="sec-body" id="bod-route">
-    <div class="route-item"><span class="rb rb-ado">ADO</span><span>D365, Dynamics, pipeline, PUAT, ADO, sprint</span></div>
-    <div class="route-item"><span class="rb rb-gh">GH</span><span>GitHub, git, repo, npm, Actions</span></div>
-    <div class="route-item"><span class="rb rb-jira">Jira</span><span>Everything else (default)</span></div>
-  </div></div>
+          <!-- Example chips -->
+          <div class="ex-chips">
+            <span class="ex-chip" onclick="setEx(0)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setEx(0)}">Login fails mobile</span>
+            <span class="ex-chip" onclick="setEx(1)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setEx(1)}">Payment timeout</span>
+            <span class="ex-chip" onclick="setEx(2)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setEx(2)}">Dashboard crash</span>
+            <span class="ex-chip" onclick="setEx(3)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setEx(3)}">API 404 error</span>
+          </div>
 
-  <!-- History -->
-  <div class="sb-sec" style="flex:1"><div class="sec-hdr" role="button" tabindex="0" onclick="tSec('hist')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('hist')}"><span class="sec-lbl">Session History <span id="hist-cnt" style="color:var(--accent2)"></span></span><span class="sec-arr open" id="arr-hist">▶</span></div>
-  <div class="sec-body open" id="bod-hist">
-    <div id="hist-list"></div>
-    <div style="display:flex;gap:6px;margin-top:8px" id="hist-export-btns" style="display:none">
-      <button class="hbtn" onclick="exportCSV()" style="flex:1;justify-content:center;font-size:10px">📥 CSV</button>
-      <button class="hbtn" onclick="exportPrint()" style="flex:1;justify-content:center;font-size:10px">🖨 Print</button>
-    </div>
-  </div></div>
-</div>
+          <!-- Platform + Project -->
+          <div class="form-row-2">
+            <div class="form-field">
+              <label class="form-field-lbl" for="platform-override">Platform</label>
+              <select id="platform-override" class="select-in" title="Force platform (overrides auto-routing)" onchange="syncProjectMirror()">
+                <option value="auto">🤖 Auto</option>
+                <option value="jira">🔵 Jira</option>
+                <option value="azure_devops">🔷 ADO</option>
+                <option value="github">⚫ GitHub</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-field-lbl" for="project-mirror">Project</label>
+              <select id="project-mirror" class="select-in" onchange="applyProjectMirror()">
+                <option value="">— select project —</option>
+              </select>
+            </div>
+          </div>
 
-<!-- ══ MAIN ══ -->
-<div class="main">
-  <!-- Header -->
-  <div class="main-hdr">
-    <div class="hdr-left">
-      <button id="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Open settings" style="display:none;background:transparent;border:none;cursor:pointer;padding:5px;border-radius:8px;color:var(--t2);font-size:18px;line-height:1">☰</button>
-      <div class="hdr-status"><div class="status-dot" aria-hidden="true" style="background:#10b981;box-shadow:0 0 0 0 #10b98160;width:8px;height:8px;border-radius:50%;animation:statusPulse 2.5s infinite"></div><span id="agent-txt" role="status" aria-live="polite" aria-atomic="true">Agent ready</span></div>
-      <div class="voice-indicator" id="voice-ind"><div class="voice-dot"></div><span>Listening...</span><button onclick="stopVoice()" style="background:none;border:none;color:var(--red);cursor:pointer;margin-left:4px;font-size:12px">Stop</button></div>
-    </div>
-    <div class="hdr-btns">
-      <button class="hbtn theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme (Ctrl+Shift+T)">🌙</button>
-      <button class="hbtn" onclick="openDash()" title="Metrics (Ctrl+M)">📊</button>
-      <button class="hbtn" id="bulk-btn" onclick="toggleBulk()" title="Bulk mode (Ctrl+B)">⚡ Bulk</button>
-      <button class="hbtn" onclick="showKB()" title="Keyboard shortcuts (?)">⌨</button>
-      <button class="hbtn" onclick="clearChat()" title="Clear (Ctrl+L)">Clear</button>
-    </div>
-  </div>
+          <!-- Voice + Comment -->
+          <div class="form-row-actions">
+            <button class="action-btn" id="voice-btn" onclick="toggleVoice()" title="Voice input (Ctrl+Shift+V)" aria-label="Voice input">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0M12 19v3"/></svg>
+              Voice
+            </button>
+            <button class="action-btn" onclick="toggleCommentForm()" title="Comment on existing ticket" aria-label="Comment on existing ticket">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              Comment
+            </button>
+          </div>
+          <button id="attach-btn" onclick="document.getElementById('file-input').click()" style="display:none"></button>
 
-  <!-- Chat -->
-  <div class="chat-area" id="chat" role="log" aria-live="polite" aria-label="Ticket generation conversation" aria-relevant="additions">
-    <div class="drop-ov" id="drop-ov"><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
-    <div class="msg ai">
-      <div class="msg-av ai"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 13l-4.3 3 1.7-5.4L5 7.4h5.2L12 2z" fill="white"/></svg></div>
-      <div><div class="msg-bub"><strong>BugForge AI v3</strong> — 14 new features active.<br><br>
-        <span style="color:var(--t2);font-size:12px">⭐ Severity auto-scorer · 🧪 Test case generator · 🔍 Root cause · 📋 Templates · 💬 Comment existing · 🔔 Slack/Teams · 🏃 Sprint assign · 🎤 Voice · 📤 Export · 📊 Dashboard · ✅ Quality scorer · 🔗 Link epic · 🌙 Theme · ⌨ Shortcuts</span>
-      </div></div>
-    </div>
-  </div>
-
-  <!-- Bulk panel -->
-  <div class="bulk-panel" id="bulk-panel" style="display:none">
-    <div class="bulk-hdr"><span class="bulk-title">⚡ Bulk Mode</span><button class="hbtn" onclick="parseBulk()">Parse</button></div>
-    <textarea id="bulk-in" style="width:100%;background:var(--s1);border:1px solid var(--b2);border-radius:8px;padding:9px;font-size:12px;color:var(--t1);font-family:'Plus Jakarta Sans',system-ui,sans-serif;outline:none;resize:none;height:70px;line-height:1.6" placeholder="1. Login button not responding&#10;2. Payment timeout on checkout&#10;3. Dashboard crash on filter&#10;&#10;(Max 20 items recommended — one per line or numbered)"></textarea>
-    <div id="bulk-rows" style="margin-top:8px"></div>
-    <div class="bulk-prog" id="bpw" style="display:none"><div class="bulk-prog-bar" id="bpb" style="width:0%"></div></div>
-    <div style="display:flex;gap:7px;margin-top:8px" id="bulk-acts" style="display:none">
-      <button class="send-btn" onclick="runBulk()"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z"/></svg>Create All</button>
-      <button class="hbtn" onclick="clearBulk()">Clear</button>
-    </div>
-  </div>
-
-  <!-- Input -->
-  <div class="input-area" id="input-area">
-    <!-- Comment on existing ticket form -->
-    <div class="existing-form" id="existing-form" style="display:none">
-      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--amber);margin-bottom:7px">💬 Comment on Existing Ticket</div>
-      <div class="ef-row">
-        <input class="cfg-in" id="existing-id" placeholder="Ticket ID (e.g. QA-1234 or #567)" style="flex:1"/>
-        <select class="cfg-in" id="existing-platform" style="width:80px">
-          <option value="jira">Jira</option><option value="ado">ADO</option><option value="github">GitHub</option>
-        </select>
-      </div>
-      <textarea class="cfg-in" id="existing-comment" placeholder="Add comment or additional repro steps..." rows="2" style="width:100%;resize:none;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:12px;line-height:1.5;margin-bottom:7px"></textarea>
-      <div style="display:flex;gap:7px">
-        <button class="send-btn" style="font-size:11px;padding:6px 12px" onclick="addComment()">Post Comment</button>
-        <button class="hbtn" onclick="toggleCommentForm()">Cancel</button>
-      </div>
-    </div>
-    <div class="input-label-row">
-      <div class="input-label-text">
-        <div class="input-label-dot"></div>
-        Bug Description
-        <span style="font-size:9px;font-weight:500;color:var(--t3)">(required)</span>
-      </div>
-      <div class="input-label-hint">Enter ↵ to generate</div>
-    </div>
-    <div class="input-box">
-      <div class="input-top">
-        <textarea id="din" aria-label="Describe your defect" aria-multiline="true" placeholder="Describe the bug in detail... (Enter to generate)&#10;Tip: Paste screenshot with Ctrl+V for better AI quality"></textarea>
-        <div class="input-btns">
-          <button class="iibtn" id="voice-btn" onclick="toggleVoice()" title="Voice input (Ctrl+Shift+V)" aria-label="Voice input (Ctrl+Shift+V)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M5 10a7 7 0 0014 0M12 19v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <!-- Generate button -->
+          <button class="generate-btn" id="send-btn" onclick="sendDefect()" aria-label="Generate ticket from defect description">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z"/></svg>
+            Generate ticket
           </button>
-          <button class="iibtn" id="attach-btn" onclick="document.getElementById('file-input').click()" title="Attach screenshot" aria-label="Attach screenshot">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="iibtn" onclick="toggleCommentForm()" title="Comment on existing ticket" aria-label="Comment on existing ticket" style="font-size:13px">💬</button>
         </div>
       </div>
-      <div id="ss-thumb"></div>
-      <div id="screenshot-warn">
-      <span>📸</span>
-      <span>Screenshot required — paste (Ctrl+V) or click the 📎 button to attach</span>
-    </div>
-    <div class="input-foot">
-        <div class="ex-chips">
-          <span class="ex-chip" onclick="setEx(0)">Login fails mobile</span>
-          <span class="ex-chip" onclick="setEx(1)">Payment timeout</span>
-          <span class="ex-chip" onclick="setEx(2)">Dashboard crash</span>
-          <span class="ex-chip" onclick="setEx(3)">API 404 error</span>
-        </div>
-        <select id="platform-override" style="background:var(--s3);border:1px solid var(--b3);border-radius:7px;padding:4px 8px;font-size:11px;color:var(--t1);font-family:'Plus Jakarta Sans',system-ui,sans-serif;cursor:pointer;outline:none;flex-shrink:0;max-width:90px" title="Force platform (overrides auto-routing)">
-          <option value="auto">🤖 Auto</option>
-          <option value="jira">🔵 Jira</option>
-          <option value="azure_devops">🔷 ADO</option>
-          <option value="github">⚫ GitHub</option>
-        </select>
-        <button class="send-btn" id="send-btn" onclick="sendDefect()" aria-label="Generate ticket from defect description">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z"/></svg>
-          Generate
+
+      <div class="form-footer">
+        <span>Drafts persist for this session only</span>
+        <button class="form-footer-clear" onclick="clearForm()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          Clear
         </button>
       </div>
+    </section>
+
+    <!-- ═══ RIGHT CARD: GENERATED TICKET ═══ -->
+    <section class="card" aria-labelledby="ticket-heading">
+      <div class="card-hdr">
+        <h2 class="card-title" id="ticket-heading">Generated Ticket</h2>
+        <button id="mobile-menu-btn" onclick="openSettings()" aria-label="Open settings" style="display:none;background:transparent;border:1px solid var(--b2);cursor:pointer;padding:5px 10px;border-radius:8px;color:var(--t2);font-size:12px">⚙</button>
+      </div>
+
+      <!-- Comment on existing ticket form (toggled) -->
+      <div class="existing-form" id="existing-form" style="display:none">
+        <div class="ef-title">💬 Comment on Existing Ticket</div>
+        <div class="ef-row">
+          <input class="cfg-in" id="existing-id" placeholder="Ticket ID (e.g. QA-1234 or #567)" style="flex:1"/>
+          <select class="cfg-in" id="existing-platform" style="width:88px">
+            <option value="jira">Jira</option><option value="ado">ADO</option><option value="github">GitHub</option>
+          </select>
+        </div>
+        <textarea class="cfg-in" id="existing-comment" placeholder="Add comment or additional repro steps..." rows="3" style="width:100%;resize:vertical;font-family:'Inter',sans-serif;font-size:12px;line-height:1.5;margin-bottom:8px"></textarea>
+        <div style="display:flex;gap:7px">
+          <button class="send-btn" style="font-size:11px;padding:7px 14px" onclick="addComment()">Post Comment</button>
+          <button class="hbtn" onclick="toggleCommentForm()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Bulk panel (toggled) -->
+      <div class="bulk-panel" id="bulk-panel" style="display:none">
+        <div class="bulk-hdr"><span class="bulk-title">⚡ Bulk Mode</span><button class="hbtn" onclick="parseBulk()">Parse</button></div>
+        <textarea id="bulk-in" style="width:100%;background:var(--s1);border:1px solid var(--b2);border-radius:9px;padding:10px;font-size:12px;color:var(--t1);font-family:'Inter',sans-serif;outline:none;resize:vertical;min-height:76px;line-height:1.6" placeholder="1. Login button not responding&#10;2. Payment timeout on checkout&#10;3. Dashboard crash on filter&#10;&#10;(Max 20 items recommended — one per line or numbered)"></textarea>
+        <div id="bulk-rows" style="margin-top:8px"></div>
+        <div class="bulk-prog" id="bpw" style="display:none"><div class="bulk-prog-bar" id="bpb" style="width:0%"></div></div>
+        <div style="display:flex;gap:7px;margin-top:8px" id="bulk-acts">
+          <button class="send-btn" onclick="runBulk()"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z"/></svg>Create All</button>
+          <button class="hbtn" onclick="clearBulk()">Clear</button>
+        </div>
+      </div>
+
+      <!-- Ticket content area (this is the #chat container for JS compat) -->
+      <div class="ticket-area" id="chat" role="log" aria-live="polite" aria-label="Generated ticket output" aria-relevant="additions">
+        <div class="drop-ov" id="drop-ov">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="color:var(--accent2);font-size:13px;font-weight:500">Drop screenshot to attach</span>
+        </div>
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div class="empty-title">Your ticket will appear here</div>
+          <div class="empty-sub">Attach a screenshot, describe the bug, then click <strong>Generate</strong>.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ══ SETTINGS DRAWER (right side) ══ -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettings()"></div>
+<aside class="settings-drawer" id="settings-drawer" role="complementary" aria-label="Settings">
+  <div class="drawer-hdr">
+    <div class="drawer-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
     </div>
+    <button class="drawer-close" onclick="closeSettings()" aria-label="Close settings">×</button>
   </div>
-</div>
-</div>
+
+  <div class="sidebar">
+
+    <!-- Platform pills (active indicator) -->
+    <div class="sb-sec">
+      <div class="ppills">
+        <div class="ppill" id="pill-jira"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M16 2L2 17l14 13 14-13L16 2z" fill="#4c8dff"/><path d="M16 9.5L9.5 17 16 23l6.5-6L16 9.5z" fill="white"/></svg>Jira</div>
+        <div class="ppill" id="pill-ado"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M27 6L20 2.5 10.5 10 4 13v7l4.5 1.5L20 29.5 27 26V6z" fill="#29a7ff"/></svg>ADO</div>
+        <div class="ppill" id="pill-gh"><svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 2C8.27 2 2 8.27 2 16c0 6.19 4 11.43 9.57 13.29.7.13.96-.3.96-.67v-2.36c-3.89.85-4.71-1.87-4.71-1.87-.64-1.62-1.55-2.05-1.55-2.05-1.27-.87.1-.85.1-.85 1.4.1 2.13 1.44 2.13 1.44 1.25 2.14 3.28 1.52 4.08 1.16.12-.9.49-1.52.89-1.87-3.11-.35-6.37-1.55-6.37-6.9 0-1.52.54-2.77 1.44-3.74-.14-.35-.63-1.77.13-3.68 0 0 1.18-.38 3.86 1.44A13.3 13.3 0 0116 8.36c1.19.01 2.38.16 3.5.47 2.67-1.82 3.84-1.44 3.84-1.44.77 1.91.28 3.33.14 3.68.9.97 1.44 2.22 1.44 3.74 0 5.36-3.27 6.54-6.38 6.89.5.43.95 1.28.95 2.59v3.83c0 .37.25.8.96.67C25.99 27.43 30 22.19 30 16 30 8.27 23.73 2 16 2z" fill="#8b949e"/></svg>GitHub</div>
+      </div>
+    </div>
+
+    <!-- Anthropic API -->
+    <div class="sb-sec">
+      <div class="sec-hdr" role="button" tabindex="0" onclick="tSec('ant')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('ant')}">
+        <span class="sec-lbl">Anthropic API</span>
+        <span class="sec-arr open" id="arr-ant">▶</span>
+      </div>
+      <div class="sec-body open" id="bod-ant">
+        <div style="padding:2px 0 8px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:7px">
+          <span class="cfg-dot ok" id="dot-ant"></span>
+          Secured via Vercel environment variable
+        </div>
+        <div style="font-size:11px;color:var(--t3);line-height:1.6;margin-bottom:10px">
+          API key stored server-side in Vercel. Go to Vercel → Settings → Environment Variables → add <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">ANTHROPIC_API_KEY</code>
+        </div>
+        <button class="btn-sv" onclick="validateCfg('ant')">✓ Test connection</button>
+      </div>
+    </div>
+
+    <!-- Jira / ADO / GitHub tabs -->
+    <div class="sb-sec">
+      <div class="sec-hdr" role="button" tabindex="0" onclick="tSec('plat')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('plat')}">
+        <span class="sec-lbl">Platforms</span>
+        <span class="sec-arr open" id="arr-plat">▶</span>
+      </div>
+      <div class="sec-body open" id="bod-plat">
+        <div class="ptab-header">
+          <button id="ptab-jira" class="ptab-btn active jira" onclick="switchPlatformTab('jira')">🔵 Jira</button>
+          <button id="ptab-ado" class="ptab-btn ado" onclick="switchPlatformTab('ado')">🔷 ADO</button>
+          <button id="ptab-gh" class="ptab-btn gh" onclick="switchPlatformTab('gh')">⚫ GitHub</button>
+        </div>
+
+        <!-- Jira Panel -->
+        <div id="ptab-jira-panel" class="ptab-panel active">
+          <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px;margin-bottom:7px">
+            <span class="cfg-dot ok" id="dot-jira"></span>Credentials secured via Vercel env vars
+          </div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.6">
+            Required: <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">JIRA_URL</code>
+            <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">JIRA_EMAIL</code>
+            <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">JIRA_TOKEN</code>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:10px" id="jira-proj-status">↻ loading...</span></div>
+            <select class="cfg-in" id="jira-proj-select" onchange="CFG.jiraProj=this.options[this.selectedIndex]?.dataset?.key||this.value;syncProjectMirror()" style="cursor:pointer">
+              <option value="">— select project —</option>
+            </select>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Assignee email <span style="color:var(--t3);font-size:10px">(optional)</span></div>
+            <input class="cfg-in" id="jira-assignee-input" placeholder="assignee@company.com" oninput="CFG.jiraAssignee=this.value.trim()"/>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:10px">
+            <button class="btn-sv" style="flex:1" onclick="validateCfg('jira')">✓ Test</button>
+            <button class="btn-sv" style="flex:0 0 auto;width:74px" onclick="loadProjects('jira')">↻ Reload</button>
+          </div>
+        </div>
+
+        <!-- ADO Panel -->
+        <div id="ptab-ado-panel" class="ptab-panel">
+          <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px;margin-bottom:7px">
+            <span class="cfg-dot ok" id="dot-ado"></span>Credentials secured via Vercel env vars
+          </div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.6">
+            Required: <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">ADO_PAT</code> — Org and Project selected below
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Organisation</div>
+            <input class="cfg-in" id="ado-org-input" placeholder="e.g. RSATwithAzure" oninput="CFG.adoOrg=this.value.trim();if(this.value.trim().length>3)loadProjects('ado')"/>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:10px" id="ado-proj-status">enter org first</span></div>
+            <select class="cfg-in" id="ado-proj-select" onchange="CFG.adoProj=this.value;syncProjectMirror()" style="cursor:pointer">
+              <option value="">— select project —</option>
+            </select>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Assign to <span style="color:var(--t3);font-size:10px">(optional)</span></div>
+            <input class="cfg-in" id="ado-assignee-input" placeholder="Display name or email" oninput="CFG.adoAssignee=this.value.trim()"/>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:10px">
+            <button class="btn-sv" style="flex:1" onclick="validateCfg('ado')">✓ Test</button>
+            <button class="btn-sv" style="flex:0 0 auto;width:74px" onclick="loadProjects('ado')">↻ Reload</button>
+          </div>
+          <input type="hidden" id="ci-ado-org"/><input type="hidden" id="ci-ado-project"/>
+          <input type="hidden" id="ci-ado-pat"/><input type="hidden" id="ci-ado-team"/>
+        </div>
+
+        <!-- GitHub Panel -->
+        <div id="ptab-gh-panel" class="ptab-panel">
+          <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px;margin-bottom:7px">
+            <span class="cfg-dot ok" id="dot-gh"></span>Credentials secured via Vercel env vars
+          </div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.6">
+            Required: <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">GITHUB_OWNER</code>
+            <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">GITHUB_REPO</code>
+            <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">GITHUB_TOKEN</code>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Assignee <span style="color:var(--t3);font-size:10px">(optional — GitHub username)</span></div>
+            <input class="cfg-in" id="gh-assignee-input" placeholder="github-username" oninput="CFG.ghAssignee=this.value.trim()"/>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Extra labels <span style="color:var(--t3);font-size:10px">(optional — comma separated)</span></div>
+            <input class="cfg-in" id="gh-labels-input" placeholder="frontend, sprint-1" oninput="CFG.ghLabels=this.value.trim()"/>
+          </div>
+          <button class="btn-sv" style="margin-top:10px" onclick="validateCfg('gh')">✓ Test GitHub connection</button>
+          <input type="hidden" id="ci-gh-owner"/><input type="hidden" id="ci-gh-repo"/>
+          <input type="hidden" id="ci-gh-token"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="sb-sec">
+      <div class="sec-hdr" role="button" tabindex="0" onclick="tSec('notif')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('notif')}">
+        <span class="sec-lbl">Notifications</span>
+        <span class="sec-arr" id="arr-notif">▶</span>
+      </div>
+      <div class="sec-body" id="bod-notif">
+        <div style="padding:2px 0 8px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:7px">
+          <span class="cfg-dot ok" id="dot-slack"></span>Secured via Vercel environment variables
+        </div>
+        <div style="font-size:11px;color:var(--t3);line-height:1.7;margin-bottom:4px">
+          Set these in <strong>Vercel → Settings → Environment Variables:</strong><br>
+          <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px;display:inline-block;margin-top:4px">SLACK_WEBHOOK_URL</code>
+          <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px;display:inline-block;margin-top:4px">TEAMS_WEBHOOK_URL</code>
+        </div>
+        <input type="hidden" id="ci-slack"/><input type="hidden" id="ci-teams"/>
+        <span id="dot-teams" style="display:none"></span>
+      </div>
+    </div>
+
+    <!-- Quick Templates -->
+    <div class="sb-sec">
+      <div class="sec-hdr" role="button" tabindex="0" onclick="tSec('tpl')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('tpl')}">
+        <span class="sec-lbl">Quick Templates</span>
+        <span class="sec-arr" id="arr-tpl">▶</span>
+      </div>
+      <div class="sec-body" id="bod-tpl">
+        <div class="tpl-grid" id="tpl-grid"></div>
+      </div>
+    </div>
+
+    <!-- Routing Rules -->
+    <div class="sb-sec">
+      <div class="sec-hdr" role="button" tabindex="0" onclick="tSec('route')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('route')}">
+        <span class="sec-lbl">Routing Rules</span>
+        <span class="sec-arr" id="arr-route">▶</span>
+      </div>
+      <div class="sec-body" id="bod-route">
+        <div class="route-item"><span class="rb rb-ado">ADO</span><span>D365, Dynamics, pipeline, PUAT, ADO, sprint</span></div>
+        <div class="route-item"><span class="rb rb-gh">GH</span><span>GitHub, git, repo, npm, Actions</span></div>
+        <div class="route-item"><span class="rb rb-jira">Jira</span><span>Everything else (default)</span></div>
+      </div>
+    </div>
+
+    <!-- Session History -->
+    <div class="sb-sec" style="flex:1">
+      <div class="sec-hdr" role="button" tabindex="0" onclick="tSec('hist')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('hist')}">
+        <span class="sec-lbl">Session History <span id="hist-cnt" style="color:var(--accent2)"></span></span>
+        <span class="sec-arr" id="arr-hist">▶</span>
+      </div>
+      <div class="sec-body" id="bod-hist">
+        <div id="hist-list"></div>
+        <div style="display:flex;gap:7px;margin-top:10px" id="hist-export-btns">
+          <button class="hbtn" onclick="exportCSV()" style="flex:1;justify-content:center;font-size:10px">📥 CSV</button>
+          <button class="hbtn" onclick="exportPrint()" style="flex:1;justify-content:center;font-size:10px">🖨 Print</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</aside>
+
+<!-- Legacy #input-area kept hidden for JS compatibility (toggleBulk references it) -->
+<div id="input-area" style="display:none"></div>
+
 <div class="toast-wrap" id="toasts" aria-live="polite" aria-atomic="false" role="status"></div>
 <script>
 // ══ CONFIG ════════════════════════════════════════════════════
@@ -1055,21 +1581,7 @@ function platIcon(p,sz=16){
 // ══ CHAT HELPERS ══════════════════════════════════════════
 const aiAv=()=>`<div class="msg-av ai" style="padding:0;overflow:hidden;background:none"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 72 72"><defs><linearGradient id="avbf" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4f6ef7"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs><rect width="72" height="72" rx="16" fill="url(#avbf)"/><rect x="16" y="36" width="40" height="22" rx="5" fill="#fff" opacity=".9"/><rect x="22" y="27" width="28" height="13" rx="4" fill="#fff" opacity=".9"/><path d="M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z" fill="url(#avbf)"/></svg></div>`;
 const usrAv=()=>`<div class="msg-av user"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="white" opacity=".7"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="white" stroke-width="1.5" fill="none" opacity=".7"/></svg></div>`;
-function addMsg(role,html){
-  const chat=document.getElementById('chat');
-  // DEF-BF-014 FIX: Limit chat history to 50 messages to prevent DOM growth
-  const MAX_MSGS = 50;
-  const msgs = chat.querySelectorAll('.msg');
-  if(msgs.length >= MAX_MSGS) {
-    // Remove oldest 10 messages to batch-clean
-    for(let i=0; i<10 && msgs[i]; i++) msgs[i].remove();
-  }
-  const d=document.createElement('div');
-  d.className='msg '+(role==='user'?'user':'ai');
-  d.innerHTML=(role==='user'?usrAv():aiAv())+`<div><div class="msg-bub">${html}</div></div>`;
-  chat.appendChild(d);
-  chat.scrollTop=chat.scrollHeight;
-}
+function addMsg(role,html){const chat=document.getElementById('chat');const d=document.createElement('div');d.className='msg '+(role==='user'?'user':'ai');d.innerHTML=(role==='user'?usrAv():aiAv())+`<div><div class="msg-bub">${html}</div></div>`;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
 function addThink(steps){const chat=document.getElementById('chat');const d=document.createElement('div');d.className='thinking';d.id='think';d.innerHTML=aiAv()+`<div class="think-box"><div class="think-steps">${steps.map((s,i)=>`<div class="think-step${i===0?' active':''}" id="ts${i}"><div class="si${i===0?' spin':' wait'}" id="si${i}"></div>${s}</div>`).join('')}</div></div>`;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
 function advStep(n){for(let i=0;i<n;i++){const ts=document.getElementById('ts'+i),si=document.getElementById('si'+i);if(ts)ts.className='think-step done';if(si)si.className='si done';}const ts=document.getElementById('ts'+n),si=document.getElementById('si'+n);if(ts)ts.className='think-step active';if(si)si.className='si spin';}
 function rmThink(){const el=document.getElementById('think');if(el)el.remove();}
@@ -1120,7 +1632,7 @@ function buildTicketHTML(t,platform,tid){
         <button class="abtn primary" id="btn-post-jira" onclick="postToSpecificPlatform('jira')" style="background:var(--accent);flex:1;min-width:100px">🔵 Post to Jira</button>
         <button class="abtn primary" id="btn-post-ado" onclick="postToSpecificPlatform('azure_devops')" style="background:#0078d4;flex:1;min-width:100px">🔷 Post to ADO</button>
         <button class="abtn primary" id="btn-post-gh" onclick="postToSpecificPlatform('github')" style="background:#24292e;flex:1;min-width:100px">⚫ GitHub</button>
-        <button class="abtn primary" id="btn-post-all" onclick="confirmPostAll()" style="background:linear-gradient(135deg,var(--accent),#0078d4);flex:1;min-width:100px">🌐 Post to All</button>
+        <button class="abtn primary" id="btn-post-all" onclick="postToSpecificPlatform('all')" style="background:linear-gradient(135deg,var(--accent),#0078d4);flex:1;min-width:100px">🌐 Post to All</button>
       </div>
       <!-- Test cases section — hidden until ticket is posted -->
       <div id="tc-prompt-area" style="display:none;padding:10px 14px;border-top:1px solid var(--b1)">
@@ -1363,7 +1875,7 @@ async function postGH(t){
   // Credentials in Vercel env vars — proceed
   const steps=(t.steps_to_reproduce||[]).map((s,i)=>`${i+1}. ${s}`).join('\n');
   const crit=(t.acceptance_criteria||[]).map(c=>`- [ ] ${c}`).join('\n');
-  const body=`## Description\n${t.body||''}\n\n## Steps to Reproduce\n${steps}\n\n## Expected\n${t.expected_result}\n\n## Actual\n${t.actual_result}\n\n## Environment\n\`\`\`\n${t.environment||''}\n\`\`\`\n${crit?`\n## Acceptance Criteria\n${crit}`:''}\n\n---\n> 🤖 Auto-generated by BugForge AI v2026.04.18`;
+  const body=`## Description\n${t.body||''}\n\n## Steps to Reproduce\n${steps}\n\n## Expected\n${t.expected_result}\n\n## Actual\n${t.actual_result}\n\n## Environment\n\`\`\`\n${t.environment||''}\n\`\`\`\n${crit?`\n## Acceptance Criteria\n${crit}`:''}\n\n---\n> 🤖 Auto-generated by BugForge AI v3`;
   const labels=[...(t.labels||[]),`severity:${(t.severity||'medium').toLowerCase()}`,'bug','ai-generated'];
   return api('github', { action:'create_issue', config:ghCfg(), payload:{ title:t.title, body, labels } });
 }
@@ -1401,24 +1913,12 @@ function handleShot(file){
   reader.onload=e=>{
     pendingShot={dataUrl:e.target.result,name:file.name,file};
     const wrap=document.getElementById('ss-thumb');
-    if(wrap){
-      wrap.innerHTML=`<div class="ss-thumb"><img src="${e.target.result}" alt="Screenshot preview" loading="lazy" style="max-height:40px;border-radius:4px;border:1px solid var(--b2)"/><span class="ss-name" style="font-size:10px;color:var(--green)">${file.name}</span><button class="ss-rm" onclick="clearShot()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px">×</button></div>`;
-      const ph=document.getElementById('ss-placeholder');
-      if(ph) ph.style.display='none';
-    }
+    if(wrap)wrap.innerHTML=`<div class="ss-thumb"><img src="${e.target.result}"/><span class="ss-name">${file.name}</span><button class="ss-rm" onclick="clearShot()">×</button></div>`;
     const ab=document.getElementById('attach-btn');if(ab)ab.classList.add('has-file');
     toast('Screenshot attached','success');
   };reader.readAsDataURL(file);
 }
-function clearShot(){
-  pendingShot=null;
-  const w=document.getElementById('ss-thumb');
-  if(w) w.innerHTML='<div id="ss-placeholder" style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3);padding:2px 0"><span style="color:var(--amber);font-weight:700">*</span> Screenshot required</div>';
-  const ab=document.getElementById('attach-btn');
-  if(ab) ab.classList.remove('has-file');
-  const warn=document.getElementById('screenshot-warn');
-  if(warn) warn.style.display='none';
-}
+function clearShot(){pendingShot=null;const w=document.getElementById('ss-thumb');if(w)w.innerHTML='';const ab=document.getElementById('attach-btn');if(ab)ab.classList.remove('has-file');}
 
 // Convert File to base64 string
 function fileToBase64(file){
@@ -1517,40 +2017,6 @@ function setEx(i){document.getElementById('din').value=EXAMPLES[i];}
 async function sendDefect(){
   const input=document.getElementById('din'),txt=input.value.trim();
   if(!txt||isProc)return;
-
-  // ── DEF-BF-004: Min description length ─────────────────
-  if(txt.trim().length < 10){
-    toast('Please describe the bug in at least 10 characters for a quality ticket','warn');
-    input.focus();
-    return;
-  }
-  // ──────────────────────────────────────────────────────────
-
-  // Validate: screenshot is required
-  if(!pendingShot){
-    // Show warning with pulse effect on attach button
-    const attachBtn=document.getElementById('attach-btn');
-    if(attachBtn){
-      attachBtn.style.animation='none';
-      attachBtn.style.background='var(--amber-bg)';
-      attachBtn.style.border='1px solid var(--amber-bd)';
-      attachBtn.style.color='var(--amber)';
-      setTimeout(()=>{
-        attachBtn.style.background='';
-        attachBtn.style.border='';
-        attachBtn.style.color='';
-      }, 2000);
-    }
-    // Show inline warning below input
-    const warn = document.getElementById('screenshot-warn');
-    if(warn){
-      warn.style.display='flex';
-      setTimeout(()=>warn.style.display='none', 3000);
-    }
-    toast('📸 Please attach a screenshot before generating the ticket','warn');
-    return;
-  }
-
   // API key handled server-side via ANTHROPIC_API_KEY env var
   isProc=true;input.value='';clearPills();
   document.getElementById('send-btn').disabled=true;
@@ -1894,20 +2360,6 @@ function dismissTCPrompt(){
   if(el) el.innerHTML='<div style="font-size:11px;color:var(--t3);padding:4px 0">No problem! You can generate test cases anytime using 🧪 Test Cases button above.</div>';
 }
 
-// OBS-02 FIX: Confirm before posting to all platforms
-async function confirmPostAll() {
-  const confirmed = await new Promise(resolve => {
-    showConfirm(
-      'Post to All Platforms?',
-      'This will create tickets on Jira, ADO, and GitHub simultaneously. Continue?',
-      'Post to All', 'Cancel',
-      () => resolve(true), () => resolve(false),
-      'btn-primary', 'btn-secondary'
-    );
-  });
-  if (confirmed) postToSpecificPlatform('all');
-}
-
 async function postToSpecificPlatform(platform){
   if(!curTicket){ toast('No ticket to post','warn'); return; }
 
@@ -2117,7 +2569,7 @@ function resetSessionOnLoad() {
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
       <div class="msg ai">${aiAv()}<div><div class="msg-bub">
-        <strong>BugForge AI v2026.04.18</strong> — Ready. Describe a defect below.<br><br>
+        <strong>BugForge AI v4.7</strong> — Ready. Describe a defect below.<br><br>
         <span style="color:var(--t2);font-size:12px">⭐ Severity scorer · 🧪 Test cases · 🔍 Root cause · 📋 Templates · 💬 Comments · 🔔 Notifications · 🏃 Sprint · 🎤 Voice · 📤 Export · 📊 Dashboard</span>
       </div></div></div>`;
   }
@@ -2201,22 +2653,310 @@ window.addEventListener('resize', function() {
     document.body.style.overflow = '';
   }
 });
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════
+   UI ADAPTERS for the new Bug Sync layout
+   These run AFTER the main script defines its functions, and
+   extend/override behavior to fit the new UI.
+   ══════════════════════════════════════════════════════════════ */
+(function(){
 
-// DEF-BF-013 FIX: ESC key closes sidebar on mobile
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    const sb = document.querySelector('.sidebar');
-    if (sb && sb.classList.contains('mobile-open')) {
-      toggleMobileSidebar();
+  /* ── Remove the empty-state on first content ───────────────── */
+  function clearEmptyState(){
+    const es = document.querySelector('#chat .empty-state');
+    if (es) es.remove();
+  }
+  // Hook into addMsg / ticket rendering by wrapping chat.appendChild
+  const chatEl = () => document.getElementById('chat');
+  const _origAppend = HTMLElement.prototype.appendChild;
+  // Light-touch observer: watch for children added to #chat and remove empty state
+  const mo = new MutationObserver(muts => {
+    for (const m of muts){
+      if (m.type === 'childList' && m.addedNodes.length){
+        for (const n of m.addedNodes){
+          if (n.nodeType === 1 && !n.classList.contains('empty-state') && !n.classList.contains('drop-ov')){
+            clearEmptyState();
+            return;
+          }
+        }
+      }
     }
-    // Also close any open dialogs
-    const confirm = document.getElementById('confirm-overlay');
-    if (confirm && confirm.style.display !== 'none') {
-      const cancelBtn = document.getElementById('confirm-cancel-btn');
-      if (cancelBtn) cancelBtn.click();
+  });
+  const ce = chatEl();
+  if (ce) mo.observe(ce, { childList: true });
+
+  /* ── Settings drawer open/close ────────────────────────────── */
+  window.openSettings = function(){
+    document.getElementById('settings-overlay').classList.add('open');
+    document.getElementById('settings-drawer').classList.add('open');
+  };
+  window.closeSettings = function(){
+    document.getElementById('settings-overlay').classList.remove('open');
+    document.getElementById('settings-drawer').classList.remove('open');
+  };
+  // Keep old mobile sidebar fn working as alias
+  const _origToggleMobile = window.toggleMobileSidebar;
+  window.toggleMobileSidebar = function(){
+    const d = document.getElementById('settings-drawer');
+    if (!d) return;
+    if (d.classList.contains('open')) closeSettings();
+    else openSettings();
+  };
+
+  /* ── Ctrl+, opens settings ─────────────────────────────────── */
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === ','){
+      e.preventDefault();
+      const d = document.getElementById('settings-drawer');
+      if (d && d.classList.contains('open')) closeSettings();
+      else openSettings();
+    }
+    if (e.key === 'Escape'){
+      const d = document.getElementById('settings-drawer');
+      if (d && d.classList.contains('open')) closeSettings();
+    }
+  });
+
+  /* ── Project-select mirror in the form ─────────────────────── */
+  window.syncProjectMirror = function(){
+    const platSel = document.getElementById('platform-override');
+    const mirror = document.getElementById('project-mirror');
+    if (!platSel || !mirror) return;
+    const plat = platSel.value;
+    let srcSel = null;
+    let placeholder = '— select project —';
+    if (plat === 'jira' || plat === 'auto') {
+      srcSel = document.getElementById('jira-proj-select');
+    } else if (plat === 'azure_devops') {
+      srcSel = document.getElementById('ado-proj-select');
+    } else if (plat === 'github') {
+      // GitHub uses owner/repo from env — show info row only
+      mirror.innerHTML = '<option value="">— set in env vars —</option>';
+      mirror.disabled = true;
+      return;
+    }
+    mirror.disabled = false;
+    if (!srcSel) { mirror.innerHTML = `<option value="">${placeholder}</option>`; return; }
+    // Copy options from source select
+    mirror.innerHTML = '';
+    Array.from(srcSel.options).forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      if (opt.dataset && opt.dataset.key) o.dataset.key = opt.dataset.key;
+      o.textContent = opt.textContent;
+      if (opt.selected) o.selected = true;
+      mirror.appendChild(o);
+    });
+  };
+  window.applyProjectMirror = function(){
+    const platSel = document.getElementById('platform-override');
+    const mirror = document.getElementById('project-mirror');
+    if (!platSel || !mirror) return;
+    const plat = platSel.value;
+    if (plat === 'jira' || plat === 'auto'){
+      const j = document.getElementById('jira-proj-select');
+      if (j) { j.value = mirror.value; j.dispatchEvent(new Event('change')); }
+    } else if (plat === 'azure_devops'){
+      const a = document.getElementById('ado-proj-select');
+      if (a) { a.value = mirror.value; a.dispatchEvent(new Event('change')); }
+    }
+  };
+
+  // Resync the mirror whenever projects are loaded into the sidebar selects
+  ['jira-proj-select', 'ado-proj-select'].forEach(id => {
+    const check = () => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      // Watch for options being added
+      const mo2 = new MutationObserver(() => syncProjectMirror());
+      mo2.observe(el, { childList: true, subtree: false });
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', check);
+    } else {
+      check();
+    }
+  });
+
+  /* ── Screenshot preview inline in dropzone ─────────────────── */
+  function updateDropzonePreview(){
+    const dz = document.getElementById('dropzone');
+    const thumb = document.getElementById('ss-thumb');
+    if (!dz || !thumb) return;
+    // If pendingShot is set (existing JS populates #ss-thumb) mirror it into the dropzone
+    if (window.pendingShot && thumb.innerHTML.trim()){
+      // Extract image src + name from the thumb
+      const img = thumb.querySelector('img');
+      const name = thumb.querySelector('.ss-name')?.textContent || 'screenshot.png';
+      if (img){
+        dz.classList.add('has-file');
+        dz.innerHTML = `
+          <div class="dz-preview">
+            <img src="${img.src}" alt="Screenshot preview"/>
+            <div class="dz-preview-info">
+              <div class="dz-preview-name">${name}</div>
+              <div class="dz-preview-size">Attached — click to replace</div>
+            </div>
+            <button class="dz-remove" onclick="event.stopPropagation();removeScreenshot()" aria-label="Remove screenshot">×</button>
+          </div>`;
+      }
+    } else {
+      dz.classList.remove('has-file');
+      dz.innerHTML = `
+        <svg class="dz-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <div class="dz-title">Drop, paste, or click</div>
+        <div class="dz-sub">PNG or JPG, up to 5 MB</div>`;
     }
   }
-});
+  window.removeScreenshot = function(){
+    window.pendingShot = null;
+    const thumb = document.getElementById('ss-thumb');
+    if (thumb) thumb.innerHTML = '';
+    updateDropzonePreview();
+  };
+  // Poll briefly after page load to sync dropzone state (file-input 'change' is handled by original JS)
+  const fileInput = document.getElementById('file-input');
+  if (fileInput){
+    fileInput.addEventListener('change', () => {
+      // Give the original handler time to populate #ss-thumb then mirror
+      setTimeout(updateDropzonePreview, 120);
+      setTimeout(updateDropzonePreview, 400);
+    });
+  }
+  // Also sync when #ss-thumb mutates (paste / drop handlers populate it)
+  const thumbEl = document.getElementById('ss-thumb');
+  if (thumbEl){
+    const tmo = new MutationObserver(updateDropzonePreview);
+    tmo.observe(thumbEl, { childList: true, subtree: true });
+  }
+
+  /* ── Drag & drop on the dropzone ───────────────────────────── */
+  const dz = document.getElementById('dropzone');
+  if (dz){
+    ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => {
+      e.preventDefault(); e.stopPropagation();
+      dz.classList.add('drag-over');
+    }));
+    ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => {
+      e.preventDefault(); e.stopPropagation();
+      if (ev === 'dragleave' && dz.contains(e.relatedTarget)) return;
+      dz.classList.remove('drag-over');
+    }));
+    dz.addEventListener('drop', e => {
+      const f = e.dataTransfer?.files?.[0];
+      if (f && f.type && f.type.startsWith('image/')){
+        const fi = document.getElementById('file-input');
+        const dt = new DataTransfer();
+        dt.items.add(f);
+        fi.files = dt.files;
+        fi.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+  }
+
+  /* ── Clear form (resets draft without nuking config) ───────── */
+  window.clearForm = function(){
+    const din = document.getElementById('din');
+    if (din) din.value = '';
+    window.pendingShot = null;
+    const thumb = document.getElementById('ss-thumb');
+    if (thumb) thumb.innerHTML = '';
+    updateDropzonePreview();
+    // Reset template highlight
+    document.querySelectorAll('.tpl-btn.active').forEach(b => b.classList.remove('active'));
+    window.activeTemplate = null;
+    // Reset chip highlight
+    document.querySelectorAll('.ex-chip.active').forEach(c => c.classList.remove('active'));
+    if (typeof toast === 'function') toast('Draft cleared', 'success');
+  };
+
+  /* ── Highlight active example chip on setEx ────────────────── */
+  const _origSetEx = window.setEx;
+  window.setEx = function(i){
+    if (typeof _origSetEx === 'function') _origSetEx(i);
+    document.querySelectorAll('.ex-chip').forEach((c, idx) => c.classList.toggle('active', idx === i));
+  };
+
+  /* ── Reset empty state on load/clear ───────────────────────── */
+  const _origReset = window.resetSessionOnLoad;
+  window.resetSessionOnLoad = function(){
+    // Call original
+    if (typeof _origReset === 'function') _origReset();
+    // Then overwrite chat with our empty state
+    const chat = document.getElementById('chat');
+    if (chat){
+      chat.innerHTML = `
+        <div class="drop-ov" id="drop-ov">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="color:var(--accent2);font-size:13px;font-weight:500">Drop screenshot to attach</span>
+        </div>
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div class="empty-title">Your ticket will appear here</div>
+          <div class="empty-sub">Attach a screenshot, describe the bug, then click <strong>Generate</strong>.</div>
+        </div>`;
+      // Re-attach observer to the new #chat
+      mo.disconnect();
+      mo.observe(chat, { childList: true });
+    }
+  };
+
+  /* ── clearChat: after it runs, restore our empty-state styling ── */
+  const _origClearChat = window.clearChat;
+  window.clearChat = async function(){
+    if (typeof _origClearChat === 'function') await _origClearChat.apply(this, arguments);
+    // The original rewrites #chat with a welcome bubble — replace with our empty state
+    const chat = document.getElementById('chat');
+    if (chat){
+      chat.innerHTML = `
+        <div class="drop-ov" id="drop-ov">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="color:var(--accent2);font-size:13px;font-weight:500">Drop screenshot to attach</span>
+        </div>
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div class="empty-title">Your ticket will appear here</div>
+          <div class="empty-sub">Attach a screenshot, describe the bug, then click <strong>Generate</strong>.</div>
+        </div>`;
+      mo.disconnect();
+      mo.observe(chat, { childList: true });
+    }
+    // Also clear the form textarea and screenshot
+    if (typeof clearForm === 'function') {
+      const din = document.getElementById('din');
+      if (din) din.value = '';
+      window.pendingShot = null;
+      const thumb = document.getElementById('ss-thumb');
+      if (thumb) thumb.innerHTML = '';
+      updateDropzonePreview();
+    }
+  };
+
+  /* ── Show mobile-menu gear in the ticket card header on small screens ── */
+  function showMobileMenuBtn(){
+    const b = document.getElementById('mobile-menu-btn');
+    if (!b) return;
+    b.style.display = window.innerWidth <= 960 ? 'flex' : 'none';
+  }
+  window.addEventListener('resize', showMobileMenuBtn);
+  showMobileMenuBtn();
+
+  /* Paste handler is provided by the main script's initDragDrop() */
+
+  /* ── Initial project-mirror sync after load ────────────────── */
+  window.addEventListener('load', () => {
+    setTimeout(syncProjectMirror, 300);
+    setTimeout(syncProjectMirror, 1500);
+    setTimeout(syncProjectMirror, 3000);
+    updateDropzonePreview();
+  });
+
+})();
 </script>
 </body>
 </html>
