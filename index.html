@@ -1439,7 +1439,11 @@ async function pfetch(url, options={}) {
 }
 
 // ══ STATE ═════════════════════════════════════════════════════
-let chatHist=[], isProc=false, curTicket=null, pendingShot=null;
+let chatHist=[], isProc=false, curTicket=null;
+// pendingShot is exposed on window so adapter IIFE code can read/clear it.
+// (Using `let` at script scope doesn't attach to `window`, which caused the
+// adapter's `window.pendingShot = null` to silently diverge from this variable.)
+window.pendingShot = null;
 // BUG-009 FIX: Wrap sessionLog parse in try/catch — corrupted localStorage must not crash the app
 let sessionLog=[];
 try{ sessionLog=JSON.parse(localStorage.getItem('da_log')||'[]'); }
@@ -2133,17 +2137,17 @@ async function postTicket(){
     else if(platform==='azure_devops')result=await postADO(curTicket);
     else result=await postGH(curTicket);
     // Attach screenshot server-side (CORS-safe)
-    if(pendingShot?.file){
+    if(window.pendingShot?.file){
       try{
-        const b64=await fileToBase64(pendingShot.file);
+        const b64=await fileToBase64(window.pendingShot.file);
         const attachResult=await fetch('/api/attach',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({
             platform,
-            fileName:pendingShot.name||`screenshot-${Date.now()}.png`,
+            fileName:window.pendingShot.name||`screenshot-${Date.now()}.png`,
             fileBase64:b64,
-            mimeType:pendingShot.file.type||'image/png',
+            mimeType:window.pendingShot.file.type||'image/png',
             ticketId:result.id,
             rawId:result.rawId,
             config:{...jiraCfg(),...adoCfg(),...ghCfg()}
@@ -2292,7 +2296,7 @@ function handleShot(file){
   }
   const reader=new FileReader();
   reader.onload=e=>{
-    pendingShot={dataUrl:e.target.result,name:file.name,file};
+    window.pendingShot={dataUrl:e.target.result,name:file.name,file};
     // ── Render preview INSIDE the visible dropzone (replaces the empty-state SVG+text) ──
     const dz = document.getElementById('dropzone');
     if (dz) {
@@ -2318,7 +2322,7 @@ function handleShot(file){
   };reader.readAsDataURL(file);
 }
 function clearShot(){
-  pendingShot=null;
+  window.pendingShot=null;
   // Reset the dropzone to its empty-state view
   const dz = document.getElementById('dropzone');
   if (dz) {
@@ -2975,7 +2979,7 @@ function toast(msg,type='info'){
 // Session state (chat, tickets, bulk) resets on every page load — fresh start each time.
 function resetSessionOnLoad() {
   // Clear in-memory session state
-  chatHist = []; curTicket = null; pendingShot = null;
+  chatHist = []; curTicket = null; window.pendingShot = null;
   bulkItems = []; isBulk = false; editOpen = false;
   activeTemplate = null; isListening = false;
 
@@ -3199,28 +3203,18 @@ window.addEventListener('resize', function() {
   });
 
   /* ── Screenshot preview inline in dropzone ─────────────────── */
+  // NOTE: handleShot() in the main JS block now renders the preview directly into
+  // #dropzone. This adapter function previously ALSO rendered into #dropzone by
+  // mirroring #ss-thumb, which caused the two to fight (handleShot's preview was
+  // overwritten by this function via the file-input change handler and the
+  // ss-thumb MutationObserver). We keep the function as a no-op wrapper so any
+  // code that still calls it doesn't break.
   function updateDropzonePreview(){
+    // No-op: handleShot() now owns the dropzone UI.
+    // If pendingShot got cleared externally, sync the empty state.
     const dz = document.getElementById('dropzone');
-    const thumb = document.getElementById('ss-thumb');
-    if (!dz || !thumb) return;
-    // If pendingShot is set (existing JS populates #ss-thumb) mirror it into the dropzone
-    if (window.pendingShot && thumb.innerHTML.trim()){
-      // Extract image src + name from the thumb
-      const img = thumb.querySelector('img');
-      const name = thumb.querySelector('.ss-name')?.textContent || 'screenshot.png';
-      if (img){
-        dz.classList.add('has-file');
-        dz.innerHTML = `
-          <div class="dz-preview">
-            <img src="${img.src}" alt="Screenshot preview"/>
-            <div class="dz-preview-info">
-              <div class="dz-preview-name">${name}</div>
-              <div class="dz-preview-size">Attached — click to replace</div>
-            </div>
-            <button class="dz-remove" onclick="event.stopPropagation();removeScreenshot()" aria-label="Remove screenshot">×</button>
-          </div>`;
-      }
-    } else {
+    if (!dz) return;
+    if (!window.pendingShot && dz.classList.contains('has-file')){
       dz.classList.remove('has-file');
       dz.innerHTML = `
         <svg class="dz-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -3228,27 +3222,14 @@ window.addEventListener('resize', function() {
         <div class="dz-sub">PNG or JPG, up to 5 MB</div>`;
     }
   }
+  // Delegate removeScreenshot to clearShot (the canonical function)
   window.removeScreenshot = function(){
-    window.pendingShot = null;
-    const thumb = document.getElementById('ss-thumb');
-    if (thumb) thumb.innerHTML = '';
-    updateDropzonePreview();
+    if (typeof clearShot === 'function') clearShot();
+    else { window.pendingShot = null; updateDropzonePreview(); }
   };
-  // Poll briefly after page load to sync dropzone state (file-input 'change' is handled by original JS)
-  const fileInput = document.getElementById('file-input');
-  if (fileInput){
-    fileInput.addEventListener('change', () => {
-      // Give the original handler time to populate #ss-thumb then mirror
-      setTimeout(updateDropzonePreview, 120);
-      setTimeout(updateDropzonePreview, 400);
-    });
-  }
-  // Also sync when #ss-thumb mutates (paste / drop handlers populate it)
-  const thumbEl = document.getElementById('ss-thumb');
-  if (thumbEl){
-    const tmo = new MutationObserver(updateDropzonePreview);
-    tmo.observe(thumbEl, { childList: true, subtree: true });
-  }
+  // NOTE: file-input 'change' listener removed — handleShot (registered in main JS
+  // block via initDragDrop) already handles this event and renders the preview.
+  // Adding another listener here caused double-rendering and flicker.
 
   /* ── Drag & drop on the dropzone ───────────────────────────── */
   const dz = document.getElementById('dropzone');
