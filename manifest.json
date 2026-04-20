@@ -1,12 +1,12 @@
 {
-  "name": "BugForge AI",
-  "short_name": "BugForge",
-  "description": "BugForge AI — Forge structured bug tickets in Jira, ADO and GitHub instantly using AI",
+  "name": "Bug Forge AI",
+  "short_name": "Bug Forge AI",
+  "description": "Bug Forge AI — AI-powered bug ticket generator for Jira, Azure DevOps and GitHub",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#080c14",
-  "theme_color": "#4f6ef7",
+  "background_color": "#0a0d14",
+  "theme_color": "#6366f1",
   "categories": ["productivity", "utilities", "developer"],
   "icons": [
     {

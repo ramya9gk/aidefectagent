@@ -7,10 +7,10 @@
 <link rel="manifest" href="/manifest.json"/>
 <meta name="theme-color" content="#4f6ef7"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-title" content="BugForge AI"/>
-<meta name="description" content="BugForge AI — Setup your organisation"/>
+<meta name="apple-mobile-web-app-title" content="Bug Forge AI"/>
+<meta name="description" content="Bug Forge AI — Setup your organisation"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>BugForge AI — Setup</title>
+<title>Bug Forge AI — Setup</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -116,7 +116,7 @@ input::placeholder{color:#4d5a6e}
       <path d="M40 12 L32 28 L38 28 L30 48 L50 24 L42 24 Z" fill="url(#sg)"/>
     </svg>
   </div>
-  <h1>BugForge AI Setup</h1>
+  <h1>Bug Forge AI Setup</h1>
   <p class="sub" id="setup-subtitle">Loading your organisation...</p>
 
   <!-- Error state -->
@@ -148,7 +148,7 @@ input::placeholder{color:#4d5a6e}
     <div class="alldone" id="alldone-msg" style="display:none">
       <div class="alldone-icon">🎉</div>
       <h3>All platforms configured by admin!</h3>
-      <p>Your organisation is ready to use BugForge AI</p>
+      <p>Your organisation is ready to use Bug Forge AI</p>
     </div>
 
     <!-- ── JIRA SECTION ── -->
@@ -195,13 +195,13 @@ input::placeholder{color:#4d5a6e}
 
     <!-- Save button — only shown if something needs setup -->
     <div id="save-section" style="display:none">
-      <button class="btn btn-primary" id="save-btn" onclick="saveSetup()">💾 Save & Activate BugForge AI</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveSetup()">💾 Save & Activate Bug Forge AI</button>
       <p style="font-size:11px;color:#4d5a6e;text-align:center;margin-top:10px">🔒 Credentials are encrypted and stored securely. We never share them.</p>
     </div>
 
     <!-- Open app button — shown when all configured -->
     <div id="open-section" style="display:none">
-      <button class="btn btn-primary" onclick="goToApp()">🚀 Open BugForge AI</button>
+      <button class="btn btn-primary" onclick="goToApp()">🚀 Open Bug Forge AI</button>
     </div>
 
   </div>
@@ -210,12 +210,12 @@ input::placeholder{color:#4d5a6e}
   <div class="success-card" id="success-card">
     <div style="font-size:40px;margin-bottom:12px">🎉</div>
     <h2>Setup Complete!</h2>
-    <p>BugForge AI is ready for your team</p>
+    <p>Bug Forge AI is ready for your team</p>
     <div style="text-align:left;margin-bottom:16px">
       <label style="font-size:10px;font-weight:700;color:#4d5a6e;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Your App URL</label>
       <div class="url-box" id="success-url"></div>
     </div>
-    <button class="btn btn-primary" onclick="goToApp()">🚀 Open BugForge AI</button>
+    <button class="btn btn-primary" onclick="goToApp()">🚀 Open Bug Forge AI</button>
   </div>
 </div>
 
@@ -456,7 +456,7 @@ async function saveSetup() {
     const d = await r.json();
     if (!r.ok) {
       toast(d.error || 'Save failed', 'error');
-      btn.disabled = false; btn.textContent = '💾 Save & Activate BugForge AI';
+      btn.disabled = false; btn.textContent = '💾 Save & Activate Bug Forge AI';
       return;
     }
 
@@ -468,7 +468,7 @@ async function saveSetup() {
 
   } catch(e) {
     toast('Error: ' + e.message, 'error');
-    btn.disabled = false; btn.textContent = '💾 Save & Activate BugForge AI';
+    btn.disabled = false; btn.textContent = '💾 Save & Activate Bug Forge AI';
   }
 }
 

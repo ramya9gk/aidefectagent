@@ -30,7 +30,33 @@ export default async function handler(req, res) {
   let targetUrl;
   try {
     targetUrl = decodeURIComponent(url);
-    const hostname = new URL(targetUrl).hostname;
+    const parsed = new URL(targetUrl);
+
+    // Security: require HTTPS — reject http:, javascript:, data:, file:, etc.
+    if (parsed.protocol !== 'https:') {
+      return res.status(400).json({ error: `Only https: URLs are allowed (got ${parsed.protocol})` });
+    }
+
+    // Security: block internal / cloud-metadata hosts (SSRF hardening)
+    const hostname = parsed.hostname;
+    const internalPatterns = [
+      /^localhost$/i,
+      /^127\./,
+      /^10\./,
+      /^192\.168\./,
+      /^172\.(1[6-9]|2\d|3[01])\./,
+      /^169\.254\./,           // AWS/Azure metadata
+      /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,  // CGNAT
+      /^fd[0-9a-f]{2}:/i,      // IPv6 unique local
+      /^fe80:/i,               // IPv6 link-local
+      /^::1$/,                 // IPv6 loopback
+      /^metadata\./i,
+    ];
+    if (internalPatterns.some(p => p.test(hostname))) {
+      return res.status(403).json({ error: `Internal hostname blocked: ${hostname}` });
+    }
+
+    // Security: only allow known API domains
     const isAllowed = allowed.some(domain => hostname.endsWith(domain));
     if (!isAllowed) {
       return res.status(403).json({ error: `Domain not allowed: ${hostname}` });

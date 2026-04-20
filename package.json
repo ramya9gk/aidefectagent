@@ -1,7 +1,7 @@
 {
-  "name": "bugforge-ai",
-  "version": "4.5.0",
-  "description": "BugForge AI — Forge structured bug tickets in Jira, ADO and GitHub \u2014 CORS Fixed, Fresh Start",
+  "name": "bugforgeai",
+  "version": "2026.04.18",
+  "description": "Bug Forge AI — AI-powered bug ticket generator for Jira, Azure DevOps and GitHub",
   "private": true,
   "scripts": {
     "dev": "npx serve public -l 3000",

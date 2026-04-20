@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "bugforge-ai",
+  "name": "bug-forge-ai",
   "headers": [
     {
       "source": "/(.*)",
@@ -10,20 +10,12 @@
           "value": "nosniff"
         },
         {
-          "key": "X-Frame-Options",
-          "value": "SAMEORIGIN"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        },
-        {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
         },
         {
           "key": "Permissions-Policy",
-          "value": "microphone=(self), camera=(), geolocation=()"
+          "value": "microphone=(self \"https://teams.microsoft.com\" \"https://*.teams.microsoft.com\"), camera=(), geolocation=()"
         },
         {
           "key": "Cache-Control",
@@ -31,7 +23,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.anthropic.com https://*.atlassian.net https://dev.azure.com https://*.visualstudio.com https://vssps.visualstudio.com https://vsrm.dev.azure.com https://api.github.com https://hooks.slack.com https://*.webhook.office.com; img-src 'self' data: blob:; media-src 'self'; frame-ancestors 'self'"
+          "value": "default-src 'self'; base-uri 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://*.teams.microsoft.com https://statics.teams.cdn.office.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://api.anthropic.com https://*.atlassian.net https://dev.azure.com https://*.visualstudio.com https://vssps.visualstudio.com https://vsrm.dev.azure.com https://api.github.com https://hooks.slack.com https://*.webhook.office.com; img-src 'self' data: blob: https://*.teams.microsoft.com; media-src 'self' data: blob:; object-src 'none'; frame-ancestors 'self' https://teams.microsoft.com https://*.teams.microsoft.com https://*.skype.com https://*.office.com https://*.officeapps.live.com https://*.microsoftonline.com; form-action 'self'"
         }
       ]
     }
