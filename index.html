@@ -2135,11 +2135,11 @@ async function postTicket(){
   if(area)area.innerHTML=`<div class="post-status posting"><span style="width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span> Posting to ${pName}...</div>`;
   try{
     let result;
+    let adoScreenshotUrl = null;  // hoisted — used for embedding AND linking
     if(platform==='jira'){
       result=await postJira(curTicket);
     } else if(platform==='azure_devops'){
       // ── ADO: upload screenshot FIRST so we can embed it inline in ReproSteps ──
-      let adoScreenshotUrl = null;
       if(window.pendingShot?.file){
         try{
           if(area) area.innerHTML=`<div class="post-status posting"><span style="width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span> Uploading screenshot…</div>`;
@@ -2169,23 +2169,45 @@ async function postTicket(){
     // ── Attach screenshot as official work-item attachment (shows in Attachments tab) ──
     if(window.pendingShot?.file){
       try{
-        const b64=await fileToBase64(window.pendingShot.file);
-        const attachResult=await fetch('/api/attach',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            platform,
-            fileName:window.pendingShot.name||`screenshot-${Date.now()}.png`,
-            fileBase64:b64,
-            mimeType:window.pendingShot.file.type||'image/png',
-            ticketId:result.id,
-            rawId:result.rawId,
-            config:{...jiraCfg(),...adoCfg(),...ghCfg()}
-          })
-        });
-        const ad=await attachResult.json();
-        if(ad.ok) toast('Screenshot attached ✓','success');
-        else toast(`Attach: ${ad.error}`,'warn');
+        let attachOk = false;
+        if(platform === 'azure_devops' && adoScreenshotUrl){
+          // Screenshot already uploaded — just link the existing URL (no re-upload)
+          const linkR = await fetch('/api/attach', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+              action: 'link_only',
+              platform: 'azure_devops',
+              attachUrl: adoScreenshotUrl,
+              ticketId: result.id,
+              rawId: result.rawId,
+              config: {...adoCfg()}
+            })
+          });
+          const linkD = await linkR.json();
+          attachOk = linkD.ok;
+          if(!attachOk) toast(`Attach link: ${linkD.error}`,'warn');
+        } else {
+          // Jira / GitHub / ADO without pre-upload — full upload + attach
+          const b64=await fileToBase64(window.pendingShot.file);
+          const attachResult=await fetch('/api/attach',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              platform,
+              fileName:window.pendingShot.name||`screenshot-${Date.now()}.png`,
+              fileBase64:b64,
+              mimeType:window.pendingShot.file.type||'image/png',
+              ticketId:result.id,
+              rawId:result.rawId,
+              config:{...jiraCfg(),...adoCfg(),...ghCfg()}
+            })
+          });
+          const ad=await attachResult.json();
+          attachOk = ad.ok;
+          if(!attachOk) toast(`Attach: ${ad.error}`,'warn');
+        }
+        if(attachOk) toast('Screenshot attached ✓','success');
         clearShot();
       }catch(e){ toast('Attach failed: '+e.message,'warn'); }
     }
