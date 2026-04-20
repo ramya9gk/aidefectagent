@@ -41,6 +41,13 @@ export default async function handler(req, res) {
       case 'create_issue': {
         const { title, body, labels, assignees } = payload;
 
+        // Guard: GitHub will reject with 422 if title is missing
+        if (!title || !String(title).trim()) {
+          return res.status(400).json({
+            error: 'Title is required but was not supplied. The AI ticket may have used "summary" instead of "title" — regenerate with platform=GitHub or edit the ticket to add a title.'
+          });
+        }
+
         // Auto-create labels (ignore 422 = already exists)
         for (const label of (labels||[])) {
           await fetch(`${base}/labels`, {
@@ -51,7 +58,7 @@ export default async function handler(req, res) {
         }
 
         // Build issue payload
-        const issuePayload = { title, body, labels: labels||[] };
+        const issuePayload = { title: String(title).trim(), body: body || '', labels: labels||[] };
         if (assignees && assignees.length > 0) issuePayload.assignees = assignees;
 
         const r = await fetch(`${base}/issues`, {

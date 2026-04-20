@@ -108,40 +108,74 @@ export default async function handler(req, res) {
 
       case 'create_issue': {
         const issueType = await getIssueType();
-
         const issueReporterAccountId = await getReporterAccountId();
-
         const issueAssigneeAccountId = await lookupAccountId(jiraAssignee);
 
-        const fields = {
-          ...payload.fields,
-          project:   { key: proj },       // always use configured project key
-          issuetype: { name: issueType },  // auto-detected valid issue type
-          ...(issueReporterAccountId ? { reporter:  { id: issueReporterAccountId } } : {}),
-          ...(issueAssigneeAccountId ? { assignee:  { id: issueAssigneeAccountId } } : {}),
+        const buildFields = (stripFields = []) => {
+          const f = {
+            ...payload.fields,
+            project:   { key: proj },
+            issuetype: { name: issueType },
+            ...(issueReporterAccountId ? { reporter:  { id: issueReporterAccountId } } : {}),
+            ...(issueAssigneeAccountId ? { assignee:  { id: issueAssigneeAccountId } } : {}),
+          };
+          // Remove any fields the caller asked to strip (from prior rejection)
+          for (const k of stripFields) delete f[k];
+          return f;
         };
+
+        let fields = buildFields();
 
         if (!fields.summary?.trim()) {
           return res.status(400).json({ error: 'Summary is empty — generate the ticket first.' });
         }
 
-        console.log(`Creating Jira issue: project=${proj}, type=${issueType}, summary=${fields.summary?.slice(0,50)}`);
+        // Attempt up to 3 times, stripping rejected fields between retries.
+        // Jira's typical failure modes: priority not on screen, labels disabled,
+        // components not available, etc. Retry drops offending fields and tries again.
+        const stripped = [];
+        const REQUIRED = new Set(['project', 'issuetype', 'summary', 'description']);
+        let lastErr = null;
 
-        const r = await fetch(`${base}/rest/api/3/issue`, {
-          method: 'POST',
-          headers: { Authorization: auth, 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ fields }),
-        });
+        for (let attempt = 0; attempt < 3; attempt++) {
+          console.log(`Creating Jira issue (attempt ${attempt + 1}): project=${proj}, type=${issueType}, summary=${fields.summary?.slice(0, 50)}, stripped=[${stripped.join(',')}]`);
 
-        const d = await r.json();
-        if (!r.ok) {
-          const errMsg = d.errorMessages?.[0]
-            || Object.entries(d.errors || {}).map(([k, v]) => `${k}: ${v}`).join(', ')
+          const r = await fetch(`${base}/rest/api/3/issue`, {
+            method: 'POST',
+            headers: { Authorization: auth, 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ fields }),
+          });
+
+          const d = await r.json();
+          if (r.ok) {
+            // If we stripped fields but still succeeded, add a note about what was dropped
+            const note = stripped.length
+              ? ` (note: these fields were not available on this project's Bug screen and were omitted: ${stripped.join(', ')})`
+              : '';
+            return res.json({ id: d.key, url: `${base}/browse/${d.key}`, note });
+          }
+
+          // Try to figure out which field(s) Jira rejected
+          const fieldErrors = d.errors || {};
+          const rejected = Object.keys(fieldErrors).filter(k => !REQUIRED.has(k));
+
+          if (rejected.length && attempt < 2) {
+            // Strip rejected fields and retry
+            stripped.push(...rejected);
+            fields = buildFields(stripped);
+            console.log(`Jira rejected fields [${rejected.join(',')}]: ${JSON.stringify(fieldErrors).slice(0,200)}. Retrying without them.`);
+            continue;
+          }
+
+          // Final failure — surface a helpful error
+          lastErr = d.errorMessages?.[0]
+            || Object.entries(fieldErrors).map(([k, v]) => `${k}: ${v}`).join('; ')
             || d.message
             || `Jira ${r.status}`;
-          return res.status(r.status).json({ error: errMsg });
+          return res.status(r.status).json({ error: lastErr, rejectedFields: rejected });
         }
-        return res.json({ id: d.key, url: `${base}/browse/${d.key}` });
+
+        return res.status(500).json({ error: lastErr || 'Jira create failed after 3 attempts' });
       }
 
       case 'add_comment': {
