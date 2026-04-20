@@ -1737,30 +1737,114 @@ function saveEdits(){
 }
 
 // ══ DUPLICATE CHECK ═══════════════════════════════════════
-async function checkDuplicates(){
+async function checkDuplicates(opts={}){
+  const {auto=false} = opts;
   const area=document.getElementById('dup-area'); if(!area||!curTicket)return;
   const platform=curTicket._platform,btn=document.getElementById('btn-dup');
   if(btn){btn.disabled=true;btn.textContent='Checking...';}
   area.innerHTML=`<div style="padding:10px 16px;font-size:12px;color:var(--t2);display:flex;align-items:center;gap:8px"><span style="width:12px;height:12px;border:2px solid var(--amber);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span>Searching for duplicates...</div>`;
   try{
+    // ══ BETTER KEYWORD EXTRACTION ══
+    // Combine summary + description + component names, strip stopwords,
+    // keep substantial nouns/verbs. Up to 6 keywords for a tight but
+    // meaningful search.
+    const STOPWORDS=new Set(('a an the and or but for nor so yet in on at to from of with by as is was were be been being have has had do does did will would could should shall may might must can not no if then than this that these those it its their our your my me you i he she they them us we when while where which who whom whose what why how all any each every some new old more most less least very really just only over under into onto about upon also still yet already'+
+      ' bug issue error crash fail fails failed failing fails fixing').split(' '));
+    const src=[(curTicket.summary||curTicket.title||''),(curTicket.description||curTicket.body||'').slice(0,300),(curTicket.components||[]).join(' ')].join(' ');
+    const words=src.toLowerCase().replace(/[^\w\s-]/g,' ').split(/\s+/).filter(w=>w.length>=4 && !STOPWORDS.has(w) && !/^\d+$/.test(w));
+    // Dedupe while keeping order, take top 6
+    const seen=new Set(); const kws=[]; for(const w of words){ if(!seen.has(w)){seen.add(w); kws.push(w); if(kws.length>=6) break;} }
+    const kw=kws.join(' ');
+    if(!kw){ area.innerHTML=''; if(btn){btn.disabled=false;btn.innerHTML='⚠ Dupes';} return; }
+
+    // ══ FETCH CANDIDATES FROM PLATFORM ══
     let dupes=[];
-    const kw=(curTicket.summary||curTicket.title||'').replace(/[\[\]()]/g,'').split(' ').filter(w=>w.length>3).slice(0,4).join(' ');
-    if(platform==='jira'&&CFG.jiraUrl&&CFG.jiraToken){
-      const jql=`project="${CFG.jiraProj}" AND issuetype=Bug AND text~"${kw.replace(/"/g,'')}" AND status!=Done ORDER BY created DESC`;
+    if(platform==='jira'&&CFG.jiraProj){
+      // JQL text~ uses Lucene OR between terms by default — good for broad recall
+      const jql=`project="${CFG.jiraProj}" AND issuetype=Bug AND text~"${kw.replace(/"/g,'\\"')}" AND status!=Done ORDER BY created DESC`;
       const d=await api('jira',{action:'search_duplicates',config:jiraCfg(),payload:{jql}});
       dupes=d.issues||[];
-    }else if(platform==='azure_devops'&&CFG.adoOrg&&CFG.adoPat){
-      const wiql=`SELECT [System.Id],[System.Title],[System.State] FROM WorkItems WHERE [System.WorkItemType]='Bug' AND [System.Title] CONTAINS '${kw.replace(/'/g,"''")}' AND [System.State]<>'Closed' ORDER BY [System.CreatedDate] DESC`;
+    }else if(platform==='azure_devops'&&CFG.adoOrg){
+      // WIQL: use OR of Title CONTAINS clauses for each top keyword
+      const titleClauses=kws.slice(0,4).map(k=>`[System.Title] CONTAINS '${k.replace(/'/g,"''")}'`).join(' OR ');
+      const wiql=`SELECT [System.Id],[System.Title],[System.State] FROM WorkItems WHERE [System.WorkItemType]='Bug' AND (${titleClauses}) AND [System.State]<>'Closed' ORDER BY [System.CreatedDate] DESC`;
       const d=await api('ado',{action:'search_duplicates',config:adoCfg(),payload:{wiql}});
       dupes=d.items||[];
-    }else if(platform==='github'&&CFG.ghOwner&&CFG.ghToken){
+    }else if(platform==='github'&&CFG.ghOwner){
       const d=await api('github',{action:'search_duplicates',config:ghCfg(),payload:{query:kw}});
       dupes=d.items||[];
     }
-    if(!dupes.length){area.innerHTML=`<div class="dup-panel"><div style="padding:10px 12px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 16 16" fill="var(--green)"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>No duplicates found — safe to post!</div></div>`;}
-    else{area.innerHTML=`<div class="dup-panel"><div class="dup-hdr"><svg width="12" height="12" viewBox="0 0 16 16" fill="var(--amber)"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 4a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0V5zm.75 7a1 1 0 110-2 1 1 0 010 2z"/></svg>${dupes.length} possible duplicate${dupes.length>1?'s':''} found</div>${dupes.map(d=>`<div class="dup-item"><span class="dup-id">${esc(d.id)}</span><span class="dup-ttl" title="${esc(d.title)}">${esc(d.title)}</span><span class="dup-st">${esc(d.status)}</span><a class="dup-lnk" href="${d.url}" target="_blank">↗</a></div>`).join('')}<div style="padding:7px 12px;display:flex;gap:7px"><button class="abtn warn" onclick="document.getElementById('dup-area').innerHTML='';postTicket()">Post anyway</button><button class="hbtn" onclick="document.getElementById('dup-area').innerHTML=''">Dismiss</button></div></div>`;}
-  }catch(e){area.innerHTML=`<div style="padding:9px 16px;font-size:12px;color:var(--red)">Search failed: ${e.message}</div>`;}
+
+    // ══ AI SIMILARITY SCORING ══
+    // Ask Claude to rank candidates by semantic similarity — not just keyword overlap.
+    // Skip if we have zero candidates or only one (no ranking needed).
+    if(dupes.length>=2){
+      try{
+        const candidates=dupes.slice(0,8).map((d,i)=>`[${i}] ${d.id}: ${d.title}`).join('\n');
+        const newTicketTxt=(curTicket.summary||curTicket.title||'')+'\n'+(curTicket.description||curTicket.body||'').slice(0,400);
+        const r=await fetch('/api/claude',{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            model:'claude-haiku-4-5', max_tokens:400,
+            messages:[{role:'user',content:`Rate how likely each candidate is a duplicate of this new bug. Return JSON array only: [{"i":0,"score":85,"reason":"same login crash"},...]. Score 0-100. 80+ = very likely duplicate; 60-79 = possibly related; <60 = unrelated.\n\nNEW BUG:\n${newTicketTxt}\n\nCANDIDATES:\n${candidates}`}]
+          })
+        });
+        const d=await r.json();
+        const txt=d.content?.[0]?.text||'';
+        const scores=JSON.parse(txt.match(/\[[\s\S]*\]/)?.[0]||'[]');
+        // Attach score+reason to each candidate
+        scores.forEach(s=>{ if(dupes[s.i]){ dupes[s.i].score=s.score; dupes[s.i].reason=s.reason; } });
+        // Sort by score desc, filter out very-low-similarity
+        dupes=dupes.filter(d=>(d.score||0)>=40).sort((a,b)=>(b.score||0)-(a.score||0));
+      }catch(e){ console.warn('AI scoring failed, falling back to keyword ranking:', e); }
+    }
+
+    // ══ RENDER ══
+    if(!dupes.length){
+      // Auto mode: stay quiet if no dupes. Manual mode: show reassuring confirmation.
+      if(auto){ area.innerHTML=''; }
+      else{ area.innerHTML=`<div class="dup-panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div style="padding:10px 12px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 16 16" fill="var(--green)"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>No duplicates found — safe to post!</div></div>`; }
+    }else{
+      // Group by confidence level
+      const highConf=dupes.filter(d=>(d.score||50)>=80);
+      const medConf=dupes.filter(d=>(d.score||50)>=60 && (d.score||50)<80);
+      const lowConf=dupes.filter(d=>(d.score||50)<60);
+      const headerColor = highConf.length ? 'var(--red)' : medConf.length ? 'var(--amber)' : 'var(--t2)';
+      const headerBg    = highConf.length ? 'var(--red-bg)' : 'var(--amber-bg)';
+      const headerBd    = highConf.length ? 'var(--red-bd)' : 'var(--amber-bd)';
+      const autoNote = auto ? '<span style="font-size:10px;opacity:.7;margin-left:auto">auto-check</span>' : '';
+      const renderRow=(d)=>{
+        const score=d.score||50;
+        const scoreColor = score>=80?'var(--red)': score>=60?'var(--amber)':'var(--t2)';
+        const scoreBg    = score>=80?'var(--red-bg)':score>=60?'var(--amber-bg)':'var(--s3)';
+        return `<div class="dup-item"><span class="dup-id">${esc(d.id)}</span><span class="dup-ttl" title="${esc((d.reason?d.reason+' — ':'')+d.title)}">${esc(d.title)}</span>${d.score!=null?`<span class="dup-st" style="background:${scoreBg};color:${scoreColor};border-color:${scoreColor}">${score}%</span>`:''}<span class="dup-st">${esc(d.status||'')}</span><a class="dup-lnk" href="${d.url}" target="_blank" rel="noopener">↗</a></div>`;
+      };
+      area.innerHTML=`<div class="dup-panel" style="border-color:${headerBd};background:${headerBg}"><div class="dup-hdr" style="color:${headerColor};border-color:${headerBd}"><svg width="12" height="12" viewBox="0 0 16 16" fill="${headerColor}"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 4a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0V5zm.75 7a1 1 0 110-2 1 1 0 010 2z"/></svg>${dupes.length} possible duplicate${dupes.length>1?'s':''} found${highConf.length?` — ${highConf.length} high-confidence`:''}${autoNote}</div>${dupes.slice(0,5).map(renderRow).join('')}<div style="padding:7px 12px;display:flex;gap:7px;flex-wrap:wrap"><button class="abtn warn" onclick="document.getElementById('dup-area').innerHTML='';postTicket()">Post anyway</button><button class="abtn info" onclick="commentOnDuplicate()">💬 Comment on dupe instead</button><button class="hbtn" onclick="document.getElementById('dup-area').innerHTML=''">Dismiss</button></div></div>`;
+    }
+  }catch(e){
+    // Silent-fail in auto mode, show error for manual click
+    if(auto){ area.innerHTML=''; console.warn('Dupe check failed:', e); }
+    else { area.innerHTML=`<div style="padding:9px 16px;font-size:12px;color:var(--red)">Search failed: ${e.message}</div>`; }
+  }
   if(btn){btn.disabled=false;btn.innerHTML='⚠ Dupes';}
+}
+
+// Quick shortcut: click a dupe in the panel and open the Comment-on-existing form
+function commentOnDuplicate(){
+  const firstDupe=document.querySelector('#dup-area .dup-item .dup-id');
+  if(firstDupe){
+    const idField=document.getElementById('existing-id');
+    const platField=document.getElementById('existing-platform');
+    if(idField) idField.value=firstDupe.textContent;
+    if(platField){
+      const p=curTicket?._platform;
+      platField.value = p==='azure_devops'?'ado': p==='github'?'github':'jira';
+    }
+    toggleCommentForm();
+    toast('Dupe ID loaded — add your comment below','success');
+  } else {
+    toggleCommentForm();
+  }
 }
 
 // ══ POST TICKET ═══════════════════════════════════════════
@@ -2069,6 +2153,10 @@ async function sendDefect(){
     const wrap=document.createElement('div');wrap.className='ticket-wrap';
     wrap.innerHTML=buildTicketHTML(curTicket,platform,fakeId);
     chat.appendChild(wrap);
+
+    // ── AUTO-CHECK FOR DUPLICATES in the background (non-blocking) ──
+    // Surfaces potential dupes before user wastes effort posting
+    setTimeout(() => { try { checkDuplicates({auto:true}); } catch(e) { console.warn('Auto-dupe check failed:', e); } }, 400);
 
     // Test case prompt now shown inside ticket card after posting
     // tc-ask-msg removed — using tc-prompt-area instead
