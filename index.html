@@ -1837,14 +1837,16 @@ const TOOLS=[
    properties:{project:{type:'string'},summary:{type:'string'},description:{type:'string'},steps_to_reproduce:{type:'array',items:{type:'string'}},expected_result:{type:'string'},actual_result:{type:'string'},severity:{type:'string',enum:['Critical','High','Medium','Low']},priority:{type:'string',enum:['P0','P1','P2','P3']},environment:{type:'string'},components:{type:'array',items:{type:'string'}},labels:{type:'array',items:{type:'string'}},acceptance_criteria:{type:'array',items:{type:'string'}}}}},
   {name:'create_azure_devops_bug',description:'Create Bug in Azure DevOps. Use for D365, Dynamics, ADO, pipeline, PUAT, sprint, C#, .NET.',
    input_schema:{type:'object',required:['title','description','repro_steps','expected_result','actual_result','severity','priority','system_info','tags','acceptance_criteria'],
-   properties:{title:{type:'string'},area_path:{type:'string'},iteration_path:{type:'string'},description:{type:'string'},repro_steps:{type:'array',items:{type:'string'}},system_info:{type:'string'},expected_result:{type:'string'},actual_result:{type:'string'},severity:{type:'string',enum:['1 - Critical','2 - High','3 - Medium','4 - Low']},priority:{type:'number',enum:[1,2,3,4]},tags:{type:'string'},acceptance_criteria:{type:'array',items:{type:'string'}}}}},
+   properties:{title:{type:'string',description:'Bug title max 80 chars'},area_path:{type:'string'},iteration_path:{type:'string'},description:{type:'string',description:'Short bug summary paragraph'},repro_steps:{type:'array',items:{type:'string'},description:'REQUIRED array of individual reproduction step strings. Each step is one action e.g. ["Navigate to Dashboard","Set date range to Last 6 months","Click Apply","Observe crash"]. NEVER a single string.'},system_info:{type:'string',description:'Environment details only: browser, OS, app version, server e.g. "Chrome 120, Windows 11, UAT"'},expected_result:{type:'string'},actual_result:{type:'string'},severity:{type:'string',enum:['1 - Critical','2 - High','3 - Medium','4 - Low']},priority:{type:'number',enum:[1,2,3,4]},tags:{type:'string'},acceptance_criteria:{type:'array',items:{type:'string'},description:'Array of acceptance criteria strings'}}}},
   {name:'create_github_issue',description:'Create GitHub issue. Use for GitHub, git, repo, npm, Actions.',
    input_schema:{type:'object',required:['title','body','labels','severity','steps_to_reproduce','expected_result','actual_result','environment','acceptance_criteria'],
    properties:{title:{type:'string'},body:{type:'string'},labels:{type:'array',items:{type:'string'}},severity:{type:'string',enum:['Critical','High','Medium','Low']},steps_to_reproduce:{type:'array',items:{type:'string'}},expected_result:{type:'string'},actual_result:{type:'string'},environment:{type:'string'},acceptance_criteria:{type:'array',items:{type:'string'}}}}}
 ];
 const SYSTEM=`You are a Bug Forge AI — Senior QA Automation Engineer. Create perfectly structured bug tickets.
 ROUTING: "Azure DevOps"|"ADO"|"D365"|"Dynamics"|"pipeline"|"PUAT"|"sprint"→create_azure_devops_bug. "GitHub"|"git"|"repo"|"npm"|"Actions"→create_github_issue. Default→create_jira_bug.
-QUALITY: [Module] summary max 80 chars, specific steps, severity Critical=crash/High=major/Medium=partial/Low=cosmetic, 3-5 acceptance criteria. Infer all details. ADO: severity "1 - Critical", priority number 1-4. Call tool immediately.`;
+QUALITY: [Module] summary max 80 chars, specific steps, severity Critical=crash/High=major/Medium=partial/Low=cosmetic, 3-5 acceptance criteria. Infer all details. ADO: severity "1 - Critical", priority number 1-4. Call tool immediately.
+ADO FIELDS: repro_steps MUST be an array of individual step strings e.g. ["Navigate to login page","Enter valid credentials","Click Submit"]. NEVER put all steps in one string. system_info is environment/browser/OS ONLY e.g. "Chrome 120, Windows 11, UAT env". acceptance_criteria MUST be an array of strings.`;
+
 
 // ══ PLATFORM HELPERS ═════════════════════════════════════
 const T2P=n=>({create_jira_bug:'jira',create_azure_devops_bug:'azure_devops',create_github_issue:'github'}[n]||'jira');
@@ -2231,19 +2233,56 @@ async function postJira(t){
 async function postADO(t){
   // Credentials in Vercel env vars — check project selected
   if(!CFG.adoProj) throw new Error('Please select an ADO project from the sidebar');
-  const steps=(t.repro_steps||[]).map((s,i)=>`<li>${i+1}. ${s}</li>`).join('');
-  const crit=(t.acceptance_criteria||[]).map((c,i)=>`<li>${i+1}. ${c}</li>`).join('');
-  const expActual=`<p><b>Expected Result:</b> ${t.expected_result||''}</p><p><b>Actual Result:</b> ${t.actual_result||''}</p>`;
+
+  // ── Normalise repro_steps: accept array OR string (split on newlines/numbers) ──
+  let rawSteps = t.repro_steps || t.steps_to_reproduce || [];
+  if (typeof rawSteps === 'string') {
+    // AI sometimes returns all steps as one string — split into individual lines
+    rawSteps = rawSteps
+      .split(/\n/)
+      .map(s => s.replace(/^\s*\d+[\.\)]\s*/, '').trim())
+      .filter(s => s.length > 0);
+  }
+  if (!Array.isArray(rawSteps)) rawSteps = [];
+  // If array has ONE element that itself contains newlines, expand it
+  if (rawSteps.length === 1 && rawSteps[0].includes('\n')) {
+    rawSteps = rawSteps[0]
+      .split('\n')
+      .map(s => s.replace(/^\s*\d+[\.\)]\s*/, '').trim())
+      .filter(s => s.length > 0);
+  }
+  // ── Last-resort fallback: extract numbered lines from description ──
+  // The AI sometimes omits repro_steps entirely but embeds steps in the description.
+  if (rawSteps.length === 0 && t.description) {
+    const descLines = t.description
+      .replace(/<[^>]+>/g, '\n')      // strip any HTML tags
+      .split(/\n/)
+      .map(s => s.trim())
+      .filter(s => /^\d+[\.\)]\s/.test(s));  // lines starting "1. " or "1) "
+    if (descLines.length > 0) {
+      rawSteps = descLines.map(s => s.replace(/^\d+[\.\)]\s*/, '').trim());
+    }
+  }
+
+  const steps = rawSteps.map((s,i) => `<li>${i+1}. ${esc(s)}</li>`).join('');
+  const crit  = (t.acceptance_criteria||[]).map((c,i)=>`<li>${i+1}. ${esc(c)}</li>`).join('');
+  const expActual = `<p><b>Expected Result:</b> ${t.expected_result||''}</p><p><b>Actual Result:</b> ${t.actual_result||''}</p>`;
+
   const patch=[
-    {op:'add',path:'/fields/System.Title',value:t.title||t.summary||'Bug'},
-    {op:'add',path:'/fields/System.Description',value:`<p>${t.description||''}</p>${expActual}`},
-    {op:'add',path:'/fields/Microsoft.VSTS.TCM.ReproSteps',value:`<ol>${steps}</ol>`},
-    {op:'add',path:'/fields/Microsoft.VSTS.TCM.SystemInfo',value:t.system_info||t.environment||''},
+    {op:'add',path:'/fields/System.Title',          value:t.title||t.summary||'Bug'},
+    {op:'add',path:'/fields/System.Description',     value:`<p>${t.description||''}</p>${expActual}`},
+    {op:'add',path:'/fields/Microsoft.VSTS.TCM.ReproSteps', value: steps ? `<ol>${steps}</ol>` : ''},
+    {op:'add',path:'/fields/Microsoft.VSTS.TCM.SystemInfo', value:t.system_info||t.environment||''},
     {op:'add',path:'/fields/Microsoft.VSTS.Common.Severity',value:t.severity||'3 - Medium'},
     {op:'add',path:'/fields/Microsoft.VSTS.Common.Priority',value:t.priority||2},
     ...(t.tags?[{op:'add',path:'/fields/System.Tags',value:t.tags}]:[]),
     ...(crit?[{op:'add',path:'/fields/Microsoft.VSTS.Common.AcceptanceCriteria',value:`<ol>${crit}</ol>`}]:[]),
-  ].filter(p=>p.value!==undefined&&p.value!==null&&String(p.value).trim()!==''||p.path==='/fields/System.Title');
+  ].filter(p => {
+    if (p.path === '/fields/System.Title') return true;
+    if (p.value === undefined || p.value === null) return false;
+    const s = String(p.value).trim();
+    return s !== '' && s !== '<ol></ol>';  // drop empty HTML lists too
+  });
   return api('ado', { action:'create_bug', config:adoCfg(), payload:patch });
 }
 // GitHub POST
