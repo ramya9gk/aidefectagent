@@ -2135,10 +2135,38 @@ async function postTicket(){
   if(area)area.innerHTML=`<div class="post-status posting"><span style="width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span> Posting to ${pName}...</div>`;
   try{
     let result;
-    if(platform==='jira')result=await postJira(curTicket);
-    else if(platform==='azure_devops')result=await postADO(curTicket);
-    else result=await postGH(curTicket);
-    // Attach screenshot server-side (CORS-safe)
+    if(platform==='jira'){
+      result=await postJira(curTicket);
+    } else if(platform==='azure_devops'){
+      // ── ADO: upload screenshot FIRST so we can embed it inline in ReproSteps ──
+      let adoScreenshotUrl = null;
+      if(window.pendingShot?.file){
+        try{
+          if(area) area.innerHTML=`<div class="post-status posting"><span style="width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span> Uploading screenshot…</div>`;
+          const b64=await fileToBase64(window.pendingShot.file);
+          const upR=await fetch('/api/attach',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              action:'upload_only',
+              platform:'azure_devops',
+              fileName:window.pendingShot.name||`screenshot-${Date.now()}.png`,
+              fileBase64:b64,
+              mimeType:window.pendingShot.file.type||'image/png',
+              config:{...adoCfg()}
+            })
+          });
+          const upD=await upR.json();
+          if(upD.ok && upD.url) adoScreenshotUrl=upD.url;
+        }catch(e){ console.warn('Pre-upload screenshot failed:',e.message); }
+        if(area) area.innerHTML=`<div class="post-status posting"><span style="width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span> Posting to Azure DevOps…</div>`;
+      }
+      result=await postADO(curTicket, adoScreenshotUrl);
+    } else {
+      result=await postGH(curTicket);
+    }
+
+    // ── Attach screenshot as official work-item attachment (shows in Attachments tab) ──
     if(window.pendingShot?.file){
       try{
         const b64=await fileToBase64(window.pendingShot.file);
@@ -2230,7 +2258,7 @@ async function postJira(t){
   return api('jira', { action:'create_issue', config:jiraCfg(), payload });
 }
 // ADO POST
-async function postADO(t){
+async function postADO(t, screenshotUrl){
   // Credentials in Vercel env vars — check project selected
   if(!CFG.adoProj) throw new Error('Please select an ADO project from the sidebar');
 
@@ -2265,23 +2293,70 @@ async function postADO(t){
   }
 
   const steps = rawSteps.map((s,i) => `<li>${i+1}. ${esc(s)}</li>`).join('');
-  const crit  = (t.acceptance_criteria||[]).map((c,i)=>`<li>${i+1}. ${esc(c)}</li>`).join('');
-  const expActual = `<p><b>Expected Result:</b> ${t.expected_result||''}</p><p><b>Actual Result:</b> ${t.actual_result||''}</p>`;
+  const crit  = (t.acceptance_criteria||[]).map((c,i) => `<li>${esc(c)}</li>`).join('');
+
+  // ── Build rich Repro Steps HTML — all test-relevant info in one place ──
+  // ADO's ReproSteps field is the primary field testers read. Consolidate everything.
+  const reproHTML = [
+    // 1 — Description / Summary
+    t.description ? `
+      <div style="margin-bottom:12px">
+        <p style="margin:0 0 4px;font-weight:600;color:#323130">📋 Description</p>
+        <p style="margin:0">${esc(t.description)}</p>
+      </div>` : '',
+
+    // 2 — Steps to Reproduce
+    steps ? `
+      <div style="margin-bottom:12px">
+        <p style="margin:0 0 4px;font-weight:600;color:#323130">🔁 Steps to Reproduce</p>
+        <ol style="margin:0;padding-left:20px">${steps}</ol>
+      </div>` : '',
+
+    // 3 — Expected Result
+    t.expected_result ? `
+      <div style="margin-bottom:12px;padding:8px 12px;background:#f0fff4;border-left:3px solid #22c55e;border-radius:3px">
+        <p style="margin:0 0 2px;font-weight:600;color:#15803d">✅ Expected Result</p>
+        <p style="margin:0;color:#166534">${esc(t.expected_result)}</p>
+      </div>` : '',
+
+    // 4 — Actual Result
+    t.actual_result ? `
+      <div style="margin-bottom:12px;padding:8px 12px;background:#fff5f5;border-left:3px solid #ef4444;border-radius:3px">
+        <p style="margin:0 0 2px;font-weight:600;color:#dc2626">❌ Actual Result</p>
+        <p style="margin:0;color:#991b1b">${esc(t.actual_result)}</p>
+      </div>` : '',
+
+    // 5 — Acceptance Criteria
+    crit ? `
+      <div style="margin-bottom:4px">
+        <p style="margin:0 0 4px;font-weight:600;color:#323130">☑️ Acceptance Criteria</p>
+        <ol style="margin:0;padding-left:20px">${crit}</ol>
+      </div>` : '',
+
+    // 6 — Screenshot (embedded inline — visible without opening attachment)
+    screenshotUrl ? `
+      <div style="margin-top:12px">
+        <p style="margin:0 0 6px;font-weight:600;color:#323130">📸 Screenshot</p>
+        <img src="${screenshotUrl}" alt="Bug screenshot"
+             style="max-width:100%;max-height:480px;border:1px solid #e1e1e1;border-radius:4px;display:block"/>
+      </div>` : '',
+
+  ].filter(Boolean).join('');
 
   const patch=[
-    {op:'add',path:'/fields/System.Title',          value:t.title||t.summary||'Bug'},
-    {op:'add',path:'/fields/System.Description',     value:`<p>${t.description||''}</p>${expActual}`},
-    {op:'add',path:'/fields/Microsoft.VSTS.TCM.ReproSteps', value: steps ? `<ol>${steps}</ol>` : ''},
-    {op:'add',path:'/fields/Microsoft.VSTS.TCM.SystemInfo', value:t.system_info||t.environment||''},
-    {op:'add',path:'/fields/Microsoft.VSTS.Common.Severity',value:t.severity||'3 - Medium'},
-    {op:'add',path:'/fields/Microsoft.VSTS.Common.Priority',value:t.priority||2},
-    ...(t.tags?[{op:'add',path:'/fields/System.Tags',value:t.tags}]:[]),
-    ...(crit?[{op:'add',path:'/fields/Microsoft.VSTS.Common.AcceptanceCriteria',value:`<ol>${crit}</ol>`}]:[]),
+    {op:'add',path:'/fields/System.Title',           value: t.title||t.summary||'Bug'},
+    {op:'add',path:'/fields/System.Description',      value: `<p>${esc(t.description||'')}</p>`},
+    {op:'add',path:'/fields/Microsoft.VSTS.TCM.ReproSteps', value: reproHTML},
+    {op:'add',path:'/fields/Microsoft.VSTS.TCM.SystemInfo', value: t.system_info||t.environment||''},
+    {op:'add',path:'/fields/Microsoft.VSTS.Common.Severity',value: t.severity||'3 - Medium'},
+    {op:'add',path:'/fields/Microsoft.VSTS.Common.Priority',value: t.priority||2},
+    ...(t.tags ? [{op:'add',path:'/fields/System.Tags', value:t.tags}] : []),
+    ...(crit   ? [{op:'add',path:'/fields/Microsoft.VSTS.Common.AcceptanceCriteria', value:`<ol>${crit}</ol>`}] : []),
   ].filter(p => {
     if (p.path === '/fields/System.Title') return true;
     if (p.value === undefined || p.value === null) return false;
     const s = String(p.value).trim();
-    return s !== '' && s !== '<ol></ol>';  // drop empty HTML lists too
+    return s !== '' && s !== '<ol></ol>' && s !== '<p></p>';
   });
   return api('ado', { action:'create_bug', config:adoCfg(), payload:patch });
 }
