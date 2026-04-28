@@ -1303,7 +1303,12 @@ button:focus-visible,.abtn:focus-visible,.hbtn:focus-visible,.send-btn:focus-vis
           </div>
         </div>
 
-        <button class="btn-sv" onclick="validateCfg('ant')">✓ Test connection</button>
+        <div style="display:flex;gap:7px">
+          <button class="btn-sv" style="flex:1" onclick="validateCfg('ant')">✓ Test connection</button>
+          <button class="btn-sv" style="flex:0 0 auto;background:var(--s2);color:var(--t2);border:1px solid var(--b2)"
+            title="Clear cooldowns and retry counts — use if providers show as unavailable"
+            onclick="ProviderManager.resetSession();updateDots();toast('Provider cooldowns cleared ✓','success')">↺ Reset</button>
+        </div>
       </div>
     </div>
 
@@ -1639,10 +1644,28 @@ window.setProvider       = setProvider;
 
 // ── callAI: provider fallback loop (from Shuddhi QA) ─────────
 async function callAI(messages, opts = {}) {
+  // Reset stale session state so old cooldowns from test connections
+  // or previous sessions don't block generation.
+  // ProviderManager.startGenerate() does this for sendDefect();
+  // for other call sites (scoreSeverity, checkDuplicates etc.) we
+  // do a lightweight reset here.
+  if (ProviderManager._state.switchCount > ProviderManager.MAX_SWITCHES
+      || ProviderManager._state.failed.size >= Object.keys(ProviderManager._state.keys).length) {
+    ProviderManager.resetSession();
+  }
+
+  // If ProviderManager isn't initialized yet, force a fallback init
+  if (!ProviderManager.isInitialized()) {
+    ProviderManager.init({ claudeKey:true, geminiKey:false, groqKey:false, aiProvider:'claude' });
+  }
+
   const toTry = ProviderManager.getOrderedProviders();
   if (!toTry.length) {
-    const wait = ProviderManager.getMinCooldownSecs();
-    throw new Error(wait>5 ? 'AI providers unavailable. Try again in ~'+wait+'s.' : 'No AI provider available. Check Settings → AI Provider.');
+    // Last resort: try the active provider even if it's in cooldown
+    const fallback = ProviderManager.getActive();
+    console.warn('[Bug Forge AI] getOrderedProviders returned []. Force-trying:', fallback);
+    ProviderManager.resetSession();
+    toTry.push(fallback);
   }
   const p = getActiveProvider();
   const MODELS = {
@@ -2954,11 +2977,13 @@ async function validateCfg(section) {
 
   try {
     if (section === 'ant') {
-      // Test the currently active AI provider via /api/ai
-      const provider = getActiveProvider();
-      const providerLabel = { claude:'Claude (Anthropic)', gemini:'Gemini (Google)', groq:'Groq' }[provider] || provider;
+      // Test the currently active AI provider DIRECTLY — do NOT go through
+      // callAI() / the fallback loop, because that marks providers as failed
+      // on errors and sets cooldowns that block subsequent generation calls.
+      const provider = ProviderManager.getActive();
+      const meta = ProviderManager.getConfig(provider);
+      const providerLabel = meta.name || provider;
       const setDot = (ok) => {
-        // New UI uses prov-dot; legacy dot-ant may still exist in some builds
         const d1 = document.getElementById('prov-dot');
         const d2 = document.getElementById('dot-ant');
         const cls = ok ? 'cfg-dot ok' : 'cfg-dot err';
@@ -2966,15 +2991,30 @@ async function validateCfg(section) {
         if (d2) d2.className = cls;
       };
       try {
-        const d = await callAI([{role:'user',content:'hi'}], {max_tokens:10});
-        if (d.content) {
+        const r = await fetch('/api/ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider,
+            model: meta.model,
+            max_tokens: 10,
+            messages: [{ role: 'user', content: 'hi' }],
+          }),
+        });
+        const d = await r.json();
+        if (r.ok && d.content) {
           toast(`✅ ${providerLabel} connected!`, 'success');
           setDot(true);
+          // Update key status in ProviderManager without marking failed
+          ProviderManager._state.keys[provider] = true;
+        } else {
+          toast(`❌ ${providerLabel}: ${d.error || 'No response'}`, 'error');
+          setDot(false);
+          // Do NOT call markFailed — this is a test, not a generation
         }
       } catch(e) {
         toast(`❌ ${providerLabel}: ${e.message}`, 'error');
         setDot(false);
-        throw e; // re-throw so finally block runs
       }
     }
 
@@ -3453,10 +3493,13 @@ function saveCfg(section){
 }
 function updateDots(){
   const dot=(id,ok)=>{const el=document.getElementById(id);if(el)el.className='cfg-dot'+(ok?' ok':'');};
-  dot('dot-ant',true);  // Always green — key in Vercel env vars
-  dot('prov-dot',true); // New UI provider dot
+  // AI provider dot reflects whether active provider's key is known
+  const provOk = ProviderManager.isInitialized() ? ProviderManager.hasKey() : true;
+  dot('dot-ant',  provOk);
+  dot('prov-dot', provOk);
   dot('dot-jira',!!(CFG.jiraUrl&&CFG.jiraToken));
-  dot('dot-ado',!!(CFG.adoOrg&&CFG.adoPat));dot('dot-gh',!!(CFG.ghOwner&&CFG.ghToken));
+  dot('dot-ado',!!(CFG.adoOrg&&CFG.adoPat));
+  dot('dot-gh',!!(CFG.ghOwner&&CFG.ghToken));
   dot('dot-slack',!!CFG.slack);dot('dot-teams',!!CFG.teams);
 }
 
