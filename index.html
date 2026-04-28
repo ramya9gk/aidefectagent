@@ -1667,17 +1667,31 @@ function setProvider(p) {
 window.getActiveProvider = getActiveProvider;
 window.setProvider       = setProvider;
 
-// ── callAI: provider fallback loop (from Shuddhi QA) ─────────
+// ── Consecutive failure tracker ───────────────────────────────
+// Tracks how many times each provider has failed across sessions.
+// Used to show quota/billing advice after repeated failures.
+const _failureCount = { claude: 0, gemini: 0, groq: 0 };
+const _QUOTA_ADVICE_THRESHOLD = 3; // show advice after N consecutive failures
+
+// ── delay helper ──────────────────────────────────────────────
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── User-friendly messages by error type ─────────────────────
+const ERROR_MESSAGES = {
+  rate_limit:  (p) => `${p} rate limit reached. Trying another provider…`,
+  quota:       (p) => `${p} free-tier quota exhausted. Switching provider…`,
+  billing:     (p) => `${p} billing/usage limit reached. Switching provider…`,
+  auth:        (p) => `${p} API key invalid. Check Vercel env vars.`,
+  model_error: (p) => `${p} model unavailable. Switching provider…`,
+  server:      (p) => `${p} server error. Trying another provider…`,
+  unknown:     (p) => `${p} request failed. Retrying…`,
+};
+
+// ── callAI: controlled execution, max 2 attempts ──────────────
 async function callAI(messages, opts = {}) {
-  // ── ALWAYS start fresh ────────────────────────────────────────
-  // Every callAI() call is independent. Background tasks (scoreSeverity,
-  // checkDuplicates etc.) must not leave stale failure state that blocks
-  // the next Generate click.
-  // sendDefect() calls startGenerate() which also resets — that's fine,
-  // redundant resets are safe.
+  // ALWAYS start fresh — background tasks must not poison state
   ProviderManager.resetSession();
 
-  // If ProviderManager isn't initialized yet, force a safe default
   if (!ProviderManager.isInitialized()) {
     ProviderManager.init({ claudeKey: true, geminiKey: false, groqKey: false, aiProvider: 'claude' });
     console.warn('[Bug Forge AI] ProviderManager not initialized — using Claude default');
@@ -1690,17 +1704,24 @@ async function callAI(messages, opts = {}) {
     groq:   opts.model || 'llama-3.3-70b-versatile',
   };
 
-  // ── MAX 2 ATTEMPTS: active provider → one fallback → stop ─────
-  // Never loop through all providers — that triggers cascading markFailed
-  // calls and puts everything in cooldown simultaneously.
+  // MAX 2 ATTEMPTS: active provider + one fallback only
   const toTry = ProviderManager.getOrderedProviders().slice(0, 2);
-  if (!toTry.length) toTry.push(active); // last resort: always try active
+  if (!toTry.length) toTry.push(active);
 
-  let lastError = 'Request failed';
+  let lastErrorMsg  = 'Request failed';
+  let isFirstAttempt = true;
 
   for (const prov of toTry) {
     ProviderManager._state.triedProviders.add(prov);
-    console.log('[Bug Forge AI] Trying provider:', prov);
+
+    // Add 2s delay before fallback (never before first attempt)
+    if (!isFirstAttempt) {
+      console.log('[Bug Forge AI] Waiting 2s before fallback to:', prov);
+      await delay(2000);
+    }
+    isFirstAttempt = false;
+
+    console.log('[Bug Forge AI] Provider:', prov, '| Model:', MODELS[prov]);
 
     const payload = {
       provider:   prov,
@@ -1713,47 +1734,72 @@ async function callAI(messages, opts = {}) {
 
     try {
       const r = await fetch('/api/ai', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
+        body: JSON.stringify(payload),
       });
       const d = await r.json();
 
       if (r.ok) {
+        // Reset failure counter on success
+        _failureCount[prov] = 0;
         if (prov !== getActiveProvider()) ProviderManager.setActive(prov, true);
         console.log('[Bug Forge AI] Success with provider:', prov);
         return d;
       }
 
-      // ── Rate limit / switchable error → try next provider ─────
-      const isLimit = r.status === 429
-        || d.switchProvider === true
-        || (r.status === 400 && (d.error || '').includes('usage limits'));
+      // ── Structured error handling ──────────────────────────
+      const errType    = d.errorType || 'unknown';
+      const isSwitch   = r.status === 429 || d.switchProvider === true;
+      const LABELS     = { claude: 'Claude', gemini: 'Gemini', groq: 'Groq' };
+      const provLabel  = LABELS[prov] || prov;
 
-      if (isLimit) {
+      console.error('[Bug Forge AI] Error:', prov, errType, d.error);
+
+      // Track consecutive failures
+      _failureCount[prov] = (_failureCount[prov] || 0) + 1;
+
+      // Show contextual toast for quota/billing advice
+      if (errType === 'quota' || errType === 'billing') {
+        const advice = _failureCount[prov] >= _QUOTA_ADVICE_THRESHOLD
+          ? ` Check your ${prov.toUpperCase()} API quota or billing settings.`
+          : '';
+        toast(`${provLabel} quota/billing issue.${advice}`, 'warn');
+      } else if (isSwitch && toTry.indexOf(prov) < toTry.length - 1) {
+        // More providers to try — show switching message
+        const msg = (ERROR_MESSAGES[errType] || ERROR_MESSAGES.unknown)(provLabel);
+        toast(msg, 'warn');
+      }
+
+      if (isSwitch) {
+        // Set short cooldown for this provider
         const cooldownMs = { groq: 30000, gemini: 30000, claude: 60000 }[prov] || 30000;
         ProviderManager._state.cooldown[prov] = Date.now() + cooldownMs;
-        lastError = d.error || `${prov} rate limited`;
-        console.warn('[Bug Forge AI] Provider', prov, 'rate limited — trying next if available');
-        continue;
+        lastErrorMsg = d.error || `${provLabel} rate limited`;
+        continue; // try next provider
       }
 
-      // ── Non-retryable error → surface immediately ─────────────
-      const LABELS = { claude: 'Claude', gemini: 'Gemini', groq: 'Groq' };
-      throw new Error(d.error || `${LABELS[prov] || prov} error ${r.status}`);
+      // Non-switchable error — surface immediately
+      throw new Error(d.error || `${provLabel} error ${r.status}`);
 
     } catch(e) {
-      if (e.message.includes('rate limit') || e.message.includes('rate limited')) {
-        lastError = e.message; continue;
+      const msg = e.message || '';
+      if (msg.includes('rate limit') || msg.includes('rate limited') || msg.includes('quota')) {
+        _failureCount[prov] = (_failureCount[prov] || 0) + 1;
+        lastErrorMsg = msg;
+        continue;
       }
-      throw e; // surface non-rate-limit errors immediately
+      throw e;
     }
   }
 
-  // Both attempts exhausted — show user-friendly message, NOT cooldown timer
-  const LABELS = { claude: 'Claude', gemini: 'Gemini', groq: 'Groq' };
-  const provLabel = LABELS[active] || active;
-  throw new Error(`${provLabel} rate limit reached. Please wait a moment and try again.`);
+  // All attempts exhausted
+  const LABELS  = { claude: 'Claude', gemini: 'Gemini', groq: 'Groq' };
+  const allFailed = toTry.every(p => (_failureCount[p] || 0) >= _QUOTA_ADVICE_THRESHOLD);
+  if (allFailed) {
+    throw new Error('Free-tier quota may be exhausted on all providers. Check your API quota or billing settings.');
+  }
+  throw new Error(`Rate limit reached. Please wait a moment and try again.`);
 }
 
 async function callAIGenerate(messages, opts = {}) {
@@ -3022,13 +3068,28 @@ async function sendDefect(){
     chat.appendChild(wrap);
 
     // ── AUTO-CHECK FOR DUPLICATES in the background (non-blocking) ──
-    // Surfaces potential dupes before user wastes effort posting
     setTimeout(() => { try { checkDuplicates({auto:true}); } catch(e) { console.warn('Auto-dupe check failed:', e); } }, 400);
 
-    // Test case prompt now shown inside ticket card after posting
-    // tc-ask-msg removed — using tc-prompt-area instead
-  }catch(e){rmThink();clearPills();addMsg('ai',`<span style="color:#f87171">Error: ${e.message}</span>`);}
-  finally{isProc=false;ProviderManager.endGenerate();document.getElementById('send-btn').disabled=false;document.getElementById('agent-txt').textContent='Agent ready';}
+  }catch(e){
+    rmThink(); clearPills();
+    const msg = e.message || 'Unknown error';
+    const isQuota   = msg.includes('quota') || msg.includes('billing') || msg.includes('free-tier');
+    const isRate    = msg.includes('rate limit') || msg.includes('Rate limit');
+    const isAuth    = msg.includes('API key') || msg.includes('invalid');
+    const icon      = isQuota ? '⚠️' : isRate ? '⏱' : isAuth ? '🔑' : '❌';
+    const hint      = isQuota ? '<br><span style="font-size:11px;opacity:.75">Check your API quota or billing at the provider\'s console.</span>'
+                    : isRate  ? '<br><span style="font-size:11px;opacity:.75">Wait a moment then click Generate again.</span>'
+                    : isAuth  ? '<br><span style="font-size:11px;opacity:.75">Check ANTHROPIC_API_KEY / BUGGEMINI_API_KEY / BUGGROQ_API_KEY in Vercel.</span>'
+                    : '';
+    addMsg('ai',`<span style="color:#f87171">${icon} ${msg}${hint}</span>`);
+    console.error('[Bug Forge AI] sendDefect error:', msg);
+  }
+  finally{
+    isProc=false;
+    ProviderManager.endGenerate();
+    document.getElementById('send-btn').disabled=false;
+    document.getElementById('agent-txt').textContent='Agent ready';
+  }
 }
 
 

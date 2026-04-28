@@ -6,10 +6,14 @@
  *   Gemini  → BUGGEMINI_API_KEY
  *   Groq    → BUGGROQ_API_KEY
  *
- * Active provider: AI_PROVIDER env var | fallback to whichever key exists
- * Single call per provider — no retry loops, no fallback chains.
- *
- * tool_use translation: Gemini/Groq receive tools as JSON system prompt.
+ * Returns structured errorType so the frontend can show specific messages:
+ *   rate_limit  → 429 / Too Many Requests
+ *   quota       → free-tier quota exhausted
+ *   billing     → account billing issue
+ *   auth        → invalid API key
+ *   model_error → model not found / unsupported
+ *   server      → 5xx
+ *   unknown     → anything else
  */
 
 export default async function handler(req, res) {
@@ -22,13 +26,29 @@ export default async function handler(req, res) {
   const body = req.body;
   const { provider: requestedProvider, ...forwardBody } = body;
 
-  // ── Single source of truth: Gemini config ─────────────────────
-  // Model: gemini-1.5-flash (GA stable)
-  // Endpoint: /v1/ (NOT v1beta — v1beta causes 404 for GA models)
+  // ── Gemini: single source of truth ────────────────────────────
   const GEMINI_CONFIG = {
     model:   'gemini-1.5-flash',
     baseUrl: 'https://generativelanguage.googleapis.com/v1',
   };
+
+  // ── Detect error type from API response text ───────────────────
+  function classifyError(status, msg = '') {
+    const m = msg.toLowerCase();
+    if (status === 429 || m.includes('too many requests') || m.includes('rate limit'))
+      return 'rate_limit';
+    if (m.includes('quota') || m.includes('quota_exceeded') || m.includes('resource_exhausted'))
+      return 'quota';
+    if (m.includes('billing') || m.includes('payment') || m.includes('usage limits') || m.includes('regain access'))
+      return 'billing';
+    if (status === 401 || status === 403 || m.includes('invalid api key') || m.includes('api_key'))
+      return 'auth';
+    if (status === 404 || m.includes('not found') || m.includes('does not exist') || m.includes('no longer available'))
+      return 'model_error';
+    if (status >= 500)
+      return 'server';
+    return 'unknown';
+  }
 
   // ── Resolve provider + key ─────────────────────────────────────
   function resolveProvider(requested) {
@@ -51,6 +71,7 @@ export default async function handler(req, res) {
   if (!resolved) {
     return res.status(500).json({
       error: 'No AI provider configured. Add ANTHROPIC_API_KEY, BUGGEMINI_API_KEY, or BUGGROQ_API_KEY to Vercel Environment Variables.',
+      errorType: 'auth',
     });
   }
 
@@ -58,15 +79,8 @@ export default async function handler(req, res) {
   const { system, messages, max_tokens = 4096, tools } = forwardBody;
 
   console.log(`[Bug Forge AI] Provider: ${provider}`);
-  if (provider === 'gemini') {
-    console.log(`[Bug Forge AI] Gemini model: ${GEMINI_CONFIG.model}`);
-    console.log(`[Bug Forge AI] Gemini endpoint: ${GEMINI_CONFIG.baseUrl}/models/${GEMINI_CONFIG.model}`);
-  }
 
-  // ── Tool_use translation for non-Claude providers ──────────────
-  // Bug Forge AI sendDefect() uses Claude tool_use format.
-  // For Gemini/Groq the tool schemas are injected as a JSON system
-  // prompt instruction so the model returns structured JSON we can parse.
+  // ── Tool schema injection for Gemini / Groq ────────────────────
   function buildSystemWithTools(baseSystem, toolDefs) {
     if (!toolDefs || !toolDefs.length) return baseSystem;
     const schemas = toolDefs.map(t =>
@@ -89,8 +103,7 @@ ${schemas}
     if (provider === 'claude') {
       const claudeBody = {
         model:      forwardBody.model || 'claude-haiku-4-5',
-        max_tokens,
-        messages,
+        max_tokens, messages,
       };
       if (system) claudeBody.system = system;
       if (tools)  claudeBody.tools  = tools;
@@ -98,8 +111,8 @@ ${schemas}
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
-          'Content-Type':      'application/json',
-          'x-api-key':         key,
+          'Content-Type': 'application/json',
+          'x-api-key': key,
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify(claudeBody),
@@ -107,22 +120,24 @@ ${schemas}
 
       const d = await r.json();
       if (!r.ok) {
-        const msg = d.error?.message || `Claude ${r.status}`;
-        const isLimit = r.status === 429
-          || (r.status === 400 && (msg.includes('usage limits') || msg.includes('regain access')));
-        if (isLimit) return res.status(429).json({ error: `Claude rate limited — ${msg}`, switchProvider: true, provider: 'claude' });
-        if (r.status === 401) return res.status(401).json({ error: 'ANTHROPIC_API_KEY invalid or expired.', provider: 'claude' });
-        return res.status(r.status).json({ error: msg, provider: 'claude' });
+        const msg      = d.error?.message || `Claude ${r.status}`;
+        const errType  = classifyError(r.status, msg);
+        const isSwitch = errType === 'rate_limit' || errType === 'quota' || errType === 'billing';
+        console.error(`[Bug Forge AI] Claude ${r.status} [${errType}]:`, msg);
+        return res.status(isSwitch ? 429 : r.status).json({
+          error: msg, errorType: errType, provider: 'claude',
+          switchProvider: isSwitch,
+        });
       }
       console.log(`[Bug Forge AI] Claude success`);
       return res.json({ ...d, _provider: 'claude' });
     }
 
     // ── GEMINI ────────────────────────────────────────────────────
-    // Single call — no retry loop, no fallback chain.
     // Model: gemini-1.5-flash | Endpoint: /v1/ (GA stable, not v1beta)
     if (provider === 'gemini') {
       const url = `${GEMINI_CONFIG.baseUrl}/models/${GEMINI_CONFIG.model}:generateContent?key=${key}`;
+      console.log(`[Bug Forge AI] Gemini model: ${GEMINI_CONFIG.model}`);
 
       const contents = (messages || []).map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
@@ -131,12 +146,12 @@ ${schemas}
                        : JSON.stringify(m.content) }],
       }));
 
-      const systemForGemini = buildSystemWithTools(system, tools);
+      const sysForGemini = buildSystemWithTools(system, tools);
       const geminiBody = {
         contents,
         generationConfig: { maxOutputTokens: Math.min(max_tokens, 8192), temperature: 0.3 },
       };
-      if (systemForGemini) geminiBody.systemInstruction = { parts: [{ text: systemForGemini }] };
+      if (sysForGemini) geminiBody.systemInstruction = { parts: [{ text: sysForGemini }] };
 
       const r = await fetch(url, {
         method: 'POST',
@@ -145,23 +160,19 @@ ${schemas}
       });
 
       if (!r.ok) {
-        const rawBody = await r.text().catch(() => '');
-        let parsed = {};
-        try { parsed = JSON.parse(rawBody); } catch(e) {}
-        const errMsg = parsed?.error?.message || rawBody.slice(0, 200);
-        console.error(`[Bug Forge AI] Gemini HTTP ${r.status}:`, errMsg);
-
-        if (r.status === 401 || r.status === 403) {
-          return res.status(r.status).json({ error: `BUGGEMINI_API_KEY invalid or missing permission: ${errMsg}`, provider: 'gemini' });
-        }
-        if (r.status === 429) {
-          return res.status(429).json({ error: `Gemini rate limited. Please wait before retrying.`, switchProvider: true, provider: 'gemini' });
-        }
-        // 400/404 — surface clean message, signal provider switch
-        return res.status(429).json({ error: `Gemini error (${r.status}): ${errMsg}`, switchProvider: true, provider: 'gemini' });
+        const raw     = await r.text().catch(() => '');
+        let parsed    = {}; try { parsed = JSON.parse(raw); } catch(e) {}
+        const msg     = parsed?.error?.message || raw.slice(0, 200);
+        const errType = classifyError(r.status, msg);
+        const isSwitch = errType === 'rate_limit' || errType === 'quota' || errType === 'billing' || errType === 'model_error';
+        console.error(`[Bug Forge AI] Gemini ${r.status} [${errType}]:`, msg);
+        return res.status(isSwitch ? 429 : r.status).json({
+          error: msg, errorType: errType, provider: 'gemini',
+          switchProvider: isSwitch,
+        });
       }
 
-      const d = await r.json();
+      const d       = await r.json();
       const rawText = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
       const content = tools ? parseToolUseFromText(rawText) : [{ type: 'text', text: rawText }];
       console.log(`[Bug Forge AI] Gemini success: ${GEMINI_CONFIG.model}`);
@@ -170,9 +181,9 @@ ${schemas}
 
     // ── GROQ ──────────────────────────────────────────────────────
     if (provider === 'groq') {
-      const systemForGroq = buildSystemWithTools(system, tools);
+      const sysForGroq = buildSystemWithTools(system, tools);
       const groqMessages = [];
-      if (systemForGroq) groqMessages.push({ role: 'system', content: systemForGroq });
+      if (sysForGroq) groqMessages.push({ role: 'system', content: sysForGroq });
       (messages || []).forEach(m => {
         groqMessages.push({
           role: m.role,
@@ -185,23 +196,27 @@ ${schemas}
       const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Content-Type':  'application/json',
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${key}`,
         },
         body: JSON.stringify({
-          model:      forwardBody.model || 'llama-3.3-70b-versatile',
-          messages:   groqMessages,
-          max_tokens: Math.min(max_tokens, 4096),
+          model:       forwardBody.model || 'llama-3.3-70b-versatile',
+          messages:    groqMessages,
+          max_tokens:  Math.min(max_tokens, 4096),
           temperature: 0.3,
         }),
       });
 
       const d = await r.json();
       if (!r.ok) {
-        const msg = d.error?.message || `Groq ${r.status}`;
-        if (r.status === 429) return res.status(429).json({ error: `Groq rate limited. Please wait before retrying.`, switchProvider: true, provider: 'groq' });
-        if (r.status === 401) return res.status(401).json({ error: 'BUGGROQ_API_KEY invalid or expired.', provider: 'groq' });
-        return res.status(r.status).json({ error: msg, provider: 'groq' });
+        const msg      = d.error?.message || `Groq ${r.status}`;
+        const errType  = classifyError(r.status, msg);
+        const isSwitch = errType === 'rate_limit' || errType === 'quota' || errType === 'billing';
+        console.error(`[Bug Forge AI] Groq ${r.status} [${errType}]:`, msg);
+        return res.status(isSwitch ? 429 : r.status).json({
+          error: msg, errorType: errType, provider: 'groq',
+          switchProvider: isSwitch,
+        });
       }
 
       const rawText = d.choices?.[0]?.message?.content || '';
@@ -210,40 +225,32 @@ ${schemas}
       return res.json({ content, stop_reason: 'stop', _provider: 'groq' });
     }
 
-    return res.status(400).json({ error: `Unknown provider: "${provider}". Valid: claude, gemini, groq` });
+    return res.status(400).json({ error: `Unknown provider: "${provider}"`, errorType: 'unknown' });
 
   } catch (err) {
     console.error(`[Bug Forge AI] Unexpected error (${provider}):`, err.message);
-    return res.status(500).json({ error: `Server error: ${err.message}`, provider });
+    return res.status(500).json({ error: `Server error: ${err.message}`, errorType: 'server', provider });
   }
 }
 
-// ── Parse tool_use JSON from plain-text response (Gemini / Groq) ──
+// ── Parse tool_use JSON from Gemini/Groq plain-text response ──────
 function parseToolUseFromText(text) {
   if (!text) return [{ type: 'text', text: '' }];
-
-  const cleaned = text
-    .replace(/^```json\s*/im, '').replace(/^```\s*/im, '').replace(/\s*```$/m, '').trim();
-
-  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
+  const cleaned = text.replace(/^```json\s*/im,'').replace(/^```\s*/im,'').replace(/\s*```$/m,'').trim();
+  const m = cleaned.match(/\{[\s\S]*\}/);
+  if (m) {
     try {
-      const p = JSON.parse(jsonMatch[0]);
-      if (p.type === 'tool_use' && p.name && p.input) {
-        return [{ type: 'tool_use', id: 'tu_' + Date.now(), name: p.name, input: p.input }];
-      }
-      if (p.name && p.input) {
-        return [{ type: 'tool_use', id: 'tu_' + Date.now(), name: p.name, input: p.input }];
-      }
-      if (p.title || p.summary || p.repro_steps || p.description) {
-        return [{ type: 'tool_use', id: 'tu_' + Date.now(), name: inferToolName(p), input: p }];
-      }
-    } catch(e) { /* fall through to text */ }
+      const p = JSON.parse(m[0]);
+      if (p.type === 'tool_use' && p.name && p.input)
+        return [{ type:'tool_use', id:'tu_'+Date.now(), name:p.name, input:p.input }];
+      if (p.name && p.input)
+        return [{ type:'tool_use', id:'tu_'+Date.now(), name:p.name, input:p.input }];
+      if (p.title || p.summary || p.repro_steps || p.description)
+        return [{ type:'tool_use', id:'tu_'+Date.now(), name:inferToolName(p), input:p }];
+    } catch(e) {}
   }
-
-  return [{ type: 'text', text }];
+  return [{ type:'text', text }];
 }
-
 function inferToolName(obj) {
   if (obj.area_path || obj.iteration_path || obj.system_info) return 'create_azure_devops_bug';
   if (obj.body || (Array.isArray(obj.labels) && obj.labels.join('').includes('bug'))) return 'create_github_issue';
