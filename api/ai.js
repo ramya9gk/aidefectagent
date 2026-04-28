@@ -102,26 +102,25 @@ ${schemas}
     }
 
     // ── GEMINI ──────────────────────────────────────────────────
-    // SINGLE SOURCE OF TRUTH for Gemini model names.
-    // UI label (PROVIDER_CONFIG.gemini.name) is DISPLAY ONLY — never used as API model.
-    // These models are validated against Google AI Studio (user-verified).
-    // Shuddhi QA backend uses same chain.
+    // SINGLE SOURCE OF TRUTH — centralized GEMINI_CONFIG
+    // API version matrix (Google official):
+    //   gemini-1.5-*  →  /v1/       (GA stable — MUST use v1, NOT v1beta)
+    //   gemini-2.0-*  →  /v1beta/   (public beta)
+    //   gemini-2.0-flash-exp → /v1beta/
     //
-    // UI label → "Gemini 3.0 Flash"   (display only, in PROVIDER_CONFIG.gemini.name)
-    // API model → gemini-2.0-flash     (actual API call, below)
+    // UI label "Gemini 3.0 Flash" is display only — never used as API model.
     //
-    const GEMINI_MODELS = {
-      primary:  { model: 'gemini-2.0-flash',            apiVer: 'v1beta' }, // Working — Shuddhi QA confirmed
-      fallback: { model: 'gemini-2.0-flash-exp',        apiVer: 'v1beta' }, // Experimental variant
-      stable:   { model: 'gemini-1.5-flash',            apiVer: 'v1beta' }, // Universal stable fallback
+    const GEMINI_CONFIG = {
+      baseUrl: 'https://generativelanguage.googleapis.com',
+      models: [
+        { model: 'gemini-1.5-flash', apiVer: 'v1'    }, // PRIMARY — GA stable, /v1/ endpoint
+        { model: 'gemini-1.5-pro',   apiVer: 'v1'    }, // Fallback — GA stable, /v1/ endpoint
+        { model: 'gemini-2.0-flash', apiVer: 'v1beta'}, // Last resort — public beta
+      ],
     };
 
     if (provider === 'gemini') {
-      const MODEL_CHAIN = [
-        GEMINI_MODELS.primary,
-        GEMINI_MODELS.fallback,
-        GEMINI_MODELS.stable,
-      ];
+      const MODEL_CHAIN = GEMINI_CONFIG.models;
 
       const contents = (messages || []).map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
@@ -145,8 +144,9 @@ ${schemas}
       let lastError  = '';
 
       for (const { model: tryModel, apiVer } of MODEL_CHAIN) {
-        const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${tryModel}:generateContent?key=${key}`;
-        console.log(`[Bug Forge AI] Gemini → ${tryModel} (${apiVer})`);
+        const url = `${GEMINI_CONFIG.baseUrl}/${apiVer}/models/${tryModel}:generateContent?key=${key}`;
+        console.log(`[Bug Forge AI] Gemini endpoint: ${GEMINI_CONFIG.baseUrl}/${apiVer}/models/${tryModel}`);
+        console.log(`[Bug Forge AI] Gemini model: ${tryModel} | apiVer: ${apiVer}`);
 
         let r;
         try {
