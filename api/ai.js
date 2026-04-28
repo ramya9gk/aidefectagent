@@ -103,8 +103,14 @@ ${schemas}
 
     // ── GEMINI ──────────────────────────────────────────────────
     if (provider === 'gemini') {
-      const MODEL_CHAIN = ['gemini-2.0-flash-001', 'gemini-1.5-flash', 'gemini-1.5-flash-latest'];
-      const geminiModel = forwardBody.model || MODEL_CHAIN[0];
+      // Model chain — tried in order on any 4xx error.
+      // All Gemini 3.x models use v1beta endpoint (verified from Shuddhi QA production).
+      const MODEL_CHAIN = [
+        { model: 'gemini-3.1-pro-preview',       apiVer: 'v1beta' },  // PRIMARY — confirmed working
+        { model: 'gemini-3.1-flash-lite-preview', apiVer: 'v1beta' },  // Fallback — cost-efficient
+        { model: 'gemini-3-flash-preview',         apiVer: 'v1beta' },  // Last resort
+      ];
+      const firstModel = forwardBody.model || MODEL_CHAIN[0].model;
 
       const contents = (messages || []).map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
@@ -121,8 +127,11 @@ ${schemas}
       if (systemForGemini) geminiBody.systemInstruction = { parts: [{ text: systemForGemini }] };
 
       for (let mi = 0; mi < MODEL_CHAIN.length; mi++) {
-        const tryModel = mi === 0 ? geminiModel : MODEL_CHAIN[mi];
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${tryModel}:generateContent?key=${key}`;
+        const { model: tryModel, apiVer } = mi === 0
+          ? { model: firstModel, apiVer: MODEL_CHAIN[0].apiVer }
+          : MODEL_CHAIN[mi];
+        const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${tryModel}:generateContent?key=${key}`;
+        console.log(`[Bug Forge AI] Gemini trying: ${tryModel} (${apiVer})`);
         const r = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -133,22 +142,24 @@ ${schemas}
           const d = await r.json();
           const rawText = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
           const content = tools ? parseToolUseFromText(rawText) : [{ type: 'text', text: rawText }];
+          console.log(`[Bug Forge AI] Gemini success: ${tryModel}`);
           return res.json({ content, stop_reason: 'end_turn', _provider: 'gemini', _model: tryModel });
         }
 
         const errText = await r.text().catch(() => '');
-        console.warn(`[Gemini] ${tryModel} → HTTP ${r.status}: ${errText.slice(0,120)}`);
+        console.warn(`[Bug Forge AI] Gemini ${tryModel} → HTTP ${r.status}: ${errText.slice(0,120)}`);
 
         if (r.status === 401 || r.status === 403) {
           return res.status(r.status).json({ error: `GEMINI_API_KEY invalid or missing permission (${r.status})`, provider: 'gemini' });
         }
         if (mi === MODEL_CHAIN.length - 1) {
           return res.status(429).json({
-            error: `Gemini: all models failed — ${errText.slice(0,100)}`,
+            error: `Gemini: all models failed — ${errText.slice(0,120)}`,
             switchProvider: true,
             provider: 'gemini',
           });
         }
+        // Continue to next model in chain
       }
     }
 
