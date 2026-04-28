@@ -103,14 +103,8 @@ ${schemas}
 
     // ── GEMINI ──────────────────────────────────────────────────
     if (provider === 'gemini') {
-      // Model chain — tried in order on any 4xx error.
-      // All use v1beta endpoint. Ordered by capability → availability.
-      const MODEL_CHAIN = [
-        { model: 'gemini-3.0-flash',     apiVer: 'v1beta' },  // PRIMARY — Gemini 3.0 Flash
-        { model: 'gemini-2.0-flash',     apiVer: 'v1beta' },  // Fallback
-        { model: 'gemini-1.5-flash',     apiVer: 'v1beta' },  // Universal fallback
-      ];
-      const firstModel = forwardBody.model || MODEL_CHAIN[0].model;
+      const geminiModel = forwardBody.model || 'gemini-3.0-flash';
+      const apiVer = 'v1beta';
 
       const contents = (messages || []).map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
@@ -126,41 +120,37 @@ ${schemas}
       };
       if (systemForGemini) geminiBody.systemInstruction = { parts: [{ text: systemForGemini }] };
 
-      for (let mi = 0; mi < MODEL_CHAIN.length; mi++) {
-        const { model: tryModel, apiVer } = mi === 0
-          ? { model: firstModel, apiVer: MODEL_CHAIN[0].apiVer }
-          : MODEL_CHAIN[mi];
-        const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${tryModel}:generateContent?key=${key}`;
-        console.log(`[Bug Forge AI] Gemini trying: ${tryModel} (${apiVer})`);
-        const r = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(geminiBody),
-        });
+      const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${geminiModel}:generateContent?key=${key}`;
+      console.log(`[Bug Forge AI] Gemini calling: ${geminiModel}`);
 
-        if (r.ok) {
-          const d = await r.json();
-          const rawText = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          const content = tools ? parseToolUseFromText(rawText) : [{ type: 'text', text: rawText }];
-          console.log(`[Bug Forge AI] Gemini success: ${tryModel}`);
-          return res.json({ content, stop_reason: 'end_turn', _provider: 'gemini', _model: tryModel });
-        }
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(geminiBody),
+      });
 
-        const errText = await r.text().catch(() => '');
-        console.warn(`[Bug Forge AI] Gemini ${tryModel} → HTTP ${r.status}: ${errText.slice(0,120)}`);
-
-        if (r.status === 401 || r.status === 403) {
-          return res.status(r.status).json({ error: `GEMINI_API_KEY invalid or missing permission (${r.status})`, provider: 'gemini' });
-        }
-        if (mi === MODEL_CHAIN.length - 1) {
-          return res.status(429).json({
-            error: `Gemini: all models failed — ${errText.slice(0,120)}`,
-            switchProvider: true,
-            provider: 'gemini',
-          });
-        }
-        // Continue to next model in chain
+      if (r.ok) {
+        const d = await r.json();
+        const rawText = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const content = tools ? parseToolUseFromText(rawText) : [{ type: 'text', text: rawText }];
+        console.log(`[Bug Forge AI] Gemini success: ${geminiModel}`);
+        return res.json({ content, stop_reason: 'end_turn', _provider: 'gemini', _model: geminiModel });
       }
+
+      const errText = await r.text().catch(() => '');
+      const errJson = (() => { try { return JSON.parse(errText); } catch(e) { return {}; } })();
+      const errMsg  = errJson?.error?.message || errText.slice(0, 150);
+      console.error(`[Bug Forge AI] Gemini ${geminiModel} → HTTP ${r.status}: ${errMsg}`);
+
+      if (r.status === 401 || r.status === 403) {
+        return res.status(r.status).json({ error: `GEMINI_API_KEY invalid or missing permission: ${errMsg}`, provider: 'gemini' });
+      }
+      // Rate limit or quota → signal frontend to switch provider
+      return res.status(429).json({
+        error: `Gemini (${geminiModel}): ${errMsg}`,
+        switchProvider: true,
+        provider: 'gemini',
+      });
     }
 
     // ── GROQ ─────────────────────────────────────────────────────
