@@ -102,16 +102,15 @@ ${schemas}
     }
 
     // ── GEMINI ──────────────────────────────────────────────────
-    // Models confirmed available in user's Google AI Studio account:
-    //   gemini-3-flash-preview       → v1beta (Gemini 3 Flash Preview)
-    //   gemini-3.1-pro-preview       → v1beta (Gemini 3.1 Pro Preview)
-    //   gemini-3.1-flash-lite-preview→ v1beta (Gemini 3.1 Flash Lite Preview)
-    // All are preview models → all use v1beta endpoint
+    // Model chain mirrors Shuddhi QA exactly — same account, same confirmed-working order.
+    // Shuddhi QA comment: "gemini-3.1-pro-preview — PRIMARY: confirmed working"
+    //                     "gemini-3-flash-preview  — Last resort: status uncertain"
+    // Bug Forge AI previously had these INVERTED — causing the "model not found" error.
     if (provider === 'gemini') {
       const MODEL_CHAIN = [
-        { model: 'gemini-3-flash-preview',        apiVer: 'v1beta' },  // PRIMARY   — Gemini 3 Flash Preview
-        { model: 'gemini-3.1-pro-preview',        apiVer: 'v1beta' },  // Fallback  — Gemini 3.1 Pro Preview
-        { model: 'gemini-3.1-flash-lite-preview', apiVer: 'v1beta' },  // Last resort — Gemini 3.1 Flash Lite
+        { model: 'gemini-3.1-pro-preview',        apiVer: 'v1beta' },  // PRIMARY   — confirmed working (Shuddhi QA)
+        { model: 'gemini-3.1-flash-lite-preview', apiVer: 'v1beta' },  // Fallback  — cost-efficient
+        { model: 'gemini-3-flash-preview',         apiVer: 'v1beta' },  // Last resort — status uncertain
       ];
 
       const contents = (messages || []).map(m => ({
