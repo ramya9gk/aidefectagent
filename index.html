@@ -1281,7 +1281,7 @@ button:focus-visible,.abtn:focus-visible,.hbtn:focus-visible,.send-btn:focus-vis
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
               Claude
             </button>
-            <button class="provider-btn" id="prov-gemini" onclick="setProvider('gemini')" title="Google Gemini 3.0 Flash (display label; API uses gemini-1.5-flash via /v1/)">
+            <button class="provider-btn" id="prov-gemini" onclick="setProvider('gemini')" title="Google Gemini 3.0 Flash (display label; API uses gemini-1.5-flash · /v1/ endpoint)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               Gemini 3.0 Flash
             </button>
@@ -1613,7 +1613,7 @@ function _updateProviderUI(provider) {
   // Update env hint card
   const ENV_KEYS = {
     claude: { key:'ANTHROPIC_API_KEY', models:'claude-haiku-4-5 · claude-sonnet-4-5' },
-    gemini: { key:'GEMINI_API_KEY',    models:'gemini-1.5-flash (v1) → gemini-1.5-pro (v1) → gemini-2.0-flash (v1beta)' },
+    gemini: { key:'GEMINI_API_KEY',    models:'gemini-1.5-flash (v1) → gemini-1.5-pro (v1)' },
     groq:   { key:'GROQ_API_KEY',      models:'llama-3.3-70b-versatile' },
   };
   const info = ENV_KEYS[provider] || ENV_KEYS.claude;
@@ -1670,7 +1670,7 @@ async function callAI(messages, opts = {}) {
   const p = getActiveProvider();
   const MODELS = {
     claude: opts.model||'claude-haiku-4-5',
-    gemini: opts.model||'gemini-2.0-flash',       // display default; api/ai.js GEMINI_MODELS.primary is authoritative
+    gemini: opts.model||'gemini-1.5-flash',       // display default; api/ai.js GEMINI_MODELS.primary is authoritative
     groq:   opts.model||'llama-3.3-70b-versatile',
   };
   for (const prov of toTry) {
@@ -1706,7 +1706,7 @@ async function callAI(messages, opts = {}) {
 
 async function callAIGenerate(messages, opts = {}) {
   const p = getActiveProvider();
-  const GENERATE_MODELS = {claude:'claude-sonnet-4-5',gemini:'gemini-2.0-flash',groq:'llama-3.3-70b-versatile'}; // api/ai.js GEMINI_MODELS.primary is authoritative
+  const GENERATE_MODELS = {claude:'claude-sonnet-4-5', gemini:'gemini-1.5-flash', groq:'llama-3.3-70b-versatile'}; // backend GEMINI_CONFIG is authoritative
   return callAI(messages, {...opts, model:GENERATE_MODELS[p]});
 }
 

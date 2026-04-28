@@ -102,25 +102,19 @@ ${schemas}
     }
 
     // ── GEMINI ──────────────────────────────────────────────────
-    // SINGLE SOURCE OF TRUTH — centralized GEMINI_CONFIG
-    // API version matrix (Google official):
-    //   gemini-1.5-*  →  /v1/       (GA stable — MUST use v1, NOT v1beta)
-    //   gemini-2.0-*  →  /v1beta/   (public beta)
-    //   gemini-2.0-flash-exp → /v1beta/
+    // DEFINITIVE CONFIG — only stable GA models, /v1/ endpoint only.
+    // Removed: gemini-2.0-flash (deprecated for new users)
+    //          gemini-3.*-preview (restricted preview, not available)
+    //          v1beta (not needed for GA models)
     //
-    // UI label "Gemini 3.0 Flash" is display only — never used as API model.
+    // UI label "Gemini 3.0 Flash" is DISPLAY ONLY — never used as API model.
     //
     const GEMINI_CONFIG = {
-      baseUrl: 'https://generativelanguage.googleapis.com',
-      models: [
-        { model: 'gemini-1.5-flash', apiVer: 'v1'    }, // PRIMARY — GA stable, /v1/ endpoint
-        { model: 'gemini-1.5-pro',   apiVer: 'v1'    }, // Fallback — GA stable, /v1/ endpoint
-        { model: 'gemini-2.0-flash', apiVer: 'v1beta'}, // Last resort — public beta
-      ],
+      baseUrl: 'https://generativelanguage.googleapis.com/v1', // v1 only — GA stable
+      models:  ['gemini-1.5-flash', 'gemini-1.5-pro'],        // only stable supported models
     };
 
     if (provider === 'gemini') {
-      const MODEL_CHAIN = GEMINI_CONFIG.models;
 
       const contents = (messages || []).map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
@@ -140,13 +134,12 @@ ${schemas}
         geminiBody.systemInstruction = { parts: [{ text: systemForGemini }] };
       }
 
-      let lastStatus = 0;
-      let lastError  = '';
+      let lastError = '';
 
-      for (const { model: tryModel, apiVer } of MODEL_CHAIN) {
-        const url = `${GEMINI_CONFIG.baseUrl}/${apiVer}/models/${tryModel}:generateContent?key=${key}`;
-        console.log(`[Bug Forge AI] Gemini endpoint: ${GEMINI_CONFIG.baseUrl}/${apiVer}/models/${tryModel}`);
-        console.log(`[Bug Forge AI] Gemini model: ${tryModel} | apiVer: ${apiVer}`);
+      for (const tryModel of GEMINI_CONFIG.models) {
+        const url = `${GEMINI_CONFIG.baseUrl}/models/${tryModel}:generateContent?key=${key}`;
+        console.log(`[Bug Forge AI] Gemini model: ${tryModel}`);
+        console.log(`[Bug Forge AI] Gemini endpoint: ${GEMINI_CONFIG.baseUrl}/models/${tryModel}`);
 
         let r;
         try {
@@ -161,30 +154,20 @@ ${schemas}
           continue;
         }
 
-        // ── Log actual API response for diagnostics ────────────
         if (!r.ok) {
           const rawBody = await r.text().catch(() => '');
           console.error(`[Bug Forge AI] Gemini ${tryModel} HTTP ${r.status}:`, rawBody.slice(0, 300));
-          lastStatus = r.status;
 
-          // Parse error for user-friendly message
           let parsed = {};
           try { parsed = JSON.parse(rawBody); } catch(e) {}
           lastError = parsed?.error?.message || rawBody.slice(0, 150);
 
-          // Non-retryable: bad key or permission denied
           if (r.status === 401 || r.status === 403) {
             return res.status(r.status).json({
-              error: `GEMINI_API_KEY invalid or missing permission (${r.status}): ${lastError}`,
+              error: `GEMINI_API_KEY invalid or missing permission: ${lastError}`,
               provider: 'gemini'
             });
           }
-          // Model not found (404) or unsupported (400) → try next model in chain
-          if (r.status === 404 || r.status === 400) {
-            console.warn(`[Bug Forge AI] Gemini model ${tryModel} unavailable (${r.status}) — trying next`);
-            continue;
-          }
-          // Rate limit → signal frontend to switch provider
           if (r.status === 429) {
             return res.status(429).json({
               error: `Gemini rate limited: ${lastError}`,
@@ -192,22 +175,23 @@ ${schemas}
               provider: 'gemini'
             });
           }
-          // Other errors → try next
+          // 400/404 or anything else — try next model
+          console.warn(`[Bug Forge AI] Gemini ${tryModel} unavailable — trying next`);
           continue;
         }
 
-        // ── SUCCESS ────────────────────────────────────────────
+        // SUCCESS
         const d = await r.json();
         const rawText = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const content = tools ? parseToolUseFromText(rawText) : [{ type: 'text', text: rawText }];
-        console.log(`[Bug Forge AI] Gemini success: ${tryModel} (${apiVer})`);
+        console.log(`[Bug Forge AI] Gemini success: ${tryModel}`);
         return res.json({ content, stop_reason: 'end_turn', _provider: 'gemini', _model: tryModel });
       }
 
-      // All models exhausted → signal frontend to switch to next provider
-      console.error(`[Bug Forge AI] Gemini: all models failed. Last: HTTP ${lastStatus} — ${lastError}`);
+      // Both models tried and failed
+      console.error(`[Bug Forge AI] Gemini unavailable. Last error: ${lastError}`);
       return res.status(429).json({
-        error: `Gemini unavailable (tried all stable models). Last error: ${lastError}`,
+        error: `Gemini unavailable. Last error: ${lastError}`,
         switchProvider: true,
         provider: 'gemini',
       });
