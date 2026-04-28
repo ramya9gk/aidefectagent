@@ -102,15 +102,25 @@ ${schemas}
     }
 
     // ── GEMINI ──────────────────────────────────────────────────
-    // Model chain mirrors Shuddhi QA exactly — same account, same confirmed-working order.
-    // Shuddhi QA comment: "gemini-3.1-pro-preview — PRIMARY: confirmed working"
-    //                     "gemini-3-flash-preview  — Last resort: status uncertain"
-    // Bug Forge AI previously had these INVERTED — causing the "model not found" error.
+    // SINGLE SOURCE OF TRUTH for Gemini model names.
+    // UI label (PROVIDER_CONFIG.gemini.name) is DISPLAY ONLY — never used as API model.
+    // These models are validated against Google AI Studio (user-verified).
+    // Shuddhi QA backend uses same chain.
+    //
+    // UI label → "Gemini 3.0 Flash"   (display only, in PROVIDER_CONFIG.gemini.name)
+    // API model → gemini-2.0-flash     (actual API call, below)
+    //
+    const GEMINI_MODELS = {
+      primary:  { model: 'gemini-2.0-flash',            apiVer: 'v1beta' }, // Working — Shuddhi QA confirmed
+      fallback: { model: 'gemini-2.0-flash-exp',        apiVer: 'v1beta' }, // Experimental variant
+      stable:   { model: 'gemini-1.5-flash',            apiVer: 'v1beta' }, // Universal stable fallback
+    };
+
     if (provider === 'gemini') {
       const MODEL_CHAIN = [
-        { model: 'gemini-3.1-pro-preview',        apiVer: 'v1beta' },  // PRIMARY   — confirmed working (Shuddhi QA)
-        { model: 'gemini-3.1-flash-lite-preview', apiVer: 'v1beta' },  // Fallback  — cost-efficient
-        { model: 'gemini-3-flash-preview',         apiVer: 'v1beta' },  // Last resort — status uncertain
+        GEMINI_MODELS.primary,
+        GEMINI_MODELS.fallback,
+        GEMINI_MODELS.stable,
       ];
 
       const contents = (messages || []).map(m => ({
