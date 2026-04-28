@@ -1281,7 +1281,7 @@ button:focus-visible,.abtn:focus-visible,.hbtn:focus-visible,.send-btn:focus-vis
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
               Claude
             </button>
-            <button class="provider-btn" id="prov-gemini" onclick="setProvider('gemini')" title="Google Gemini 2.0 Flash">
+            <button class="provider-btn" id="prov-gemini" onclick="setProvider('gemini')" title="Google Gemini 2.0 Flash (gemini-2.0-flash-001)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               Gemini 2.0 Flash
             </button>
@@ -1489,100 +1489,202 @@ const CFG = {
   adoOrg:'', adoProj:'', adoPat:'', adoTeam:'',
   ghOwner:'', ghRepo:'', ghToken:'',
   slack:'', teams:'',
-  // ── AI Provider — single source of truth ──────────────────
-  // Values: 'claude' | 'gemini' | 'groq'
-  // All AI calls MUST go through callAI() which reads this value.
-  // Never hardcode a provider anywhere else in this file.
-  aiProvider: 'claude',
+  // aiProvider is managed by ProviderManager — read via getActiveProvider()
+  get aiProvider() { return typeof ProviderManager !== 'undefined' ? ProviderManager.getActive() : 'claude'; },
+  set aiProvider(v) { if (typeof ProviderManager !== 'undefined') ProviderManager.setActive(v, true); },
 };
 
-// ══ AI PROVIDER MANAGER ═══════════════════════════════════════
+// ══ AI PROVIDER MANAGER (ProviderManager) ════════════════════
+// Full ProviderManager adapted from Shuddhi QA production code.
 // Single source of truth for all AI calls in Bug Forge AI.
-// Replaces all direct /api/claude hardcoded calls.
-// -- identical interface to what /api/claude accepted --
-// opts: { max_tokens, system, tools, model }
+// api/status.js → ProviderManager.init() on page load
+// callAI() / callAIGenerate() replace all /api/claude calls.
 
-function getActiveProvider() {
-  return CFG.aiProvider || 'claude';
-}
-
-async function callAI(messages, opts = {}) {
-  const provider = getActiveProvider();
-  console.log('[Bug Forge AI] Active provider:', provider, '| callAI invoked');
-
-  // Provider → default model mapping
-  const MODELS = {
-    claude: opts.model || 'claude-haiku-4-5',
-    gemini: opts.model || 'gemini-2.0-flash',
-    groq:   opts.model || 'llama-3.3-70b-versatile',
+const ProviderManager = (function() {
+  'use strict';
+  const LS_KEY    = 'bugforge-ai-provider';
+  const PROVIDERS = ['groq', 'gemini', 'claude'];
+  const PROVIDER_CONFIG = {
+    groq:   { name:'Groq',           icon:'⚡', model:'llama-3.3-70b-versatile', envKey:'GROQ_API_KEY',      rpmFree:30,   dailyFree:14400 },
+    gemini: { name:'Gemini 2.0 Flash',icon:'✦', model:'gemini-2.0-flash-001',   envKey:'GEMINI_API_KEY',    rpmFree:15,   dailyFree:1500  },
+    claude: { name:'Claude',          icon:'🤖', model:'claude-sonnet-4-5',      envKey:'ANTHROPIC_API_KEY', rpmFree:null, dailyFree:null  },
   };
-
-  const payload = {
-    provider,
-    model:      MODELS[provider],
-    max_tokens: opts.max_tokens || 1000,
-    messages,
+  const _state = {
+    active:'claude', keys:{}, failed:new Set(), cooldown:{},
+    generating:false, initialized:false, switchCount:0,
+    triedProviders:new Set(), generateStartedAt:0,
   };
-  if (opts.system) payload.system = opts.system;
-  if (opts.tools)  payload.tools  = opts.tools;
+  const MAX_SWITCHES = 2;
 
-  const r = await fetch('/api/ai', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-
-  const d = await r.json();
-
-  // ── Unified error handling ─────────────────────────────────
-  if (!r.ok) {
-    const providerLabel = { claude: 'Claude', gemini: 'Gemini', groq: 'Groq' }[provider] || provider;
-    if (r.status === 429) throw new Error(`${providerLabel} rate limit reached. Try again in a moment.`);
-    if (r.status === 404) throw new Error(`${providerLabel} model not found. Check provider config.`);
-    throw new Error(d.error || `${providerLabel} API error ${r.status}`);
+  function init(statusData) {
+    _state.keys = { claude:!!statusData.claudeKey, gemini:!!statusData.geminiKey, groq:!!statusData.groqKey };
+    let saved = ''; try { saved = localStorage.getItem(LS_KEY)||''; } catch(e) {}
+    const envProvider = (statusData.aiProvider||'').toLowerCase();
+    const firstAvail  = PROVIDERS.find(p => _state.keys[p]) || 'claude';
+    _state.active = (saved && _state.keys[saved] ? saved : null)
+                 || (envProvider && _state.keys[envProvider] ? envProvider : null)
+                 || firstAvail;
+    _state.initialized = true;
+    _syncLegacy();
+    console.log('[ProviderManager] Initialized. Active:', _state.active, '| Keys:', _state.keys);
+    if (typeof _updateProviderUI === 'function') _updateProviderUI(_state.active);
+    return _api;
   }
 
-  // Normalise: all providers return { content: [{ type:'text', text }] }
-  // (api/ai.js handles the normalisation server-side)
-  console.log('[Bug Forge AI] Bug Forge AI using provider:', provider, '| response ok');
-  return d;
-}
+  function getActive()     { return _state.active || 'claude'; }
+  function getConfig(p)    { return PROVIDER_CONFIG[p||_state.active] || PROVIDER_CONFIG.claude; }
+  function hasKey(p)       { return !!_state.keys[p||_state.active]; }
+  function hasAnyKey()     { return PROVIDERS.some(p => _state.keys[p]); }
+  function isInitialized() { return _state.initialized; }
 
-// Convenience: callAI for the main ticket generation (uses Sonnet/larger model)
-async function callAIGenerate(messages, opts = {}) {
-  const provider = getActiveProvider();
-  const GENERATE_MODELS = {
-    claude: 'claude-sonnet-4-5',
-    gemini: 'gemini-2.0-flash',
-    groq:   'llama-3.3-70b-versatile',
+  function setActive(provider, save) {
+    if (!PROVIDER_CONFIG[provider]) { console.warn('[ProviderManager] Unknown provider:', provider); return; }
+    const prev = _state.active; _state.active = provider;
+    if (save !== false) { try { localStorage.setItem(LS_KEY, provider); } catch(e) {} }
+    _syncLegacy();
+    if (prev !== provider) console.log('[ProviderManager] Active:', prev||'(none)', '→', provider);
+    return _api;
+  }
+
+  function resetSession() {
+    _state.failed.clear(); _state.triedProviders.clear(); _state.switchCount = 0;
+    Object.keys(_state.cooldown).forEach(k => delete _state.cooldown[k]);
+    console.log('[ProviderManager] Session reset');
+  }
+
+  function markFailed(provider) {
+    _state.failed.add(provider); _state.triedProviders.add(provider); _state.switchCount++;
+    const ms = {groq:65000,gemini:62000,claude:120000}[provider]||65000;
+    _state.cooldown[provider] = Date.now() + ms;
+    console.log('[ProviderManager]', provider, 'failed. Switch', _state.switchCount+'/'+MAX_SWITCHES, '| Cooldown:', Math.round(ms/1000)+'s');
+  }
+
+  function isCoolingDown(p) { const cd=_state.cooldown[p]; return cd && Date.now()<cd; }
+  function getMinCooldownSecs() {
+    const now=Date.now(),waits=Object.values(_state.cooldown).map(t=>Math.max(0,Math.ceil((t-now)/1000)));
+    return waits.length ? Math.min(...waits) : 0;
+  }
+
+  function getOrderedProviders() {
+    if (_state.switchCount>MAX_SWITCHES) { console.warn('[ProviderManager] MAX_SWITCHES reached'); return []; }
+    const active=_state.active;
+    return [active,...PROVIDERS.filter(p=>p!==active)]
+      .filter(p=>_state.keys[p]&&!_state.triedProviders.has(p)&&!isCoolingDown(p));
+  }
+
+  function startGenerate() {
+    if (_state.generating) return false;
+    _state.generating=true; _state.generateStartedAt=Date.now(); resetSession(); return true;
+  }
+  function endGenerate()  { _state.generating=false; }
+  function isGenerating() { return _state.generating; }
+
+  function _syncLegacy() {
+    window.__activeProvider=_state.active;
+    window.__claudeKey=!!_state.keys.claude;
+    window.__geminiKey=!!_state.keys.gemini;
+    window.__groqKey=!!_state.keys.groq;
+    if (window.CFG) CFG.aiProvider=_state.active;
+  }
+
+  const _api = {
+    init,getActive,getConfig,hasKey,hasAnyKey,isInitialized,
+    setActive,resetSession,markFailed,isCoolingDown,getMinCooldownSecs,
+    getOrderedProviders,startGenerate,endGenerate,isGenerating,
+    CONFIGS:PROVIDER_CONFIG,PRIORITY:PROVIDERS,_state,MAX_SWITCHES,
   };
-  return callAI(messages, { ...opts, model: GENERATE_MODELS[provider] });
-}
+  return _api;
+})();
+window.ProviderManager = ProviderManager;
 
-// ── Provider selector UI ─────────────────────────────────────
-function setProvider(p) {
-  CFG.aiProvider = p;
-  // Update active button states
+// ── _updateProviderUI: synced from Shuddhi QA ────────────────
+function _updateProviderUI(provider) {
+  const meta = ProviderManager.getConfig(provider) || {};
+  // Update pill buttons
   ['claude','gemini','groq'].forEach(id => {
-    const btn = document.getElementById(`prov-${id}`);
-    if (btn) btn.classList.toggle('active', id === p);
+    const btn = document.getElementById('prov-'+id);
+    if (btn) btn.classList.toggle('active', id === provider);
   });
-  // Update env hint
-  const ENV_VARS = {
+  // Update env hint card
+  const ENV_KEYS = {
     claude: { key:'ANTHROPIC_API_KEY', models:'claude-haiku-4-5 · claude-sonnet-4-5' },
-    gemini: { key:'GEMINI_API_KEY',    models:'gemini-2.0-flash' },
+    gemini: { key:'GEMINI_API_KEY',    models:'gemini-2.0-flash-001' },
     groq:   { key:'GROQ_API_KEY',      models:'llama-3.3-70b-versatile' },
   };
-  const info = ENV_VARS[p] || ENV_VARS.claude;
-  const envText = document.getElementById('prov-env-text');
-  const modelDisplay = document.getElementById('prov-model-display');
-  if (envText) envText.innerHTML = `Set <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:10px">${info.key}</code> in Vercel → Settings → Environment Variables`;
-  if (modelDisplay) modelDisplay.textContent = info.models;
-  // Update topbar brand subtitle to show active provider
+  const info = ENV_KEYS[provider] || ENV_KEYS.claude;
+  const envText    = document.getElementById('prov-env-text');
+  const modelDisp  = document.getElementById('prov-model-display');
+  const dot        = document.getElementById('prov-dot');
+  const hasK       = ProviderManager.hasKey(provider);
+  if (envText)   envText.innerHTML = 'Set <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:10px">'+info.key+'</code> in Vercel → Settings → Environment Variables';
+  if (modelDisp) modelDisp.textContent = info.models;
+  if (dot)       dot.className = 'cfg-dot' + (hasK ? ' ok' : ' err');
+  // Topbar brand subtitle
   const sub = document.querySelector('.brand-sub');
-  if (sub) sub.textContent = `v2026.04.18 · AI: ${p.charAt(0).toUpperCase()+p.slice(1)} · Jira · ADO · GitHub`;
+  if (sub) sub.textContent = 'v2026.04.18 · AI: '+(meta.name||provider)+' · Jira · ADO · GitHub';
+}
+window._updateProviderUI = _updateProviderUI;
+
+// ── Backward-compat shims ────────────────────────────────────
+function getActiveProvider() { return ProviderManager.getActive(); }
+function setProvider(p) {
+  ProviderManager.setActive(p, true);
+  if (typeof _updateProviderUI === 'function') _updateProviderUI(p);
+  const label = ProviderManager.getConfig(p).name || p;
+  toast('AI provider: '+label+' ✓', 'success');
   console.log('[Bug Forge AI] Active provider changed to:', p);
-  toast(`AI provider: ${p.charAt(0).toUpperCase()+p.slice(1)} ✓`, 'success');
+}
+window.getActiveProvider = getActiveProvider;
+window.setProvider       = setProvider;
+
+// ── callAI: provider fallback loop (from Shuddhi QA) ─────────
+async function callAI(messages, opts = {}) {
+  const toTry = ProviderManager.getOrderedProviders();
+  if (!toTry.length) {
+    const wait = ProviderManager.getMinCooldownSecs();
+    throw new Error(wait>5 ? 'AI providers unavailable. Try again in ~'+wait+'s.' : 'No AI provider available. Check Settings → AI Provider.');
+  }
+  const p = getActiveProvider();
+  const MODELS = {
+    claude: opts.model||'claude-haiku-4-5',
+    gemini: opts.model||'gemini-2.0-flash-001',
+    groq:   opts.model||'llama-3.3-70b-versatile',
+  };
+  for (const prov of toTry) {
+    ProviderManager._state.triedProviders.add(prov);
+    console.log('[Bug Forge AI] Using provider:', prov);
+    try {
+      const payload = {
+        provider:   prov,
+        model:      MODELS[prov]||MODELS[p]||MODELS.claude,
+        max_tokens: opts.max_tokens||1000,
+        messages,
+      };
+      if (opts.system) payload.system = opts.system;
+      if (opts.tools)  payload.tools  = opts.tools;
+      const r = await fetch('/api/ai', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+      const d = await r.json();
+      if (r.ok) {
+        if (prov !== getActiveProvider()) ProviderManager.setActive(prov, true);
+        return d;
+      }
+      const isLimit = r.status===429 || d.switchProvider===true || (r.status===400 && (d.error||'').includes('usage limits'));
+      if (isLimit) { console.warn('[Bug Forge AI] Provider',prov,'rate limited — trying next'); ProviderManager.markFailed(prov); continue; }
+      const LABELS = {claude:'Claude',gemini:'Gemini',groq:'Groq'};
+      throw new Error(d.error || (LABELS[prov]||prov)+' error '+r.status);
+    } catch(e) {
+      if (e.message.includes('rate limit')||e.message.includes('rate limited')) { ProviderManager.markFailed(prov); continue; }
+      throw e;
+    }
+  }
+  const wait = ProviderManager.getMinCooldownSecs();
+  throw new Error(wait>5 ? 'All AI providers temporarily unavailable. Try again in ~'+wait+'s.' : 'All AI providers failed. Please try again shortly.');
+}
+
+async function callAIGenerate(messages, opts = {}) {
+  const p = getActiveProvider();
+  const GENERATE_MODELS = {claude:'claude-sonnet-4-5',gemini:'gemini-2.0-flash-001',groq:'llama-3.3-70b-versatile'};
+  return callAI(messages, {...opts, model:GENERATE_MODELS[p]});
 }
 
 
@@ -2778,10 +2880,21 @@ function setEx(i){document.getElementById('din').value=EXAMPLES[i];}
 async function sendDefect(){
   const input=document.getElementById('din'),txt=input.value.trim();
   if(!txt||isProc)return;
-  // API key handled server-side via ANTHROPIC_API_KEY env var
+
+  // ── ProviderManager generate guard (from Shuddhi QA) ──
+  if (ProviderManager.isGenerating()) {
+    // Detect stuck flag: if generating for >2 min, force reset
+    const stuckMs = Date.now() - (ProviderManager._state.generateStartedAt||0);
+    if (stuckMs > 120000) {
+      console.warn('[sendDefect] Stuck flag detected ('+Math.round(stuckMs/1000)+'s) — force resetting');
+      ProviderManager.endGenerate();
+    } else { return; }
+  }
+  ProviderManager.startGenerate();
+
   isProc=true;input.value='';clearPills();
   document.getElementById('send-btn').disabled=true;
-  document.getElementById('agent-txt').textContent='Processing...';
+  document.getElementById('agent-txt').textContent='Processing... ('+ProviderManager.getConfig().name+')';
   addMsg('user',txt.replace(/\n/g,'<br>'));
   chatHist.push({role:'user',content:txt});
   // BUG-007 FIX: Cap chatHist at 20 entries (10 turns) — prevents API context window overflow after long sessions
@@ -2829,7 +2942,7 @@ async function sendDefect(){
     // Test case prompt now shown inside ticket card after posting
     // tc-ask-msg removed — using tc-prompt-area instead
   }catch(e){rmThink();clearPills();addMsg('ai',`<span style="color:#f87171">Error: ${e.message}</span>`);}
-  finally{isProc=false;document.getElementById('send-btn').disabled=false;document.getElementById('agent-txt').textContent='Agent ready';}
+  finally{isProc=false;ProviderManager.endGenerate();document.getElementById('send-btn').disabled=false;document.getElementById('agent-txt').textContent='Agent ready';}
 }
 
 
@@ -2844,15 +2957,24 @@ async function validateCfg(section) {
       // Test the currently active AI provider via /api/ai
       const provider = getActiveProvider();
       const providerLabel = { claude:'Claude (Anthropic)', gemini:'Gemini (Google)', groq:'Groq' }[provider] || provider;
+      const setDot = (ok) => {
+        // New UI uses prov-dot; legacy dot-ant may still exist in some builds
+        const d1 = document.getElementById('prov-dot');
+        const d2 = document.getElementById('dot-ant');
+        const cls = ok ? 'cfg-dot ok' : 'cfg-dot err';
+        if (d1) d1.className = cls;
+        if (d2) d2.className = cls;
+      };
       try {
         const d = await callAI([{role:'user',content:'hi'}], {max_tokens:10});
         if (d.content) {
           toast(`✅ ${providerLabel} connected!`, 'success');
-          document.getElementById('dot-ant').className = 'cfg-dot ok';
+          setDot(true);
         }
       } catch(e) {
         toast(`❌ ${providerLabel}: ${e.message}`, 'error');
-        document.getElementById('dot-ant').className = 'cfg-dot err';
+        setDot(false);
+        throw e; // re-throw so finally block runs
       }
     }
 
@@ -3331,7 +3453,9 @@ function saveCfg(section){
 }
 function updateDots(){
   const dot=(id,ok)=>{const el=document.getElementById(id);if(el)el.className='cfg-dot'+(ok?' ok':'');};
-  dot('dot-ant',true); // Always green - key in Vercel env varsdot('dot-jira',!!(CFG.jiraUrl&&CFG.jiraToken));
+  dot('dot-ant',true);  // Always green — key in Vercel env vars
+  dot('prov-dot',true); // New UI provider dot
+  dot('dot-jira',!!(CFG.jiraUrl&&CFG.jiraToken));
   dot('dot-ado',!!(CFG.adoOrg&&CFG.adoPat));dot('dot-gh',!!(CFG.ghOwner&&CFG.ghToken));
   dot('dot-slack',!!CFG.slack);dot('dot-teams',!!CFG.teams);
 }
@@ -3435,23 +3559,28 @@ window.addEventListener('load',()=>{
   initShortcuts();
   document.getElementById('din').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendDefect();}});
 
-  // Auto-load live project lists — only after checking API is available
+  // ── Init ProviderManager from /api/status (Shuddhi QA pattern) ──
+  // Also loads projects + ADO orgs after confirming API is reachable
   setTimeout(async ()=>{
     try {
-      const ping = await fetch('/api/projects', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({platform:'jira'})});
-      const ct = ping.headers.get('content-type') || '';
-      if (ct.includes('application/json')) {
-        loadProjects('jira').catch(()=>{});
-        // Auto-load ADO orgs (no org name needed — PAT is in Vercel env)
-        loadAdoOrgs().catch(()=>{});
+      // 1. Fetch status — initialises ProviderManager with key availability
+      const statusR = await fetch('/api/status');
+      if (statusR.ok) {
+        const statusData = await statusR.json();
+        ProviderManager.init(statusData);
+        console.log('[Bug Forge AI] Status loaded. Provider:', ProviderManager.getActive(), '| Keys:', ProviderManager._state.keys);
       } else {
-        const s = document.getElementById('jira-proj-status');
-        if (s) { s.textContent = 'Click ↻ Reload to load projects'; s.style.color = 'var(--t3)'; }
-        const sa = document.getElementById('ado-org-status');
-        if (sa) { sa.textContent = 'Click Load to fetch orgs'; sa.style.color = 'var(--t3)'; }
+        // status API not deployed yet — init with defaults (Claude assumed)
+        ProviderManager.init({ claudeKey: true, geminiKey: false, groqKey: false, aiProvider: 'claude' });
+        console.warn('[Bug Forge AI] /api/status unavailable — defaulting to Claude');
       }
+      // 2. Load projects + ADO orgs
+      loadProjects('jira').catch(()=>{});
+      loadAdoOrgs().catch(()=>{});
     } catch(e) {
-      console.log('Projects API not available:', e.message);
+      console.log('[Bug Forge AI] Init error:', e.message);
+      // Fallback init so app is still usable
+      ProviderManager.init({ claudeKey: true, geminiKey: false, groqKey: false, aiProvider: 'claude' });
     }
   }, 1200);
 });
