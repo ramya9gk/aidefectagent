@@ -1510,8 +1510,8 @@ const ProviderManager = (function() {
   const LS_KEY    = 'bugforge-ai-provider';
   const PROVIDERS = ['groq', 'gemini', 'claude'];
   const PROVIDER_CONFIG = {
-    groq:   { name:'Groq',           icon:'⚡', model:'llama-3.3-70b-versatile', envKey:'GROQ_API_KEY',      rpmFree:30,   dailyFree:14400 },
-    gemini: { name:'Gemini 3.0 Flash',icon:'✦', model:'gemini-1.5-flash', envKey:'GEMINI_API_KEY', rpmFree:15, dailyFree:1500 },  // NOTE: display metadata only. Actual API model = api/ai.js GEMINI_CONFIG
+    groq:   { name:'Groq',           icon:'⚡', model:'llama-3.3-70b-versatile', envKey:'BUGBUGGROQ_API_KEY',      rpmFree:30,   dailyFree:14400 },
+    gemini: { name:'Gemini 3.0 Flash',icon:'✦', model:'gemini-1.5-flash', envKey:'BUGBUGGEMINI_API_KEY', rpmFree:15, dailyFree:1500 },  // NOTE: display metadata only. Actual API model = api/ai.js GEMINI_CONFIG
     claude: { name:'Claude',          icon:'🤖', model:'claude-sonnet-4-5',      envKey:'ANTHROPIC_API_KEY', rpmFree:null, dailyFree:null  },
   };
   const _state = {
@@ -1613,8 +1613,8 @@ function _updateProviderUI(provider) {
   // Update env hint card
   const ENV_KEYS = {
     claude: { key:'ANTHROPIC_API_KEY', models:'claude-haiku-4-5 · claude-sonnet-4-5' },
-    gemini: { key:'GEMINI_API_KEY',    models:'gemini-1.5-flash (v1) → gemini-1.5-pro (v1)' },
-    groq:   { key:'GROQ_API_KEY',      models:'llama-3.3-70b-versatile' },
+    gemini: { key:'BUGGEMINI_API_KEY',    models:'gemini-1.5-flash (v1 endpoint)' },
+    groq:   { key:'BUGGROQ_API_KEY',      models:'llama-3.3-70b-versatile' },
   };
   const info = ENV_KEYS[provider] || ENV_KEYS.claude;
   const envText    = document.getElementById('prov-env-text');
@@ -1706,7 +1706,7 @@ async function callAI(messages, opts = {}) {
 
 async function callAIGenerate(messages, opts = {}) {
   const p = getActiveProvider();
-  const GENERATE_MODELS = {claude:'claude-sonnet-4-5', gemini:'gemini-1.5-flash', groq:'llama-3.3-70b-versatile'}; // backend GEMINI_CONFIG is authoritative
+  const GENERATE_MODELS = {claude:'claude-sonnet-4-5', gemini:'gemini-1.5-flash', groq:'llama-3.3-70b-versatile'}; // backend GEMINI_CONFIG.model is authoritative
   return callAI(messages, {...opts, model:GENERATE_MODELS[p]});
 }
 

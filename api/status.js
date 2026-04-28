@@ -1,8 +1,12 @@
 /**
  * api/status.js — Environment key configuration check
- * Called once on page load. Returns which AI provider keys are
- * configured as Vercel environment variables.
- * Adapted from Shuddhi QA's api/status.js
+ * Called once on page load by ProviderManager.init()
+ *
+ * Environment variables:
+ *   ANTHROPIC_API_KEY or CLAUDE_API_KEY → Claude
+ *   BUGGEMINI_API_KEY                   → Gemini
+ *   BUGGROQ_API_KEY                     → Groq
+ *   AI_PROVIDER (optional)              → force a specific provider
  */
 
 export default async function handler(req, res) {
@@ -13,19 +17,20 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const hasClaude = !!(process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY);
-  const hasGemini = !!process.env.GEMINI_API_KEY;
-  const hasGroq   = !!process.env.GROQ_API_KEY;
+  const hasGemini = !!process.env.BUGGEMINI_API_KEY;
+  const hasGroq   = !!process.env.BUGGROQ_API_KEY;
 
   const preferred = (process.env.AI_PROVIDER || '').toLowerCase();
   const activeProvider = preferred ||
     (hasClaude ? 'claude' : hasGemini ? 'gemini' : hasGroq ? 'groq' : 'none');
+
+  console.log(`[Bug Forge AI] Status: claude=${hasClaude} gemini=${hasGemini} groq=${hasGroq} active=${activeProvider}`);
 
   return res.json({
     claudeKey:   hasClaude,
     geminiKey:   hasGemini,
     groqKey:     hasGroq,
     aiProvider:  activeProvider,
-    // Bug Forge AI platform config status
     hasJira:     !!(process.env.JIRA_URL && process.env.JIRA_TOKEN),
     hasAdo:      !!(process.env.ADO_ORG && process.env.ADO_PAT),
     hasGitHub:   !!(process.env.GITHUB_OWNER && process.env.GITHUB_TOKEN),
