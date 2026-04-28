@@ -1307,7 +1307,7 @@ button:focus-visible,.abtn:focus-visible,.hbtn:focus-visible,.send-btn:focus-vis
           <button class="btn-sv" style="flex:1" onclick="validateCfg('ant')">✓ Test connection</button>
           <button class="btn-sv" style="flex:0 0 auto;background:var(--s2);color:var(--t2);border:1px solid var(--b2)"
             title="Clear cooldowns and retry counts — use if providers show as unavailable"
-            onclick="ProviderManager.resetSession();updateDots();toast('Provider cooldowns cleared ✓','success')">↺ Reset</button>
+            onclick="ProviderManager.resetSession();ProviderManager.endGenerate();isProc=false;document.getElementById('send-btn').disabled=false;document.getElementById('agent-txt').textContent='Agent ready';updateDots();toast('Provider state reset ✓','success');console.log('[Bug Forge AI] Resetting provider state')">↺ Reset</button>
         </div>
       </div>
     </div>
@@ -1564,17 +1564,42 @@ const ProviderManager = (function() {
     console.log('[ProviderManager]', provider, 'failed. Switch', _state.switchCount+'/'+MAX_SWITCHES, '| Cooldown:', Math.round(ms/1000)+'s');
   }
 
-  function isCoolingDown(p) { const cd=_state.cooldown[p]; return cd && Date.now()<cd; }
+  function isCoolingDown(p) {
+    const cd = _state.cooldown[p];
+    if (!cd) return false;
+    if (Date.now() >= cd) {
+      // Cooldown expired — auto-clear so provider is available again
+      delete _state.cooldown[p];
+      _state.failed.delete(p);
+      return false;
+    }
+    return true;
+  }
   function getMinCooldownSecs() {
     const now=Date.now(),waits=Object.values(_state.cooldown).map(t=>Math.max(0,Math.ceil((t-now)/1000)));
     return waits.length ? Math.min(...waits) : 0;
   }
 
   function getOrderedProviders() {
-    if (_state.switchCount>MAX_SWITCHES) { console.warn('[ProviderManager] MAX_SWITCHES reached'); return []; }
-    const active=_state.active;
-    return [active,...PROVIDERS.filter(p=>p!==active)]
-      .filter(p=>_state.keys[p]&&!_state.triedProviders.has(p)&&!isCoolingDown(p));
+    // Always start fresh per request — never permanently block
+    const active = _state.active;
+
+    // Build ordered list: active first, then others
+    const ordered = [active, ...PROVIDERS.filter(p => p !== active)];
+
+    // Filter: key must exist, not tried this session, not in cooldown
+    const available = ordered.filter(p =>
+      _state.keys[p] && !_state.triedProviders.has(p) && !isCoolingDown(p)
+    );
+
+    // Safety net: if everything filtered out, return just the active provider
+    // so we always attempt at least once (avoids "all unavailable" on first call)
+    if (!available.length && _state.keys[active]) {
+      console.warn('[ProviderManager] All filtered — forcing active provider:', active);
+      return [active];
+    }
+
+    return available;
   }
 
   function startGenerate() {
@@ -1644,70 +1669,101 @@ window.setProvider       = setProvider;
 
 // ── callAI: provider fallback loop (from Shuddhi QA) ─────────
 async function callAI(messages, opts = {}) {
-  // Reset stale session state so old cooldowns from test connections
-  // or previous sessions don't block generation.
-  // ProviderManager.startGenerate() does this for sendDefect();
-  // for other call sites (scoreSeverity, checkDuplicates etc.) we
-  // do a lightweight reset here.
-  if (ProviderManager._state.switchCount > ProviderManager.MAX_SWITCHES
-      || ProviderManager._state.failed.size >= Object.keys(ProviderManager._state.keys).length) {
-    ProviderManager.resetSession();
-  }
+  // ── ALWAYS start fresh ────────────────────────────────────────
+  // Every callAI() call is independent. Background tasks (scoreSeverity,
+  // checkDuplicates etc.) must not leave stale failure state that blocks
+  // the next Generate click.
+  // sendDefect() calls startGenerate() which also resets — that's fine,
+  // redundant resets are safe.
+  ProviderManager.resetSession();
 
-  // If ProviderManager isn't initialized yet, force a fallback init
+  // If ProviderManager isn't initialized yet, force a safe default
   if (!ProviderManager.isInitialized()) {
-    ProviderManager.init({ claudeKey:true, geminiKey:false, groqKey:false, aiProvider:'claude' });
+    ProviderManager.init({ claudeKey: true, geminiKey: false, groqKey: false, aiProvider: 'claude' });
+    console.warn('[Bug Forge AI] ProviderManager not initialized — using Claude default');
   }
 
-  const toTry = ProviderManager.getOrderedProviders();
-  if (!toTry.length) {
-    // Last resort: try the active provider even if it's in cooldown
-    const fallback = ProviderManager.getActive();
-    console.warn('[Bug Forge AI] getOrderedProviders returned []. Force-trying:', fallback);
-    ProviderManager.resetSession();
-    toTry.push(fallback);
-  }
-  const p = getActiveProvider();
+  const active = getActiveProvider();
   const MODELS = {
-    claude: opts.model||'claude-haiku-4-5',
-    gemini: opts.model||'gemini-1.5-flash',       // display default; api/ai.js GEMINI_MODELS.primary is authoritative
-    groq:   opts.model||'llama-3.3-70b-versatile',
+    claude: opts.model || 'claude-haiku-4-5',
+    gemini: opts.model || 'gemini-1.5-flash',
+    groq:   opts.model || 'llama-3.3-70b-versatile',
   };
+
+  // ── MAX 2 ATTEMPTS: active provider → one fallback → stop ─────
+  // Never loop through all providers — that triggers cascading markFailed
+  // calls and puts everything in cooldown simultaneously.
+  const toTry = ProviderManager.getOrderedProviders().slice(0, 2);
+  if (!toTry.length) toTry.push(active); // last resort: always try active
+
+  let lastError = 'Request failed';
+
   for (const prov of toTry) {
     ProviderManager._state.triedProviders.add(prov);
-    console.log('[Bug Forge AI] Using provider:', prov);
+    console.log('[Bug Forge AI] Trying provider:', prov);
+
+    const payload = {
+      provider:   prov,
+      model:      MODELS[prov] || MODELS.claude,
+      max_tokens: opts.max_tokens || 1000,
+      messages,
+    };
+    if (opts.system) payload.system = opts.system;
+    if (opts.tools)  payload.tools  = opts.tools;
+
     try {
-      const payload = {
-        provider:   prov,
-        model:      MODELS[prov]||MODELS[p]||MODELS.claude,
-        max_tokens: opts.max_tokens||1000,
-        messages,
-      };
-      if (opts.system) payload.system = opts.system;
-      if (opts.tools)  payload.tools  = opts.tools;
-      const r = await fetch('/api/ai', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+      const r = await fetch('/api/ai', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
       const d = await r.json();
+
       if (r.ok) {
         if (prov !== getActiveProvider()) ProviderManager.setActive(prov, true);
+        console.log('[Bug Forge AI] Success with provider:', prov);
         return d;
       }
-      const isLimit = r.status===429 || d.switchProvider===true || (r.status===400 && (d.error||'').includes('usage limits'));
-      if (isLimit) { console.warn('[Bug Forge AI] Provider',prov,'rate limited — trying next'); ProviderManager.markFailed(prov); continue; }
-      const LABELS = {claude:'Claude',gemini:'Gemini',groq:'Groq'};
-      throw new Error(d.error || (LABELS[prov]||prov)+' error '+r.status);
+
+      // ── Rate limit / switchable error → try next provider ─────
+      const isLimit = r.status === 429
+        || d.switchProvider === true
+        || (r.status === 400 && (d.error || '').includes('usage limits'));
+
+      if (isLimit) {
+        const cooldownMs = { groq: 30000, gemini: 30000, claude: 60000 }[prov] || 30000;
+        ProviderManager._state.cooldown[prov] = Date.now() + cooldownMs;
+        lastError = d.error || `${prov} rate limited`;
+        console.warn('[Bug Forge AI] Provider', prov, 'rate limited — trying next if available');
+        continue;
+      }
+
+      // ── Non-retryable error → surface immediately ─────────────
+      const LABELS = { claude: 'Claude', gemini: 'Gemini', groq: 'Groq' };
+      throw new Error(d.error || `${LABELS[prov] || prov} error ${r.status}`);
+
     } catch(e) {
-      if (e.message.includes('rate limit')||e.message.includes('rate limited')) { ProviderManager.markFailed(prov); continue; }
-      throw e;
+      if (e.message.includes('rate limit') || e.message.includes('rate limited')) {
+        lastError = e.message; continue;
+      }
+      throw e; // surface non-rate-limit errors immediately
     }
   }
-  const wait = ProviderManager.getMinCooldownSecs();
-  throw new Error(wait>5 ? 'All AI providers temporarily unavailable. Try again in ~'+wait+'s.' : 'All AI providers failed. Please try again shortly.');
+
+  // Both attempts exhausted — show user-friendly message, NOT cooldown timer
+  const LABELS = { claude: 'Claude', gemini: 'Gemini', groq: 'Groq' };
+  const provLabel = LABELS[active] || active;
+  throw new Error(`${provLabel} rate limit reached. Please wait a moment and try again.`);
 }
 
 async function callAIGenerate(messages, opts = {}) {
   const p = getActiveProvider();
-  const GENERATE_MODELS = {claude:'claude-sonnet-4-5', gemini:'gemini-1.5-flash', groq:'llama-3.3-70b-versatile'}; // backend GEMINI_CONFIG.model is authoritative
-  return callAI(messages, {...opts, model:GENERATE_MODELS[p]});
+  const GENERATE_MODELS = {
+    claude: 'claude-sonnet-4-5',
+    gemini: 'gemini-1.5-flash',
+    groq:   'llama-3.3-70b-versatile',
+  };
+  return callAI(messages, { ...opts, model: GENERATE_MODELS[p] });
 }
 
 
@@ -2904,23 +2960,30 @@ async function sendDefect(){
   const input=document.getElementById('din'),txt=input.value.trim();
   if(!txt||isProc)return;
 
-  // ── ProviderManager generate guard (from Shuddhi QA) ──
-  if (ProviderManager.isGenerating()) {
-    // Detect stuck flag: if generating for >2 min, force reset
-    const stuckMs = Date.now() - (ProviderManager._state.generateStartedAt||0);
+  // ── Always reset provider state on every Generate click ───────
+  // This ensures new API keys take effect immediately and cooldowns
+  // from background tasks (scoreSeverity, checkDuplicates etc.) don't
+  // block the user.
+  ProviderManager.resetSession();
+  if (!ProviderManager.startGenerate()) {
+    // Still generating — check for stuck flag (>2 min)
+    const stuckMs = Date.now() - (ProviderManager._state.generateStartedAt || 0);
     if (stuckMs > 120000) {
-      console.warn('[sendDefect] Stuck flag detected ('+Math.round(stuckMs/1000)+'s) — force resetting');
+      console.warn('[sendDefect] Stuck flag detected — force resetting');
       ProviderManager.endGenerate();
-    } else { return; }
+      ProviderManager.startGenerate();
+    } else {
+      console.log('[sendDefect] Already generating, ignoring click');
+      return;
+    }
   }
-  ProviderManager.startGenerate();
 
-  isProc=true;input.value='';clearPills();
+  isProc=true; input.value=''; clearPills();
   document.getElementById('send-btn').disabled=true;
   document.getElementById('agent-txt').textContent='Processing... ('+ProviderManager.getConfig().name+')';
   addMsg('user',txt.replace(/\n/g,'<br>'));
   chatHist.push({role:'user',content:txt});
-  // BUG-007 FIX: Cap chatHist at 20 entries (10 turns) — prevents API context window overflow after long sessions
+  // BUG-007 FIX: Cap chatHist at 20 entries (10 turns)
   if(chatHist.length>20) chatHist=chatHist.slice(-20);
 
   // Score severity first (async, non-blocking)
