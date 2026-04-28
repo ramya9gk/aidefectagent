@@ -104,11 +104,11 @@ ${schemas}
     // ── GEMINI ──────────────────────────────────────────────────
     if (provider === 'gemini') {
       // Model chain — tried in order on any 4xx error.
-      // All Gemini 3.x models use v1beta endpoint (verified from Shuddhi QA production).
+      // All use v1beta endpoint. Ordered by capability → availability.
       const MODEL_CHAIN = [
-        { model: 'gemini-3.1-pro-preview',       apiVer: 'v1beta' },  // PRIMARY — confirmed working
-        { model: 'gemini-3.1-flash-lite-preview', apiVer: 'v1beta' },  // Fallback — cost-efficient
-        { model: 'gemini-3-flash-preview',         apiVer: 'v1beta' },  // Last resort
+        { model: 'gemini-3.0-flash',     apiVer: 'v1beta' },  // PRIMARY — Gemini 3.0 Flash
+        { model: 'gemini-2.0-flash',     apiVer: 'v1beta' },  // Fallback
+        { model: 'gemini-1.5-flash',     apiVer: 'v1beta' },  // Universal fallback
       ];
       const firstModel = forwardBody.model || MODEL_CHAIN[0].model;
 

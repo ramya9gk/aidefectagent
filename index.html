@@ -1281,7 +1281,7 @@ button:focus-visible,.abtn:focus-visible,.hbtn:focus-visible,.send-btn:focus-vis
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
               Claude
             </button>
-            <button class="provider-btn" id="prov-gemini" onclick="setProvider('gemini')" title="Google Gemini 3.0 Flash (gemini-3.1-pro-preview)">
+            <button class="provider-btn" id="prov-gemini" onclick="setProvider('gemini')" title="Google Gemini 3.0 Flash">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               Gemini 3.0 Flash
             </button>
@@ -1511,7 +1511,7 @@ const ProviderManager = (function() {
   const PROVIDERS = ['groq', 'gemini', 'claude'];
   const PROVIDER_CONFIG = {
     groq:   { name:'Groq',           icon:'⚡', model:'llama-3.3-70b-versatile', envKey:'GROQ_API_KEY',      rpmFree:30,   dailyFree:14400 },
-    gemini: { name:'Gemini 3.0 Flash',icon:'✦', model:'gemini-3.1-pro-preview',   envKey:'GEMINI_API_KEY',    rpmFree:15,   dailyFree:1500  },
+    gemini: { name:'Gemini 3.0 Flash',icon:'✦', model:'gemini-3.0-flash',   envKey:'GEMINI_API_KEY',    rpmFree:15,   dailyFree:1500  },
     claude: { name:'Claude',          icon:'🤖', model:'claude-sonnet-4-5',      envKey:'ANTHROPIC_API_KEY', rpmFree:null, dailyFree:null  },
   };
   const _state = {
@@ -1613,7 +1613,7 @@ function _updateProviderUI(provider) {
   // Update env hint card
   const ENV_KEYS = {
     claude: { key:'ANTHROPIC_API_KEY', models:'claude-haiku-4-5 · claude-sonnet-4-5' },
-    gemini: { key:'GEMINI_API_KEY',    models:'gemini-3.1-pro-preview' },
+    gemini: { key:'GEMINI_API_KEY',    models:'gemini-3.0-flash' },
     groq:   { key:'GROQ_API_KEY',      models:'llama-3.3-70b-versatile' },
   };
   const info = ENV_KEYS[provider] || ENV_KEYS.claude;
@@ -1670,7 +1670,7 @@ async function callAI(messages, opts = {}) {
   const p = getActiveProvider();
   const MODELS = {
     claude: opts.model||'claude-haiku-4-5',
-    gemini: opts.model||'gemini-3.1-pro-preview',
+    gemini: opts.model||'gemini-3.0-flash',
     groq:   opts.model||'llama-3.3-70b-versatile',
   };
   for (const prov of toTry) {
@@ -1706,7 +1706,7 @@ async function callAI(messages, opts = {}) {
 
 async function callAIGenerate(messages, opts = {}) {
   const p = getActiveProvider();
-  const GENERATE_MODELS = {claude:'claude-sonnet-4-5',gemini:'gemini-3.1-pro-preview',groq:'llama-3.3-70b-versatile'};
+  const GENERATE_MODELS = {claude:'claude-sonnet-4-5',gemini:'gemini-3.0-flash',groq:'llama-3.3-70b-versatile'};
   return callAI(messages, {...opts, model:GENERATE_MODELS[p]});
 }
 
