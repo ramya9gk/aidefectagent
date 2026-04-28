@@ -204,13 +204,32 @@ export default async function handler(req, res) {
       }
 
       case 'search_duplicates': {
-        const { jql } = payload;
-        const r = await fetch(`${base}/rest/api/3/issue/search?jql=${encodeURIComponent(jql)}&maxResults=5&fields=key,summary,status`, {
+        const { jql, maxResults=8 } = payload;
+        const r = await fetch(`${base}/rest/api/3/issue/search?jql=${encodeURIComponent(jql)}&maxResults=${maxResults}&fields=key,summary,status`, {
           headers: { Authorization: auth, Accept: 'application/json' },
         });
         if (!r.ok) return res.json({ issues: [] });
         const d = await r.json();
         return res.json({ issues: (d.issues || []).map(i => ({ id: i.key, title: i.fields.summary, status: i.fields.status.name, url: `${base}/browse/${i.key}` })) });
+      }
+
+      case 'link_duplicate': {
+        // Create a "Duplicates" issue link from new ticket → existing ticket
+        const { inwardKey, outwardKey } = payload;
+        const r = await fetch(`${base}/rest/api/3/issueLink`, {
+          method: 'POST',
+          headers: { Authorization: auth, 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            type: { name: 'Duplicate' },
+            inwardIssue:  { key: String(inwardKey)  },   // new ticket "is duplicated by"
+            outwardIssue: { key: String(outwardKey) },    // existing ticket "duplicates"
+          }),
+        });
+        if (!r.ok) {
+          const e = await r.text();
+          return res.json({ ok: false, error: `Jira link ${r.status}: ${e.slice(0,150)}` });
+        }
+        return res.json({ ok: true });
       }
 
       case 'get_sprint': {

@@ -629,14 +629,26 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'Inter',s
 .tc-item:last-child{margin-bottom:0}
 .tc-scenario{padding:7px 10px;background:var(--s3);font-size:11px;font-weight:500;color:var(--accent2);border-bottom:1px solid var(--b2)}
 .tc-body{padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t2);line-height:1.8;white-space:pre-wrap}
-.dup-panel{margin:0 16px 12px;border:1px solid var(--amber-bd);border-radius:10px;overflow:hidden;background:var(--amber-bg)}
-.dup-hdr{padding:7px 12px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--amber);border-bottom:1px solid var(--amber-bd)}
-.dup-item{display:flex;align-items:center;gap:9px;padding:7px 12px;border-bottom:1px solid var(--amber-bd);font-size:12px}
-.dup-item:last-child{border-bottom:none}
-.dup-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--amber);flex-shrink:0}
-.dup-ttl{flex:1;color:var(--t2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.dup-st{font-size:10px;padding:2px 6px;border-radius:20px;background:var(--s3);color:var(--t2);border:1px solid var(--b2);flex-shrink:0}
-.dup-lnk{color:var(--accent2);text-decoration:none;font-size:11px;flex-shrink:0}
+.dup-panel{margin:0 16px 12px;border:1.5px solid var(--amber-bd);border-radius:12px;overflow:hidden;background:var(--amber-bg)}
+.dup-panel.dup-high{border-color:var(--red-bd);background:var(--red-bg)}
+.dup-panel.dup-clear{border-color:var(--green-bd);background:var(--green-bg)}
+.dup-hdr{padding:9px 13px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--amber);border-bottom:1px solid var(--amber-bd)}
+.dup-panel.dup-high .dup-hdr{color:var(--red);border-color:var(--red-bd)}
+.dup-item{display:flex;align-items:flex-start;gap:9px;padding:9px 13px;border-bottom:1px solid var(--b1);font-size:12px;transition:background .15s}
+.dup-item:hover{background:var(--s2)}
+.dup-item:last-of-type{border-bottom:none}
+.dup-item-main{flex:1;min-width:0}
+.dup-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);flex-shrink:0;margin-top:1px}
+.dup-ttl{color:var(--t1);font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%}
+.dup-reason{font-size:11px;color:var(--t3);margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dup-meta{display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap}
+.dup-st{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--s3);color:var(--t2);border:1px solid var(--b2);flex-shrink:0}
+.dup-score{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700;flex-shrink:0}
+.dup-lnk{color:var(--accent2);text-decoration:none;font-size:11px;flex-shrink:0;padding:2px 4px;border-radius:4px;transition:background .12s}
+.dup-lnk:hover{background:var(--accent-bg)}
+.dup-mark-btn{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--red-bd);color:var(--red);background:var(--red-bg);cursor:pointer;flex-shrink:0;transition:var(--transition)}
+.dup-mark-btn:hover{background:var(--red);color:#fff}
+.dup-actions{padding:8px 13px;display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--b1)}
 
 /* Edit panel */
 .edit-panel{padding:14px 16px;background:var(--s2);border-top:1px solid var(--b2)}
@@ -667,6 +679,24 @@ select.ef-in{cursor:pointer}
 .abtn.success{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
 .abtn.warn{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)}
 .abtn.info{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue)}
+.abtn.danger{background:var(--red-bg);border-color:var(--red-bd);color:var(--red);font-weight:600}
+.abtn.danger:hover{background:var(--red);color:#fff}
+
+/* ── AI Provider selector ── */
+.provider-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 10px;border-radius:8px;font-size:11px;font-weight:500;
+  border:1.5px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;
+  font-family:'Inter',sans-serif;
+  transition:transform .12s ease, background .15s, border-color .15s, color .15s, box-shadow .15s;
+}
+.provider-btn:hover{transform:translateY(-1px);border-color:var(--b3);color:var(--t1)}
+.provider-btn.active{
+  background:linear-gradient(135deg,#4338ca,#8b5cf6 50%,#ec4899);
+  border-color:transparent;color:#fff;
+  box-shadow:0 3px 10px rgba(139,92,246,.35);
+}
+.provider-btn.active:hover{box-shadow:0 5px 14px rgba(139,92,246,.5);transform:translateY(-1.5px)}
 .abtn.purple{background:var(--purple-bg);border-color:rgba(168,85,247,.3);color:var(--purple)}
 .abtn:disabled{opacity:.4;cursor:not-allowed}
 .json-pane{font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.7;color:var(--t2);padding:12px 16px;background:var(--bg);max-height:280px;overflow-y:auto;border-top:1px solid var(--b1)}
@@ -1235,20 +1265,44 @@ button:focus-visible,.abtn:focus-visible,.hbtn:focus-visible,.send-btn:focus-vis
       </div>
     </div>
 
-    <!-- Anthropic API -->
+    <!-- AI Provider — multi-provider selector -->
     <div class="sb-sec">
       <div class="sec-hdr" role="button" tabindex="0" onclick="tSec('ant')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tSec('ant')}">
-        <span class="sec-lbl">Anthropic API</span>
+        <span class="sec-lbl">AI Provider</span>
         <span class="sec-arr open" id="arr-ant">▶</span>
       </div>
       <div class="sec-body open" id="bod-ant">
-        <div style="padding:2px 0 8px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:7px">
-          <span class="cfg-dot ok" id="dot-ant"></span>
-          Secured via Vercel environment variable
+
+        <!-- Provider selector -->
+        <div class="cfg-row" style="margin-bottom:10px">
+          <div class="cfg-lbl" style="font-weight:600">Active Provider</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap" id="provider-btn-group">
+            <button class="provider-btn active" id="prov-claude"   onclick="setProvider('claude')"  title="Anthropic Claude — Haiku (fast) / Sonnet (generation)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+              Claude
+            </button>
+            <button class="provider-btn" id="prov-gemini" onclick="setProvider('gemini')" title="Google Gemini 2.0 Flash">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              Gemini 2.0 Flash
+            </button>
+            <button class="provider-btn" id="prov-groq"   onclick="setProvider('groq')"   title="Groq — Llama 3.3 70B (ultra-fast)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Groq
+            </button>
+          </div>
         </div>
-        <div style="font-size:11px;color:var(--t3);line-height:1.6;margin-bottom:10px">
-          API key stored server-side in Vercel. Go to Vercel → Settings → Environment Variables → add <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">ANTHROPIC_API_KEY</code>
+
+        <!-- Status + env var guidance -->
+        <div id="provider-status-row" style="font-size:11px;color:var(--t3);line-height:1.7;margin-bottom:10px;padding:8px 10px;background:var(--s2);border-radius:8px;border:1px solid var(--b1)">
+          <div id="prov-env-hint">
+            <span id="prov-dot" class="cfg-dot ok"></span>
+            <span id="prov-env-text">Set <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:10px">ANTHROPIC_API_KEY</code> in Vercel → Settings → Environment Variables</span>
+          </div>
+          <div id="prov-model-hint" style="margin-top:4px;color:var(--accent2)">
+            Using: <span id="prov-model-display">claude-haiku-4-5 / claude-sonnet-4-5</span>
+          </div>
         </div>
+
         <button class="btn-sv" onclick="validateCfg('ant')">✓ Test connection</button>
       </div>
     </div>
@@ -1298,15 +1352,23 @@ button:focus-visible,.abtn:focus-visible,.hbtn:focus-visible,.send-btn:focus-vis
             <span class="cfg-dot ok" id="dot-ado"></span>Credentials secured via Vercel env vars
           </div>
           <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.6">
-            Required: <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">ADO_PAT</code> — Org and Project selected below
+            Required: <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">ADO_PAT</code> — Organisation and Project loaded automatically
           </div>
           <div class="cfg-row">
-            <div class="cfg-lbl">Organisation</div>
-            <input class="cfg-in" id="ado-org-input" placeholder="e.g. RSATwithAzure" oninput="CFG.adoOrg=this.value.trim();if(this.value.trim().length>3)loadProjects('ado')"/>
+            <div class="cfg-lbl">Organisation <span style="color:var(--accent2);font-size:10px" id="ado-org-status">click Load to fetch</span></div>
+            <div style="display:flex;gap:6px">
+              <select class="cfg-in" id="ado-org-select" onchange="onAdoOrgChange(this.value)" style="cursor:pointer;flex:1">
+                <option value="">— click Load Orgs —</option>
+              </select>
+              <button class="hbtn" style="flex-shrink:0;padding:6px 10px;font-size:11px" onclick="loadAdoOrgs()" title="Fetch organisations from ADO">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                Load
+              </button>
+            </div>
           </div>
           <div class="cfg-row">
-            <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:10px" id="ado-proj-status">enter org first</span></div>
-            <select class="cfg-in" id="ado-proj-select" onchange="CFG.adoProj=this.value;syncProjectMirror()" style="cursor:pointer">
+            <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:10px" id="ado-proj-status">select org first</span></div>
+            <select class="cfg-in" id="ado-proj-select" onchange="CFG.adoProj=this.value;syncProjectMirror();updateDots()" style="cursor:pointer">
               <option value="">— select project —</option>
             </select>
           </div>
@@ -1315,9 +1377,9 @@ button:focus-visible,.abtn:focus-visible,.hbtn:focus-visible,.send-btn:focus-vis
             <input class="cfg-in" id="ado-assignee-input" placeholder="Display name or email" oninput="CFG.adoAssignee=this.value.trim()"/>
           </div>
           <div style="display:flex;gap:7px;margin-top:10px">
-            <button class="btn-sv" style="flex:1" onclick="validateCfg('ado')">✓ Test</button>
-            <button class="btn-sv" style="flex:0 0 auto;width:74px" onclick="loadProjects('ado')">↻ Reload</button>
+            <button class="btn-sv" style="flex:1" onclick="validateCfg('ado')">✓ Test Connection</button>
           </div>
+          <input type="hidden" id="ado-org-input"/>
           <input type="hidden" id="ci-ado-org"/><input type="hidden" id="ci-ado-project"/>
           <input type="hidden" id="ci-ado-pat"/><input type="hidden" id="ci-ado-team"/>
         </div>
@@ -1427,7 +1489,102 @@ const CFG = {
   adoOrg:'', adoProj:'', adoPat:'', adoTeam:'',
   ghOwner:'', ghRepo:'', ghToken:'',
   slack:'', teams:'',
+  // ── AI Provider — single source of truth ──────────────────
+  // Values: 'claude' | 'gemini' | 'groq'
+  // All AI calls MUST go through callAI() which reads this value.
+  // Never hardcode a provider anywhere else in this file.
+  aiProvider: 'claude',
 };
+
+// ══ AI PROVIDER MANAGER ═══════════════════════════════════════
+// Single source of truth for all AI calls in Bug Forge AI.
+// Replaces all direct /api/claude hardcoded calls.
+// -- identical interface to what /api/claude accepted --
+// opts: { max_tokens, system, tools, model }
+
+function getActiveProvider() {
+  return CFG.aiProvider || 'claude';
+}
+
+async function callAI(messages, opts = {}) {
+  const provider = getActiveProvider();
+  console.log('[Bug Forge AI] Active provider:', provider, '| callAI invoked');
+
+  // Provider → default model mapping
+  const MODELS = {
+    claude: opts.model || 'claude-haiku-4-5',
+    gemini: opts.model || 'gemini-2.0-flash',
+    groq:   opts.model || 'llama-3.3-70b-versatile',
+  };
+
+  const payload = {
+    provider,
+    model:      MODELS[provider],
+    max_tokens: opts.max_tokens || 1000,
+    messages,
+  };
+  if (opts.system) payload.system = opts.system;
+  if (opts.tools)  payload.tools  = opts.tools;
+
+  const r = await fetch('/api/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const d = await r.json();
+
+  // ── Unified error handling ─────────────────────────────────
+  if (!r.ok) {
+    const providerLabel = { claude: 'Claude', gemini: 'Gemini', groq: 'Groq' }[provider] || provider;
+    if (r.status === 429) throw new Error(`${providerLabel} rate limit reached. Try again in a moment.`);
+    if (r.status === 404) throw new Error(`${providerLabel} model not found. Check provider config.`);
+    throw new Error(d.error || `${providerLabel} API error ${r.status}`);
+  }
+
+  // Normalise: all providers return { content: [{ type:'text', text }] }
+  // (api/ai.js handles the normalisation server-side)
+  console.log('[Bug Forge AI] Bug Forge AI using provider:', provider, '| response ok');
+  return d;
+}
+
+// Convenience: callAI for the main ticket generation (uses Sonnet/larger model)
+async function callAIGenerate(messages, opts = {}) {
+  const provider = getActiveProvider();
+  const GENERATE_MODELS = {
+    claude: 'claude-sonnet-4-5',
+    gemini: 'gemini-2.0-flash',
+    groq:   'llama-3.3-70b-versatile',
+  };
+  return callAI(messages, { ...opts, model: GENERATE_MODELS[provider] });
+}
+
+// ── Provider selector UI ─────────────────────────────────────
+function setProvider(p) {
+  CFG.aiProvider = p;
+  // Update active button states
+  ['claude','gemini','groq'].forEach(id => {
+    const btn = document.getElementById(`prov-${id}`);
+    if (btn) btn.classList.toggle('active', id === p);
+  });
+  // Update env hint
+  const ENV_VARS = {
+    claude: { key:'ANTHROPIC_API_KEY', models:'claude-haiku-4-5 · claude-sonnet-4-5' },
+    gemini: { key:'GEMINI_API_KEY',    models:'gemini-2.0-flash' },
+    groq:   { key:'GROQ_API_KEY',      models:'llama-3.3-70b-versatile' },
+  };
+  const info = ENV_VARS[p] || ENV_VARS.claude;
+  const envText = document.getElementById('prov-env-text');
+  const modelDisplay = document.getElementById('prov-model-display');
+  if (envText) envText.innerHTML = `Set <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:10px">${info.key}</code> in Vercel → Settings → Environment Variables`;
+  if (modelDisplay) modelDisplay.textContent = info.models;
+  // Update topbar brand subtitle to show active provider
+  const sub = document.querySelector('.brand-sub');
+  if (sub) sub.textContent = `v2026.04.18 · AI: ${p.charAt(0).toUpperCase()+p.slice(1)} · Jira · ADO · GitHub`;
+  console.log('[Bug Forge AI] Active provider changed to:', p);
+  toast(`AI provider: ${p.charAt(0).toUpperCase()+p.slice(1)} ✓`, 'success');
+}
+
 
 // ══ PROXY FETCH ═══════════════════════════════════════════════
 // Jira / ADO / GitHub block direct browser requests (CORS).
@@ -1483,12 +1640,10 @@ function applyTemplate(name) {
 
 // ══ FEATURE 1: SEVERITY AUTO-SCORER ════════════════════════
 async function scoreSeverity(description) {
-  // Anthropic key server-side
-  const r = await fetch('/api/claude', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ model:'claude-haiku-4-5', max_tokens:200, messages:[{role:'user',content:`Score this defect severity 0-100 and give one-line reasoning. Format: {"score":85,"level":"Critical","reasoning":"Blocks all users from login — production impact"}\n\nDefect: ${description}`}] })
-  });
-  const d = await r.json();
+  const d = await callAI(
+    [{role:'user',content:`Score this defect severity 0-100 and give one-line reasoning. Format: {"score":85,"level":"Critical","reasoning":"Blocks all users from login — production impact"}\n\nDefect: ${description}`}],
+    {max_tokens:200}
+  );
   const txt = d.content?.[0]?.text||'';
   try { return JSON.parse(txt.match(/\{[^}]+\}/)?.[0]||'{}'); } catch { return null; }
 }
@@ -1511,11 +1666,10 @@ async function scoreQuality(ticket) {
   if(staleBadge) staleBadge.remove();
   const btn = document.getElementById('btn-quality');
   if(btn){ btn.textContent='Scoring...'; btn.disabled=true; }
-  const r = await fetch('/api/claude', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ model:'claude-haiku-4-5', max_tokens:300, messages:[{role:'user',content:`Rate this bug ticket quality 1-10. Return JSON only: {"score":8,"grade":"Good","issues":["Missing browser version","Steps could be more specific"],"strengths":["Clear expected/actual","Good acceptance criteria"]}\n\nTicket: ${JSON.stringify(ticket)}`}] })
-  });
-  const d = await r.json();
+  const d = await callAI(
+    [{role:'user',content:`Rate this bug ticket quality 1-10. Return JSON only: {"score":8,"grade":"Good","issues":["Missing browser version","Steps could be more specific"],"strengths":["Clear expected/actual","Good acceptance criteria"]}\n\nTicket: ${JSON.stringify(ticket)}`}],
+    {max_tokens:300}
+  );
   try {
     const txt = d.content?.[0]?.text||'';
     const q = JSON.parse(txt.match(/\{[\s\S]+\}/)?.[0]||'{}');
@@ -1543,33 +1697,31 @@ async function suggestRootCause() {
   const area=document.getElementById('rc-area'); if(!area) return;
   area.innerHTML=`<div class="feat-panel"><div class="feat-panel-hdr">🔍 Root Cause Analysis <span style="font-size:10px;color:var(--t2);margin-left:auto">AI-powered</span></div><div class="feat-panel-body" style="color:var(--t2);font-size:12px">Analyzing...</div></div>`;
   try {
-    const r = await fetch('/api/claude', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ model:'claude-haiku-4-5', max_tokens:400, messages:[{role:'user',content:`Suggest root causes for this bug. Return JSON: {"causes":[{"cause":"Session token not refreshed","area":"auth/session.ts","likelihood":"High"},{"cause":"API rate limit exceeded","area":"api/middleware.ts","likelihood":"Medium"}]}\n\nBug: ${JSON.stringify(curTicket)}`}] })
-    });
-    const d = await r.json();
+    const d = await callAI(
+      [{role:'user',content:`Suggest root causes for this bug. Return JSON: {"causes":[{"cause":"Session token not refreshed","area":"auth/session.ts","likelihood":"High"},{"cause":"API rate limit exceeded","area":"api/middleware.ts","likelihood":"Medium"}]}\n\nBug: ${JSON.stringify(curTicket)}`}],
+      {max_tokens:400}
+    );
     const rc = JSON.parse((d.content?.[0]?.text||'').match(/\{[\s\S]+\}/)?.[0]||'{}');
     area.innerHTML=`<div class="feat-panel"><div class="feat-panel-hdr">🔍 Root Cause Analysis</div><div class="feat-panel-body"><div class="rc-list">${(rc.causes||[]).map((c,i)=>`<div class="rc-item"><span class="rc-num">${String(i+1).padStart(2,'0')}</span><div class="rc-content"><div class="rc-cause">${c.cause}</div><div class="rc-area">📁 ${c.area} · Likelihood: <strong style="color:${c.likelihood==='High'?'var(--red)':c.likelihood==='Medium'?'var(--amber)':'var(--green)'}">${c.likelihood}</strong></div></div></div>`).join('')}</div></div></div>`;
-  } catch(e) { area.innerHTML=''; toast('Root cause failed','error'); }
+  } catch(e) { area.innerHTML=''; toast('Root cause failed: '+e.message,'error'); }
   if(btn){btn.disabled=false;btn.innerHTML='🔍 Root Cause';}
 }
 
 // ══ FEATURE 2: TEST CASE GENERATOR ════════════════════════
 async function generateTestCases() {
-  if(!curTicket) return; // Anthropic key server-side
+  if(!curTicket) return;
   const btn=document.getElementById('btn-tc'); if(btn){btn.disabled=true;btn.textContent='Generating...';}
   const area=document.getElementById('tc-area'); if(!area) return;
   area.innerHTML=`<div class="feat-panel"><div class="feat-panel-hdr">🧪 Test Cases <span style="color:var(--t2);font-size:10px;margin-left:auto">Gherkin/BDD</span></div><div class="feat-panel-body" style="font-size:12px;color:var(--t2)">Generating...</div></div>`;
   try {
-    const r = await fetch('/api/claude', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ model:'claude-haiku-4-5', max_tokens:600, messages:[{role:'user',content:`Generate 4 Gherkin test cases for this bug (positive, negative, edge case, regression). JSON: {"cases":[{"type":"Positive","scenario":"Verify login succeeds with valid credentials","gherkin":"Given the user is on login page\\nWhen they enter valid email and password\\nAnd click Sign In\\nThen they should be redirected to dashboard"}]}\n\nBug: ${JSON.stringify({summary:curTicket.summary||curTicket.title, steps:curTicket.steps_to_reproduce||curTicket.repro_steps, expected:curTicket.expected_result, actual:curTicket.actual_result})}`}] })
-    });
-    const d = await r.json();
+    const d = await callAI(
+      [{role:'user',content:`Generate 4 Gherkin test cases for this bug (positive, negative, edge case, regression). JSON: {"cases":[{"type":"Positive","scenario":"Verify login succeeds with valid credentials","gherkin":"Given the user is on login page\\nWhen they enter valid email and password\\nAnd click Sign In\\nThen they should be redirected to dashboard"}]}\n\nBug: ${JSON.stringify({summary:curTicket.summary||curTicket.title, steps:curTicket.steps_to_reproduce||curTicket.repro_steps, expected:curTicket.expected_result, actual:curTicket.actual_result})}`}],
+      {max_tokens:600}
+    );
     const tc = JSON.parse((d.content?.[0]?.text||'').match(/\{[\s\S]+\}/)?.[0]||'{}');
     const typeColors={'Positive':'var(--green)','Negative':'var(--red)','Edge Case':'var(--amber)','Regression':'var(--purple)'};
     area.innerHTML=`<div class="feat-panel"><div class="feat-panel-hdr">🧪 Test Cases <button onclick="copyTestCases()" style="margin-left:auto;background:none;border:1px solid var(--b2);border-radius:5px;padding:2px 7px;font-size:10px;color:var(--t2);cursor:pointer">Copy All</button></div><div class="feat-panel-body" id="tc-content">${(tc.cases||[]).map(c=>`<div class="tc-item"><div class="tc-scenario" style="color:${typeColors[c.type]||'var(--accent2)'}">📋 ${c.type} — ${c.scenario}</div><div class="tc-body">${c.gherkin}</div></div>`).join('')}</div></div>`;
-  } catch(e) { area.innerHTML=''; toast('Test case generation failed','error'); }
+  } catch(e) { area.innerHTML=''; toast('Test case generation failed: '+e.message,'error'); }
   if(btn){btn.disabled=false;btn.innerHTML='🧪 Test Cases';}
 }
 
@@ -2018,95 +2170,182 @@ function saveEdits(){
 // ══ DUPLICATE CHECK ═══════════════════════════════════════
 async function checkDuplicates(opts={}){
   const {auto=false} = opts;
-  const area=document.getElementById('dup-area'); if(!area||!curTicket)return;
-  const platform=curTicket._platform,btn=document.getElementById('btn-dup');
-  if(btn){btn.disabled=true;btn.textContent='Checking...';}
-  area.innerHTML=`<div style="padding:10px 16px;font-size:12px;color:var(--t2);display:flex;align-items:center;gap:8px"><span style="width:12px;height:12px;border:2px solid var(--amber);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span>Searching for duplicates...</div>`;
+  const area = document.getElementById('dup-area');
+  if(!area || !curTicket) return;
+  const platform = curTicket._platform;
+  const btn = document.getElementById('btn-dup');
+  if(btn){ btn.disabled=true; btn.textContent='Checking…'; }
+
+  area.innerHTML=`<div style="padding:10px 16px;font-size:12px;color:var(--t2);display:flex;align-items:center;gap:8px">
+    <span style="width:12px;height:12px;border:2px solid var(--amber);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span>
+    Scanning for duplicate bugs across ${platform==='jira'?'Jira':platform==='azure_devops'?'Azure DevOps':'GitHub'}…
+  </div>`;
+
   try{
-    // ══ BETTER KEYWORD EXTRACTION ══
-    // Combine summary + description + component names, strip stopwords,
-    // keep substantial nouns/verbs. Up to 6 keywords for a tight but
-    // meaningful search.
-    const STOPWORDS=new Set(('a an the and or but for nor so yet in on at to from of with by as is was were be been being have has had do does did will would could should shall may might must can not no if then than this that these those it its their our your my me you i he she they them us we when while where which who whom whose what why how all any each every some new old more most less least very really just only over under into onto about upon also still yet already'+
-      ' bug issue error crash fail fails failed failing fails fixing').split(' '));
-    const src=[(curTicket.summary||curTicket.title||''),(curTicket.description||curTicket.body||'').slice(0,300),(curTicket.components||[]).join(' ')].join(' ');
-    const words=src.toLowerCase().replace(/[^\w\s-]/g,' ').split(/\s+/).filter(w=>w.length>=4 && !STOPWORDS.has(w) && !/^\d+$/.test(w));
-    // Dedupe while keeping order, take top 6
-    const seen=new Set(); const kws=[]; for(const w of words){ if(!seen.has(w)){seen.add(w); kws.push(w); if(kws.length>=6) break;} }
-    const kw=kws.join(' ');
+    // ── 1. EXTRACT SMART KEYWORDS ──────────────────────────────
+    const STOP = new Set(('a an the and or but for nor so yet in on at to from of with by as is was were be been being have has had do does did will would could should shall may might must can not no if then than this that these those it its their our your my me you i he she they them us we when while where which who whom whose what why how all any each every some new old more most less least very really just only over under into onto about upon also still yet already bug issue error crash fail fails failed fixing unable cannot').split(' '));
+    const titleStr = (curTicket.summary||curTicket.title||'');
+    const descStr  = (curTicket.description||curTicket.body||'').slice(0,400);
+    const stepsStr = (curTicket.repro_steps||curTicket.steps_to_reproduce||[]).slice(0,3).join(' ');
+    const src = [titleStr, descStr, stepsStr, (curTicket.components||[]).join(' ')].join(' ');
+    const words = src.toLowerCase().replace(/[^\w\s]/g,' ').split(/\s+/)
+      .filter(w => w.length>=4 && !STOP.has(w) && !/^\d+$/.test(w));
+    const seen=new Set(); const kws=[];
+    for(const w of words){ if(!seen.has(w)){ seen.add(w); kws.push(w); if(kws.length>=8) break; } }
+    const kw = kws.join(' ');
     if(!kw){ area.innerHTML=''; if(btn){btn.disabled=false;btn.innerHTML='⚠ Dupes';} return; }
 
-    // ══ FETCH CANDIDATES FROM PLATFORM ══
-    let dupes=[];
-    if(platform==='jira'&&CFG.jiraProj){
-      // JQL text~ uses Lucene OR between terms by default — good for broad recall
-      const jql=`project="${CFG.jiraProj}" AND issuetype=Bug AND text~"${kw.replace(/"/g,'\\"')}" AND status!=Done ORDER BY created DESC`;
-      const d=await api('jira',{action:'search_duplicates',config:jiraCfg(),payload:{jql}});
-      dupes=d.issues||[];
-    }else if(platform==='azure_devops'&&CFG.adoOrg){
-      // WIQL: use OR of Title CONTAINS clauses for each top keyword
-      const titleClauses=kws.slice(0,4).map(k=>`[System.Title] CONTAINS '${k.replace(/'/g,"''")}'`).join(' OR ');
-      const wiql=`SELECT [System.Id],[System.Title],[System.State] FROM WorkItems WHERE [System.WorkItemType]='Bug' AND (${titleClauses}) AND [System.State]<>'Closed' ORDER BY [System.CreatedDate] DESC`;
-      const d=await api('ado',{action:'search_duplicates',config:adoCfg(),payload:{wiql}});
-      dupes=d.items||[];
-    }else if(platform==='github'&&CFG.ghOwner){
-      const d=await api('github',{action:'search_duplicates',config:ghCfg(),payload:{query:kw}});
-      dupes=d.items||[];
+    // ── 2. SEARCH EACH PLATFORM ────────────────────────────────
+    let dupes = [];
+
+    if(platform==='jira' && CFG.jiraProj){
+      // Search by summary (precise) AND text~ (broad) — deduplicated
+      const jql = `project="${CFG.jiraProj}" AND issuetype=Bug AND status!=Done AND (summary~"${titleStr.replace(/"/g,'\\"').slice(0,60)}" OR text~"${kw.replace(/"/g,'\\"')}") ORDER BY created DESC`;
+      const d = await api('jira',{action:'search_duplicates',config:jiraCfg(),payload:{jql, maxResults:8}});
+      dupes = d.issues||[];
+
+    } else if(platform==='azure_devops' && CFG.adoOrg){
+      // Search title AND description fields, include all active states
+      const titleClauses = kws.slice(0,4).map(k=>`[System.Title] CONTAINS '${k.replace(/'/g,"''")}'`).join(' OR ');
+      const descClauses  = kws.slice(0,3).map(k=>`[System.Description] CONTAINS '${k.replace(/'/g,"''")}'`).join(' OR ');
+      const wiql = `SELECT [System.Id],[System.Title],[System.State],[System.Description] FROM WorkItems WHERE [System.WorkItemType]='Bug' AND [System.State] NOT IN ('Closed','Resolved','Done') AND ((${titleClauses}) OR (${descClauses})) ORDER BY [System.CreatedDate] DESC`;
+      const d = await api('ado',{action:'search_duplicates',config:adoCfg(),payload:{wiql, maxResults:8}});
+      dupes = d.items||[];
+
+    } else if(platform==='github' && CFG.ghOwner){
+      // Search open AND closed issues (closed might be duplicates already marked)
+      const d = await api('github',{action:'search_duplicates',config:ghCfg(),payload:{query:kw, maxResults:8}});
+      dupes = d.items||[];
     }
 
-    // ══ AI SIMILARITY SCORING ══
-    // Ask Claude to rank candidates by semantic similarity — not just keyword overlap.
-    // Skip if we have zero candidates or only one (no ranking needed).
-    if(dupes.length>=2){
+    // ── 3. AI SIMILARITY SCORING (all candidates, even single) ─
+    if(dupes.length >= 1){
       try{
-        const candidates=dupes.slice(0,8).map((d,i)=>`[${i}] ${d.id}: ${d.title}`).join('\n');
-        const newTicketTxt=(curTicket.summary||curTicket.title||'')+'\n'+(curTicket.description||curTicket.body||'').slice(0,400);
-        const r=await fetch('/api/claude',{
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            model:'claude-haiku-4-5', max_tokens:400,
-            messages:[{role:'user',content:`Rate how likely each candidate is a duplicate of this new bug. Return JSON array only: [{"i":0,"score":85,"reason":"same login crash"},...]. Score 0-100. 80+ = very likely duplicate; 60-79 = possibly related; <60 = unrelated.\n\nNEW BUG:\n${newTicketTxt}\n\nCANDIDATES:\n${candidates}`}]
-          })
-        });
-        const d=await r.json();
-        const txt=d.content?.[0]?.text||'';
-        const scores=JSON.parse(txt.match(/\[[\s\S]*\]/)?.[0]||'[]');
-        // Attach score+reason to each candidate
+        const newBug = `Title: ${titleStr}\nDescription: ${descStr.slice(0,300)}\nSteps: ${stepsStr.slice(0,200)}`;
+        const candidates = dupes.slice(0,8).map((d,i)=>`[${i}] ${d.id}: ${d.title}`).join('\n');
+        const d = await callAI(
+          [{role:'user',content:
+            `You are a QA expert. Rate how likely each existing bug is a duplicate of the new bug.\n` +
+            `Return ONLY a JSON array: [{"i":0,"score":85,"reason":"Same crash on login page with OTP"},...]\n` +
+            `Score 0-100: 90+=definite duplicate, 70-89=very likely, 50-69=possibly related, <50=unrelated.\n\n` +
+            `NEW BUG:\n${newBug}\n\nEXISTING BUGS:\n${candidates}`
+          }],
+          {max_tokens:500}
+        );
+        const txt = d.content?.[0]?.text||'';
+        const scores = JSON.parse(txt.match(/\[[\s\S]*?\]/)?.[0]||'[]');
         scores.forEach(s=>{ if(dupes[s.i]){ dupes[s.i].score=s.score; dupes[s.i].reason=s.reason; } });
-        // Sort by score desc, filter out very-low-similarity
-        dupes=dupes.filter(d=>(d.score||0)>=40).sort((a,b)=>(b.score||0)-(a.score||0));
-      }catch(e){ console.warn('AI scoring failed, falling back to keyword ranking:', e); }
+        // Filter <35 (noise) and sort by score desc
+        dupes = dupes.filter(d=>(d.score??50)>=35).sort((a,b)=>(b.score??50)-(a.score??50));
+      }catch(e){ console.warn('AI scoring failed:', e); }
     }
 
-    // ══ RENDER ══
+    // ── 4. RENDER ──────────────────────────────────────────────
+    const highConf = dupes.filter(d=>(d.score??50)>=80);
+    const medConf  = dupes.filter(d=>(d.score??50)>=50 && (d.score??50)<80);
+
     if(!dupes.length){
-      // Auto mode: stay quiet if no dupes. Manual mode: show reassuring confirmation.
       if(auto){ area.innerHTML=''; }
-      else{ area.innerHTML=`<div class="dup-panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div style="padding:10px 12px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 16 16" fill="var(--green)"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>No duplicates found — safe to post!</div></div>`; }
-    }else{
-      // Group by confidence level
-      const highConf=dupes.filter(d=>(d.score||50)>=80);
-      const medConf=dupes.filter(d=>(d.score||50)>=60 && (d.score||50)<80);
-      const lowConf=dupes.filter(d=>(d.score||50)<60);
-      const headerColor = highConf.length ? 'var(--red)' : medConf.length ? 'var(--amber)' : 'var(--t2)';
-      const headerBg    = highConf.length ? 'var(--red-bg)' : 'var(--amber-bg)';
-      const headerBd    = highConf.length ? 'var(--red-bd)' : 'var(--amber-bd)';
-      const autoNote = auto ? '<span style="font-size:10px;opacity:.7;margin-left:auto">auto-check</span>' : '';
-      const renderRow=(d)=>{
-        const score=d.score||50;
-        const scoreColor = score>=80?'var(--red)': score>=60?'var(--amber)':'var(--t2)';
-        const scoreBg    = score>=80?'var(--red-bg)':score>=60?'var(--amber-bg)':'var(--s3)';
-        return `<div class="dup-item"><span class="dup-id">${esc(d.id)}</span><span class="dup-ttl" title="${esc((d.reason?d.reason+' — ':'')+d.title)}">${esc(d.title)}</span>${d.score!=null?`<span class="dup-st" style="background:${scoreBg};color:${scoreColor};border-color:${scoreColor}">${score}%</span>`:''}<span class="dup-st">${esc(d.status||'')}</span><a class="dup-lnk" href="${d.url}" target="_blank" rel="noopener">↗</a></div>`;
-      };
-      area.innerHTML=`<div class="dup-panel" style="border-color:${headerBd};background:${headerBg}"><div class="dup-hdr" style="color:${headerColor};border-color:${headerBd}"><svg width="12" height="12" viewBox="0 0 16 16" fill="${headerColor}"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 4a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0V5zm.75 7a1 1 0 110-2 1 1 0 010 2z"/></svg>${dupes.length} possible duplicate${dupes.length>1?'s':''} found${highConf.length?` — ${highConf.length} high-confidence`:''}${autoNote}</div>${dupes.slice(0,5).map(renderRow).join('')}<div style="padding:7px 12px;display:flex;gap:7px;flex-wrap:wrap"><button class="abtn warn" onclick="document.getElementById('dup-area').innerHTML='';postTicket()">Post anyway</button><button class="abtn info" onclick="commentOnDuplicate()">💬 Comment on dupe instead</button><button class="hbtn" onclick="document.getElementById('dup-area').innerHTML=''">Dismiss</button></div></div>`;
+      else{
+        area.innerHTML=`<div class="dup-panel dup-clear">
+          <div class="dup-hdr" style="color:var(--green);border-color:var(--green-bd)">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="var(--green)"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+            No duplicates found — safe to post!
+          </div>
+        </div>`;
+      }
+      if(btn){btn.disabled=false;btn.innerHTML='⚠ Dupes';}
+      return;
     }
+
+    const panelClass = highConf.length ? 'dup-high' : '';
+    const hdrColor   = highConf.length ? 'var(--red)'   : 'var(--amber)';
+    const hdrBd      = highConf.length ? 'var(--red-bd)' : 'var(--amber-bd)';
+    const countLabel = highConf.length
+      ? `🚨 ${highConf.length} definite duplicate${highConf.length>1?'s':''} found!`
+      : `⚠ ${dupes.length} possible duplicate${dupes.length>1?'s':''} found`;
+    const autoTag = auto ? `<span style="font-size:10px;opacity:.6;margin-left:auto;font-weight:400">auto-check</span>` : '';
+
+    const renderRow = (d,idx) => {
+      const score = d.score ?? 50;
+      const scoreBg    = score>=80 ? 'var(--red-bg)'   : score>=60 ? 'var(--amber-bg)' : 'var(--s3)';
+      const scoreColor = score>=80 ? 'var(--red)'       : score>=60 ? 'var(--amber)'    : 'var(--t3)';
+      const scoreLabel = score>=80 ? `${score}% match`  : score>=60 ? `${score}% similar` : `${score}% weak`;
+      return `<div class="dup-item">
+        <span class="dup-id">${esc(d.id)}</span>
+        <div class="dup-item-main">
+          <div class="dup-ttl" title="${esc(d.title)}">${esc(d.title)}</div>
+          ${d.reason ? `<div class="dup-reason">💬 ${esc(d.reason)}</div>` : ''}
+          <div class="dup-meta">
+            <span class="dup-score" style="background:${scoreBg};color:${scoreColor};border:1px solid ${scoreColor}">${scoreLabel}</span>
+            <span class="dup-st">${esc(d.status||'')}</span>
+            <a class="dup-lnk" href="${d.url}" target="_blank" rel="noopener">↗ Open</a>
+            <button class="dup-mark-btn" onclick="markAsDuplicate('${esc(d.id)}','${d.url}')">🔗 Mark as duplicate</button>
+          </div>
+        </div>
+      </div>`;
+    };
+
+    area.innerHTML=`<div class="dup-panel ${panelClass}">
+      <div class="dup-hdr" style="color:${hdrColor};border-color:${hdrBd}">
+        ${countLabel} ${autoTag}
+      </div>
+      ${dupes.slice(0,6).map(renderRow).join('')}
+      <div class="dup-actions">
+        ${highConf.length
+          ? `<button class="abtn danger" onclick="markAsDuplicate('${esc(highConf[0].id)}','${highConf[0].url}')">🔗 Mark as duplicate of ${esc(highConf[0].id)}</button>`
+          : `<button class="abtn warn" onclick="document.getElementById('dup-area').innerHTML='';postTicket()">Post anyway</button>`}
+        <button class="abtn info" onclick="commentOnDuplicate()">💬 Comment on existing</button>
+        ${!highConf.length ? '' : `<button class="abtn warn" onclick="document.getElementById('dup-area').innerHTML='';postTicket()">Post anyway</button>`}
+        <button class="hbtn" onclick="document.getElementById('dup-area').innerHTML=''">Dismiss</button>
+      </div>
+    </div>`;
+
   }catch(e){
-    // Silent-fail in auto mode, show error for manual click
-    if(auto){ area.innerHTML=''; console.warn('Dupe check failed:', e); }
-    else { area.innerHTML=`<div style="padding:9px 16px;font-size:12px;color:var(--red)">Search failed: ${e.message}</div>`; }
+    if(auto){ area.innerHTML=''; console.warn('Dupe check error:', e); }
+    else{ area.innerHTML=`<div style="padding:9px 16px;font-size:12px;color:var(--red)">Duplicate check failed: ${esc(e.message)}</div>`; }
   }
-  if(btn){btn.disabled=false;btn.innerHTML='⚠ Dupes';}
+  if(btn){ btn.disabled=false; btn.innerHTML='⚠ Dupes'; }
 }
+
+// ── Mark current ticket as duplicate of an existing one ──────
+async function markAsDuplicate(existingId, existingUrl){
+  if(!curTicket || !curTicket._postedId){
+    // Not yet posted — store the dupe reference and block posting
+    toast(`Duplicate of ${existingId} noted. Post cancelled.`, 'warn');
+    document.getElementById('dup-area').innerHTML=
+      `<div class="dup-panel dup-high"><div class="dup-hdr" style="color:var(--red);border-color:var(--red-bd)">
+        🔗 Duplicate of <a href="${existingUrl}" target="_blank" style="color:var(--accent2)">${esc(existingId)}</a> — ticket not posted.
+        <button class="hbtn" style="margin-left:auto" onclick="document.getElementById('dup-area').innerHTML=''">Dismiss</button>
+      </div></div>`;
+    return;
+  }
+  const platform = curTicket._platform;
+  const newId    = curTicket._rawId || curTicket._postedId?.replace('#','');
+  const btn      = event?.currentTarget;
+  if(btn){ btn.disabled=true; btn.textContent='Linking…'; }
+  try{
+    if(platform==='jira'){
+      // Jira: create "Duplicates" issue link
+      await api('jira',{ action:'link_duplicate', config:jiraCfg(), payload:{ inwardKey: newId, outwardKey: existingId.replace('#','') } });
+    } else if(platform==='azure_devops'){
+      // ADO: add a "Duplicate" relation between work items
+      await api('ado',{ action:'link_duplicate', config:adoCfg(), payload:{ workItemId: newId, duplicateOfId: existingId.replace('#','') } });
+    } else if(platform==='github'){
+      // GitHub: add "duplicate" label + comment referencing original
+      await api('github',{ action:'link_duplicate', config:ghCfg(), payload:{ issueNumber: newId, duplicateOfNumber: existingId.replace('#',''), duplicateOfUrl: existingUrl } });
+    }
+    toast(`Marked as duplicate of ${existingId} ✓`, 'success');
+    document.getElementById('dup-area').innerHTML=
+      `<div class="dup-panel dup-clear"><div class="dup-hdr" style="color:var(--green);border-color:var(--green-bd)">
+        ✓ Marked as duplicate of <a href="${existingUrl}" target="_blank" style="color:var(--accent2)">${esc(existingId)}</a>
+      </div></div>`;
+  }catch(e){
+    toast('Link failed: '+e.message, 'error');
+    if(btn){ btn.disabled=false; btn.textContent='🔗 Mark as duplicate'; }
+  }
+}
+
 
 // Quick shortcut: click a dupe in the panel and open the Comment-on-existing form
 function commentOnDuplicate(){
@@ -2212,7 +2451,14 @@ async function api(endpoint, body) {
   return d;
 }
 function jiraCfg() { return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'', orgCode: ORG_CODE||'' }; }
-function adoCfg()  { const orgEl=document.getElementById('ado-org-input'); if(orgEl&&orgEl.value.trim()) CFG.adoOrg=orgEl.value.trim(); return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam }; }
+function adoCfg()  {
+  // Read org from the new select dropdown (falls back to hidden legacy input)
+  const orgSel = document.getElementById('ado-org-select');
+  const orgInput = document.getElementById('ado-org-input');
+  const org = orgSel?.value?.trim() || orgInput?.value?.trim() || CFG.adoOrg || '';
+  if (org) CFG.adoOrg = org;
+  return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam };
+}
 function ghCfg()   { return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken }; }
 
 // Jira POST
@@ -2504,8 +2750,7 @@ async function runBulk(){
     bulkItems[i].status='processing';renderBulkRows();
     if(pb)pb.style.width=`${(i/bulkItems.length)*100}%`;
     try{
-      const r=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:1000,system:SYSTEM,tools:TOOLS,messages:[{role:'user',content:bulkItems[i].text}]})});
-      const d=await r.json();
+      const d=await callAI([{role:'user',content:bulkItems[i].text}],{max_tokens:1000,system:SYSTEM,tools:TOOLS});
       const tb=d.content.find(b=>b.type==='tool_use');
       if(tb){
         const platform=T2P(tb.name),ticket={...tb.input,_platform:platform};
@@ -2549,9 +2794,7 @@ async function sendDefect(){
   addThink(STEPS);
   try{
     advStep(0);
-    const r1=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:SYSTEM,tools:TOOLS,messages:chatHist})});
-    if(!r1.ok){const e=await r1.json();throw new Error(e.error?.message||`API ${r1.status}`);}
-    const d1=await r1.json();
+    const d1=await callAIGenerate(chatHist,{max_tokens:1500,system:SYSTEM,tools:TOOLS});
     const tb=d1.content.find(b=>b.type==='tool_use');
     if(!tb){rmThink();const t=d1.content.find(b=>b.type==='text')?.text||'Please provide more details.';chatHist.push({role:'assistant',content:t});addMsg('ai',t);return;}
     advStep(1);
@@ -2569,8 +2812,7 @@ async function sendDefect(){
     }
     const fakeId=platform==='jira'?`${curTicket.project||CFG.jiraProj||'QA'}-${1000+Math.floor(Math.random()*9000)}`:platform==='azure_devops'?`#${Math.floor(10000+Math.random()*89999)}`:`#${Math.floor(100+Math.random()*900)}`;
     advStep(3);
-    const r2=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:150,system:SYSTEM,tools:TOOLS,messages:[...chatHist,{role:'assistant',content:d1.content},{role:'user',content:[{type:'tool_result',tool_use_id:tb.id,content:JSON.stringify({success:true,ticket_id:fakeId,platform})}]}]})});
-    const d2=await r2.json();
+    const d2=await callAI([...chatHist,{role:'assistant',content:d1.content},{role:'user',content:[{type:'tool_result',tool_use_id:tb.id,content:JSON.stringify({success:true,ticket_id:fakeId,platform})}]}],{max_tokens:150,system:SYSTEM,tools:TOOLS});
     const ct=d2.content?.find(b=>b.type==='text')?.text||`Ticket structured for ${platform}.`;
     chatHist.push({role:'assistant',content:ct});
     rmThink();
@@ -2599,14 +2841,19 @@ async function validateCfg(section) {
 
   try {
     if (section === 'ant') {
-      // Test via /api/claude — key is in Vercel env vars
-      const r = await fetch('/api/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 10, messages: [{ role: 'user', content: 'hi' }] })
-      });
-      if (r.ok) { toast('✅ Anthropic API connected via Vercel env var!', 'success'); document.getElementById('dot-ant').className = 'cfg-dot ok'; }
-      else { const e = await r.json(); toast(`❌ Anthropic: ${e.error || r.status}`, 'error'); document.getElementById('dot-ant').className = 'cfg-dot err'; }
+      // Test the currently active AI provider via /api/ai
+      const provider = getActiveProvider();
+      const providerLabel = { claude:'Claude (Anthropic)', gemini:'Gemini (Google)', groq:'Groq' }[provider] || provider;
+      try {
+        const d = await callAI([{role:'user',content:'hi'}], {max_tokens:10});
+        if (d.content) {
+          toast(`✅ ${providerLabel} connected!`, 'success');
+          document.getElementById('dot-ant').className = 'cfg-dot ok';
+        }
+      } catch(e) {
+        toast(`❌ ${providerLabel}: ${e.message}`, 'error');
+        document.getElementById('dot-ant').className = 'cfg-dot err';
+      }
     }
 
     else if (section === 'jira') {
@@ -2670,10 +2917,7 @@ async function acceptTestCases(){
 
   try{
     // Step 1 — Generate 4 Gherkin test cases via AI
-    const r=await fetch('/api/claude',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:900,messages:[{role:'user',content:`Generate exactly 4 Gherkin test cases for this bug. Return JSON only, no extra text:
+    const d=await callAI([{role:'user',content:`Generate exactly 4 Gherkin test cases for this bug. Return JSON only, no extra text:
 {"cases":[
   {"type":"Positive","summary":"Short summary max 55 chars (no TC_ prefix needed)","description":"One line description","gherkin":"Scenario: ...\n  Given ...\n  When ...\n  Then ..."},
   {"type":"Negative","summary":"...","description":"...","gherkin":"..."},
@@ -2687,9 +2931,7 @@ Bug: ${JSON.stringify({
   steps: curTicket.steps_to_reproduce||curTicket.repro_steps,
   expected: curTicket.expected_result,
   actual: curTicket.actual_result
-})}`}]})
-    });
-    const d=await r.json();
+})}`}],{max_tokens:900});
     // Robust JSON extraction with multiple fallback strategies
     let cases = [];
     try {
@@ -2791,6 +3033,65 @@ function copyInlineTC(){
   toast('Test cases copied!','success');
 }
 
+
+// ══ ADO ORG LOADER ════════════════════════════════════════════
+async function loadAdoOrgs() {
+  const sel    = document.getElementById('ado-org-select');
+  const status = document.getElementById('ado-org-status');
+  if (!sel) return;
+
+  if (status) { status.textContent = '↻ loading...'; status.style.color = 'var(--accent2)'; }
+  sel.innerHTML = '<option value="">Loading organisations…</option>';
+
+  try {
+    const r = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform: 'azure_devops_orgs' })
+    });
+    const d = await r.json();
+
+    if (d.error || !d.orgs?.length) {
+      if (status) { status.textContent = d.error || 'No orgs found'; status.style.color = 'var(--red)'; }
+      sel.innerHTML = '<option value="">— no organisations found —</option>';
+      return;
+    }
+
+    // Populate org dropdown
+    const savedOrg = CFG.adoOrg || '';
+    sel.innerHTML = '<option value="">— select organisation —</option>' +
+      d.orgs.map(o => `<option value="${esc(o.name)}" ${o.name === savedOrg ? 'selected' : ''}>${esc(o.name)}</option>`).join('');
+
+    // Auto-select if only one org or if it was saved previously
+    if (d.orgs.length === 1) {
+      sel.value = d.orgs[0].name;
+      await onAdoOrgChange(d.orgs[0].name);
+    } else if (savedOrg && sel.querySelector(`option[value="${savedOrg}"]`)) {
+      sel.value = savedOrg;
+      await onAdoOrgChange(savedOrg);
+    }
+
+    const n = d.orgs.length;
+    if (status) { status.textContent = `${n} org${n>1?'s':''} found ✓`; status.style.color = 'var(--green)'; }
+  } catch(e) {
+    if (status) { status.textContent = e.message; status.style.color = 'var(--red)'; }
+    sel.innerHTML = '<option value="">— error loading —</option>';
+  }
+}
+
+async function onAdoOrgChange(orgName) {
+  CFG.adoOrg = orgName;
+  // Also sync the hidden legacy input so adoCfg() still works
+  const legacyInput = document.getElementById('ado-org-input');
+  if (legacyInput) legacyInput.value = orgName;
+  // Clear project selection
+  const projSel = document.getElementById('ado-proj-select');
+  if (projSel) projSel.innerHTML = '<option value="">— loading projects… —</option>';
+  CFG.adoProj = '';
+  // Load projects for the selected org
+  if (orgName) await loadProjects('ado');
+  updateDots();
+}
 
 // ══ LIVE PROJECT LOADER ═══════════════════════════════════════
 async function loadProjects(platform) {
@@ -3141,12 +3442,13 @@ window.addEventListener('load',()=>{
       const ct = ping.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
         loadProjects('jira').catch(()=>{});
+        // Auto-load ADO orgs (no org name needed — PAT is in Vercel env)
+        loadAdoOrgs().catch(()=>{});
       } else {
-        // API not deployed yet — show manual reload option
         const s = document.getElementById('jira-proj-status');
         if (s) { s.textContent = 'Click ↻ Reload to load projects'; s.style.color = 'var(--t3)'; }
-        const sa = document.getElementById('ado-proj-status');
-        if (sa) { sa.textContent = 'Enter org then click ↻ Reload'; sa.style.color = 'var(--t3)'; }
+        const sa = document.getElementById('ado-org-status');
+        if (sa) { sa.textContent = 'Click Load to fetch orgs'; sa.style.color = 'var(--t3)'; }
       }
     } catch(e) {
       console.log('Projects API not available:', e.message);

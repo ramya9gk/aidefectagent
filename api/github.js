@@ -92,13 +92,39 @@ export default async function handler(req, res) {
       }
 
       case 'search_duplicates': {
-        const { query } = payload;
-        const r = await fetch(`https://api.github.com/search/issues?q=${encodeURIComponent(query)}+repo:${ghOwner}/${ghRepo}+is:issue+is:open&per_page=5`, {
-          headers: { Authorization: auth, Accept: 'application/vnd.github.v3+json' },
-        });
+        const { query, maxResults=8 } = payload;
+        // Search both open and closed issues (closed dupes still matter)
+        const r = await fetch(
+          `https://api.github.com/search/issues?q=${encodeURIComponent(query)}+repo:${ghOwner}/${ghRepo}+is:issue&per_page=${maxResults}&sort=relevance`,
+          { headers: { Authorization: auth, Accept: 'application/vnd.github.v3+json' } }
+        );
         if (!r.ok) return res.json({ items: [] });
         const d = await r.json();
         return res.json({ items: (d.items || []).map(i => ({ id: `#${i.number}`, title: i.title, status: i.state, url: i.html_url })) });
+      }
+
+      case 'link_duplicate': {
+        // Add "duplicate" label to the new issue + post a comment referencing the original
+        const { issueNumber, duplicateOfNumber, duplicateOfUrl } = payload;
+        const newNum  = String(issueNumber).replace('#','');
+        const origNum = String(duplicateOfNumber).replace('#','');
+        // Add label
+        await fetch(`https://api.github.com/repos/${ghOwner}/${ghRepo}/issues/${newNum}/labels`, {
+          method: 'POST',
+          headers: { Authorization: auth, 'Content-Type': 'application/json', Accept: 'application/vnd.github.v3+json' },
+          body: JSON.stringify({ labels: ['duplicate'] })
+        });
+        // Post comment
+        const commentR = await fetch(`https://api.github.com/repos/${ghOwner}/${ghRepo}/issues/${newNum}/comments`, {
+          method: 'POST',
+          headers: { Authorization: auth, 'Content-Type': 'application/json', Accept: 'application/vnd.github.v3+json' },
+          body: JSON.stringify({ body: `🔁 This issue is a duplicate of #${origNum}.\n\nOriginal: ${duplicateOfUrl}\n\n> Linked by Bug Forge AI` })
+        });
+        if (!commentR.ok) {
+          const e = await commentR.text();
+          return res.json({ ok: false, error: `GitHub comment ${commentR.status}: ${e.slice(0,100)}` });
+        }
+        return res.json({ ok: true });
       }
 
       case 'validate': {

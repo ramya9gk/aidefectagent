@@ -57,7 +57,7 @@ export default async function handler(req, res) {
     switch (action) {
 
       case 'create_bug': {
-        // Sanitize payload — fix Priority (must be int 1-4) and Severity (must be "X - Label")
+        // Sanitize payload — fix Priority, Severity, and ReproSteps
         const priMap = {'P0':1,'P1':1,'P2':2,'P3':3,'P4':4,'Critical':1,'High':1,'Medium':2,'Low':3};
         const sevMap = {'Critical':'1 - Critical','High':'2 - High','Medium':'3 - Medium','Low':'4 - Low',
                         '1 - Critical':'1 - Critical','2 - High':'2 - High','3 - Medium':'3 - Medium','4 - Low':'4 - Low'};
@@ -69,14 +69,33 @@ export default async function handler(req, res) {
           if (op.path === '/fields/Microsoft.VSTS.Common.Severity') {
             return { ...op, value: sevMap[op.value] || '3 - Medium' };
           }
-          return op;
+          // If ReproSteps arrived as a plain string, wrap each line in <li>
+          if (op.path === '/fields/Microsoft.VSTS.TCM.ReproSteps') {
+            let val = op.value || '';
+            if (typeof val === 'string' && !val.startsWith('<')) {
+              // Plain text — convert newline-separated steps into HTML list
+              const items = val
+                .split('\n')
+                .map(s => s.replace(/^\s*\d+[\.\)]\s*/, '').trim())
+                .filter(s => s.length > 0)
+                .map((s,i) => `<li>${i+1}. ${s}</li>`)
+                .join('');
+              val = items ? `<ol>${items}</ol>` : '';
+            }
+            return { ...op, value: val };
+          }
           if (op.path === '/fields/System.AssignedTo') {
-            // Use env var assignee if set, otherwise keep what was passed
             const assigneeVal = adoAssignee || op.value || '';
             return assigneeVal ? { ...op, value: assigneeVal } : null;
           }
           return op;
-        }).filter(op => op !== null && (op.value !== undefined && op.value !== null && String(op.value).trim() !== '' || op.path === '/fields/System.Title'));
+        }).filter(op => {
+          if (!op) return false;
+          if (op.path === '/fields/System.Title') return true;
+          if (op.value === undefined || op.value === null) return false;
+          const s = String(op.value).trim();
+          return s !== '' && s !== '<ol></ol>';
+        });
 
         // Add assignee from env var if not already in payload
         if (adoAssignee && !sanitizedPayload.find(op => op.path === '/fields/System.AssignedTo')) {
@@ -109,20 +128,50 @@ export default async function handler(req, res) {
       }
 
       case 'search_duplicates': {
-        const { wiql } = payload;
-        const r = await adoFetch(`${base}/${proj}/_apis/wit/wiql?api-version=6.0&$top=5`, {
+        const { wiql, maxResults=8 } = payload;
+        const r = await adoFetch(`${base}/${proj}/_apis/wit/wiql?api-version=6.0&$top=${maxResults}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: wiql }),
         });
         if (r._html || !r.ok) return res.json({ items: [] });
         const d = await r.json();
-        const ids = (d.workItems || []).slice(0, 5).map(w => w.id);
+        const ids = (d.workItems || []).slice(0, maxResults).map(w => w.id);
         if (!ids.length) return res.json({ items: [] });
         const r2 = await adoFetch(`${base}/${proj}/_apis/wit/workitems?ids=${ids.join(',')}&fields=System.Id,System.Title,System.State&api-version=6.0`);
         if (!r2.ok) return res.json({ items: [] });
         const d2 = await r2.json();
         return res.json({ items: (d2.value || []).map(i => ({ id: `#${i.id}`, title: i.fields['System.Title'], status: i.fields['System.State'], url: `${base}/${adoProj}/_workitems/edit/${i.id}` })) });
+      }
+
+      case 'link_duplicate': {
+        // Add a "Duplicate" relation from the new work item to the existing one
+        const { workItemId, duplicateOfId } = payload;
+        const newWid = String(workItemId).replace('#','');
+        const existWid = String(duplicateOfId).replace('#','');
+        // Get the URL of the existing work item first
+        const existR = await adoFetch(`${base}/${proj}/_apis/wit/workitems/${existWid}?api-version=6.0`);
+        if (!existR.ok) return res.json({ ok: false, error: `Could not find work item #${existWid}` });
+        const existData = await existR.json();
+        const existUrl = existData.url;
+        // Add "Duplicate" relation (System.LinkTypes.Duplicate-Forward)
+        const patchR = await adoFetch(`${base}/${proj}/_apis/wit/workitems/${newWid}?api-version=6.0`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json-patch+json' },
+          body: JSON.stringify([{
+            op: 'add', path: '/relations/-',
+            value: {
+              rel: 'System.LinkTypes.Duplicate-Forward',
+              url: existUrl,
+              attributes: { comment: `Duplicate of #${existWid} — linked by Bug Forge AI` }
+            }
+          }])
+        });
+        if (!patchR.ok) {
+          const e = await patchR.text();
+          return res.json({ ok: false, error: `ADO link ${patchR.status}: ${e.slice(0,150)}` });
+        }
+        return res.json({ ok: true });
       }
 
       case 'get_iteration': {

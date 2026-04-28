@@ -70,6 +70,27 @@ export default async function handler(req, res) {
       const proj = encodeURIComponent(adoProj || '');
       const base = `https://dev.azure.com/${adoOrg}`;
 
+      // ── link_only: file already uploaded, just link the existing URL to the work item ──
+      if (req.body.action === 'link_only') {
+        const existingUrl = req.body.attachUrl;
+        if (!existingUrl) return res.json({ ok: false, error: 'attachUrl required for link_only' });
+        const wid = rawId || String(ticketId).replace('#', '');
+        const r = await fetch(
+          `${base}/${proj}/_apis/wit/workitems/${wid}?api-version=6.0`,
+          {
+            method: 'PATCH',
+            headers: { Authorization: auth, 'Content-Type': 'application/json-patch+json' },
+            body: JSON.stringify([{
+              op: 'add', path: '/relations/-',
+              value: { rel: 'AttachedFile', url: existingUrl,
+                       attributes: { comment: 'Screenshot attached by Bug Forge AI' } }
+            }]),
+          }
+        );
+        if (!r.ok) { const e = await r.text(); return res.json({ ok: false, error: `ADO link ${r.status}: ${e.slice(0,100)}` }); }
+        return res.json({ ok: true, url: existingUrl });
+      }
+
       // Step 1: Upload attachment binary
       const uploadR = await fetch(
         `${base}/${proj}/_apis/wit/attachments?fileName=${encodeURIComponent(fileName)}&api-version=6.0`,
@@ -88,6 +109,14 @@ export default async function handler(req, res) {
       const uploadData = await uploadR.json();
       const attachUrl = uploadData.url;
 
+      // If upload_only: return the URL so caller can embed it in ReproSteps HTML
+      // The caller will link the attachment after the ticket is created
+      if (req.body.action === 'upload_only') {
+        return res.json({ ok: true, url: attachUrl });
+      }
+
+      const linkUrl = attachUrl;
+
       // Step 2: Link attachment to work item
       const wid = rawId || String(ticketId).replace('#', '');
       const patchR = await fetch(
@@ -100,8 +129,8 @@ export default async function handler(req, res) {
             path: '/relations/-',
             value: {
               rel: 'AttachedFile',
-              url: attachUrl,
-              attributes: { comment: 'Screenshot attached by AI Defect Agent' }
+              url: linkUrl,
+              attributes: { comment: 'Screenshot attached by Bug Forge AI' }
             }
           }]),
         }
@@ -111,7 +140,7 @@ export default async function handler(req, res) {
         const e = await patchR.text();
         return res.json({ ok: false, error: `ADO link ${patchR.status}: ${e.slice(0, 100)}` });
       }
-      return res.json({ ok: true });
+      return res.json({ ok: true, url: attachUrl });
     }
 
     // ── GitHub attachment ─────────────────────────────────────

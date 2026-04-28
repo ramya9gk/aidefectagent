@@ -39,6 +39,46 @@ export default async function handler(req, res) {
     }
   }
 
+  // ── ADO organisations ──────────────────────────────────────
+  // Uses the Azure DevOps profile + accounts API to list all orgs the PAT can access.
+  if (platform === 'azure_devops_orgs') {
+    const adoPat = process.env.ADO_PAT || '';
+    if (!adoPat) return res.json({ orgs: [], error: 'ADO_PAT not set in Vercel env vars' });
+
+    const auth = 'Basic ' + Buffer.from(`:${adoPat}`).toString('base64');
+
+    try {
+      // Step 1: get the member (user) ID from the profile API
+      const profileR = await fetch(
+        'https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=6.0',
+        { headers: { Authorization: auth, Accept: 'application/json' } }
+      );
+      if (profileR.status === 401 || profileR.status === 203) {
+        return res.json({ orgs: [], error: 'ADO PAT is invalid or expired — update ADO_PAT in Vercel' });
+      }
+      if (!profileR.ok) return res.json({ orgs: [], error: `Profile API ${profileR.status}` });
+      const profile = await profileR.json();
+      const memberId = profile.id;
+      if (!memberId) return res.json({ orgs: [], error: 'Could not resolve ADO member ID from PAT' });
+
+      // Step 2: list all organizations the member belongs to
+      const accountsR = await fetch(
+        `https://app.vssps.visualstudio.com/_apis/accounts?memberId=${memberId}&api-version=6.0`,
+        { headers: { Authorization: auth, Accept: 'application/json' } }
+      );
+      if (!accountsR.ok) return res.json({ orgs: [], error: `Accounts API ${accountsR.status}` });
+      const accountsD = await accountsR.json();
+      const orgs = (accountsD.value || []).map(a => ({
+        name: a.accountName,
+        id:   a.accountId,
+        url:  a.accountUri
+      }));
+      return res.json({ orgs });
+    } catch (err) {
+      return res.json({ orgs: [], error: err.message });
+    }
+  }
+
   // ── ADO projects ───────────────────────────────────────────
   // ADO_PAT from env var (secure), org name from browser (user types it)
   if (platform === 'azure_devops') {
