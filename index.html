@@ -495,7 +495,23 @@ select.ef-in{cursor:pointer}
 @supports(padding-bottom:env(safe-area-inset-bottom)){ .form-footer{padding-bottom:calc(10px + env(safe-area-inset-bottom))} .topbar{padding-top:max(14px,calc(10px + env(safe-area-inset-top)))} .settings-drawer{padding-bottom:env(safe-area-inset-bottom)} .toast-container{bottom:calc(24px + env(safe-area-inset-bottom))}
 } /* ── Tablet landscape: 641px–1024px — 2-column, compacted ── */
 @media(min-width:641px) and (max-width:1024px){ .settings-drawer{width:min(400px,50vw)} .dashboard-panel{width:min(480px,90vw)}
-} /* ── Input font-size ≥16px everywhere (prevent iOS zoom) ── */
+} /* ── Dup status strip — inline above post buttons ── */
+#dup-status-strip{padding:9px 14px;border-top:1px solid var(--b1);font-size:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;transition:background .2s,border-color .2s}
+#dup-status-strip.dss-checking{background:var(--s2);color:var(--t2)}
+#dup-status-strip.dss-clean{background:var(--green-bg);border-top-color:var(--green-bd);color:var(--green)}
+#dup-status-strip.dss-found{background:var(--amber-bg);border-top-color:var(--amber-bd);color:var(--amber)}
+#dup-status-strip.dss-error{background:var(--s2);color:var(--t3)}
+.dss-spinner{width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.dss-matches{width:100%;margin-top:6px;display:flex;flex-direction:column;gap:4px}
+.dss-match-row{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--s1);border-radius:7px;border:1px solid var(--b1)}
+.dss-match-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);flex-shrink:0;min-width:60px}
+.dss-match-title{flex:1;font-size:11px;color:var(--t1);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dss-match-score{font-size:10px;font-weight:600;flex-shrink:0}
+.dss-actions{display:flex;gap:6px;margin-top:6px;width:100%;flex-wrap:wrap}
+.dss-btn-post{padding:7px 16px;background:var(--amber);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation;min-height:36px}
+.dss-btn-dismiss{padding:7px 12px;background:transparent;color:var(--t3);border:1px solid var(--b2);border-radius:8px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation;min-height:36px}
+.dss-view-link{font-size:11px;color:var(--accent2);text-decoration:none;flex-shrink:0}
+.dss-view-link:hover{text-decoration:underline}
 @media(max-width:960px){ .cfg-in,.ef-in,.select-in,.describe-box, input[type="text"],input[type="email"],input[type="search"], input[type="number"],textarea,select{font-size:16px !important}
 } /* ── Touch interaction ─────────────────────────────── */
 .abtn,.hbtn,.generate-btn,.action-btn,.provider-btn,.ex-chip{touch-action:manipulation}
@@ -1445,42 +1461,132 @@ function _resetDupCheckState(reason=''){
   }
   dupCheckCompleted = false;
   dupCheckHasResults = false;
-  // Update button badge immediately
   _updateDupBtn();
+  _updateDupStrip('idle');
 }
 
-function _markDupCheckDone(hasResults){
+function _markDupCheckDone(hasResults, matches=[], platform=''){
   dupCheckCompleted = true;
   dupCheckHasResults = !!hasResults;
   console.log('[Dupes] Check completed. Duplicates found:', hasResults);
   _updateDupBtn();
+  // Update the inline strip
+  if(hasResults){
+    _updateDupStrip('found', { matches, count:matches.length, platform });
+  } else {
+    _updateDupStrip('clean', { cross: CFG.crossDupEnabled });
+  }
 }
 
 function _updateDupBtn(){
   const btn = document.getElementById('btn-dup');
   if(!btn) return;
   if(dupCheckCompleted && !dupCheckHasResults){
-    // Clean — green check
     btn.innerHTML = '✅ Dupes';
     btn.style.color = 'var(--green)';
     btn.style.borderColor = 'var(--green-bd)';
     btn.style.background = 'var(--green-bg)';
     btn.style.boxShadow = '';
   } else if(dupCheckCompleted && dupCheckHasResults){
-    // Found — amber warning
     btn.innerHTML = '⚠ Dupes ●';
     btn.style.color = 'var(--amber)';
     btn.style.borderColor = 'var(--amber-bd)';
     btn.style.background = 'var(--amber-bg)';
     btn.style.boxShadow = '0 0 8px var(--amber-bd)';
   } else {
-    // Not checked yet — pulsing glow to draw attention
     btn.innerHTML = '⚠ Dupes';
     btn.style.color = '';
     btn.style.borderColor = '';
     btn.style.background = '';
     btn.style.boxShadow = '0 0 0 2px var(--amber-bd)';
   }
+}
+
+// ── Dup status strip controller ───────────────────────────
+// States: 'idle' | 'checking' | 'clean' | 'found' | 'error'
+function _updateDupStrip(state, data={}){
+  const strip = document.getElementById('dup-status-strip');
+  if(!strip) return;
+  strip.className = 'dss-checking';
+  if(state === 'idle'){
+    strip.style.display = 'none';
+    strip.innerHTML = '';
+    return;
+  }
+  strip.style.display = 'flex';
+  strip.style.flexDirection = 'column';
+  if(state === 'checking'){
+    strip.className = 'dss-checking';
+    const pLabel = data.platform==='jira'?'Jira':data.platform==='azure_devops'?'Azure DevOps':data.platform==='github'?'GitHub':'connected platforms';
+    strip.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
+      <span class="dss-spinner"></span>
+      <span>Scanning for duplicates in <strong>${pLabel}</strong>…</span>
+    </div>`;
+    ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
+      const b=document.getElementById(id); if(b){b.style.opacity='0.4';b.style.pointerEvents='none';}
+    });
+    return;
+  }
+  // Re-enable post buttons after any completed state
+  ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
+    const b=document.getElementById(id); if(b){b.style.opacity='';b.style.pointerEvents='';}
+  });
+  if(state === 'clean'){
+    strip.className = 'dss-clean';
+    strip.innerHTML = `<div style="display:flex;align-items:center;gap:6px">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="var(--green)"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+      <strong>No duplicates found</strong>${data.cross?' across all connected systems':''} — safe to post
+    </div>`;
+    return;
+  }
+  if(state === 'error'){
+    strip.className = 'dss-error';
+    strip.innerHTML = `<div style="display:flex;align-items:center;gap:6px;width:100%">
+      ⚠ Could not scan for duplicates
+      <button class="dss-btn-dismiss" style="margin-left:auto" onclick="_updateDupStrip('idle')">Dismiss</button>
+    </div>`;
+    return;
+  }
+  if(state === 'found'){
+    strip.className = 'dss-found';
+    const matches = data.matches || [];
+    const count   = data.count || matches.length;
+    const pLabel  = data.platform==='jira'?'Jira':data.platform==='azure_devops'?'Azure DevOps':data.platform==='github'?'GitHub':'your platforms';
+    const matchRows = matches.slice(0,3).map(m => {
+      const score = m.score ?? 50;
+      const scoreColor = score>=80 ? 'var(--red)' : score>=60 ? 'var(--amber)' : 'var(--t3)';
+      return `<div class="dss-match-row">
+        <span class="dss-match-id">${esc(m.id)}</span>
+        <span class="dss-match-title" title="${esc(m.title)}">${esc(m.title)}</span>
+        <span class="dss-match-score" style="color:${scoreColor}">${score}%</span>
+        <a class="dss-view-link" href="${m.url}" target="_blank" rel="noopener">↗</a>
+        <button style="padding:2px 8px;font-size:10px;background:transparent;border:1px solid var(--b2);border-radius:5px;cursor:pointer;color:var(--t2);font-family:'Inter',sans-serif" onclick="markAsDuplicate('${esc(m.id)}','${m.url}')">🔗</button>
+      </div>`;
+    }).join('');
+    strip.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;width:100%">
+        <span>⚠ <strong>${count} similar issue${count>1?'s':''} found</strong> in ${pLabel}</span>
+        <button class="dss-btn-dismiss" style="margin-left:auto" onclick="_updateDupStrip('idle');_dupStripPostTarget=null">✕</button>
+      </div>
+      <div class="dss-matches">${matchRows}</div>
+      <div class="dss-actions">
+        <button class="dss-btn-post" onclick="_dupStripProceed()">📤 Post Anyway</button>
+        <button class="dss-btn-dismiss" onclick="checkDuplicates({auto:false})">🔍 Re-check</button>
+        <button class="dss-btn-dismiss" onclick="_updateDupStrip('idle');_dupStripPostTarget=null">Cancel</button>
+      </div>`;
+  }
+}
+
+// Target platform stored when user hits Post while dupes found
+let _dupStripPostTarget = null;
+
+async function _dupStripProceed(){
+  const platform = _dupStripPostTarget;
+  _dupStripPostTarget = null;
+  _updateDupStrip('idle');
+  if(!platform) return;
+  console.log('[Dupes] User chose to proceed anyway');
+  await _executePost(platform);
 }
 // pendingShot is exposed on window so adapter IIFE code can read/clear it.
 // (Using `let` at script scope doesn't attach to `window`, which caused the
@@ -1956,6 +2062,8 @@ function buildTicketHTML(t,platform,tid){
         <button class="abtn warn" id="btn-dup" onclick="checkDuplicates()">⚠ Dupes</button>
         <button class="abtn info" onclick="showLinkEpic()">🔗 Link Epic</button>
       </div>
+      <!-- Dup status strip — proactive check status shown BEFORE post buttons -->
+      <div id="dup-status-strip" class="dss-checking" style="display:none"></div>
       <!-- Platform posting buttons — shown after generation, hidden after posting -->
       <div id="platform-post-btns" style="display:flex;gap:7px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--b1);background:var(--s2);border-radius:0 0 10px 10px">
         <div style="font-size:11px;color:var(--t2);width:100%;margin-bottom:4px">📤 Post ticket to:</div>
@@ -2078,6 +2186,7 @@ async function checkDuplicates(opts={}){
   const btn = document.getElementById('btn-dup');
   if(btn){ btn.disabled=true; btn.textContent='Checking…'; btn.style.boxShadow=''; }
   console.log('[Dupes] Duplicate check triggered');
+  _updateDupStrip('checking', { platform: primaryPlatform });
 
   area.innerHTML=`<div style="padding:10px 16px;font-size:12px;color:var(--t2);display:flex;align-items:center;gap:8px">
     <span style="width:12px;height:12px;border:2px solid var(--amber);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span>
@@ -2096,7 +2205,12 @@ async function checkDuplicates(opts={}){
     const seen=new Set(); const kws=[];
     for(const w of words){ if(!seen.has(w)){ seen.add(w); kws.push(w); if(kws.length>=8) break; } }
     const kw = kws.join(' ');
-    if(!kw){ area.innerHTML=''; if(btn){btn.disabled=false;btn.innerHTML='⚠ Dupes';} return; }
+    if(!kw){
+      area.innerHTML='<div class="dup-panel dup-clear"><div class="dup-hdr" style="color:var(--t3);border-color:var(--b2)">⚠ Not enough text to scan for duplicates — safe to post.</div></div>';
+      _markDupCheckDone(false, [], primaryPlatform);
+      if(btn){btn.disabled=false;}
+      return;
+    }
 
     let primaryDupes = [];
     primaryDupes = await _fetchDupes(primaryPlatform, kw, kws, titleStr);
@@ -2164,7 +2278,7 @@ async function checkDuplicates(opts={}){
           </div>
         </div>`;
       }
-      _markDupCheckDone(false); // clean — no dupes
+      _markDupCheckDone(false, [], primaryPlatform);
       if(btn){btn.disabled=false;}
       return;
     }
@@ -2234,13 +2348,15 @@ async function checkDuplicates(opts={}){
       </div>
     </div>`;
 
-    _markDupCheckDone(true); // dupes found
+    // Collect all found dupes for the strip
+    const allFoundDupes = [...primaryDupes, ...Object.values(crossResults).flat()].slice(0,5);
+    _markDupCheckDone(true, allFoundDupes, primaryPlatform);
 
   }catch(e){
     if(auto){ area.innerHTML=''; console.warn('Dupe check error:', e); }
     else{ area.innerHTML=`<div style="padding:9px 16px;font-size:12px;color:var(--red)">Duplicate check failed: ${esc(e.message)}</div>`; }
-    // On error, mark as completed so user isn't blocked — they saw the error
-    _markDupCheckDone(false);
+    _updateDupStrip('error');
+    _markDupCheckDone(false, [], primaryPlatform||'');
   }
   if(btn){ btn.disabled=false; }
 }
@@ -2838,7 +2954,7 @@ async function sendDefect(){
     wrap.innerHTML=buildTicketHTML(curTicket,platform,fakeId);
     chat.appendChild(wrap);
 
-    setTimeout(() => { try { checkDuplicates({auto:true}); } catch(e) { console.warn('Auto-dupe check failed:', e); } }, 400);
+    setTimeout(() => { try { checkDuplicates({auto:true}); } catch(e) { console.warn('Auto-dupe check failed:', e); } }, 0);
 
   }catch(e){
     rmThink(); clearPills();
@@ -3229,28 +3345,55 @@ function dismissTCPrompt(){
 async function postToSpecificPlatform(platform){
   if(!curTicket){ toast('No ticket to post','warn'); return; }
 
-  // ── DUP-CHECK GATE ──────────────────────────────────────────
-  // EVERY post action goes through this gate.
-  // Gate shows a floating modal — always visible regardless of scroll position.
-  // User can proceed anyway but is always informed.
-  console.log('[Dupes] Post blocked — dupes not checked:', !dupCheckCompleted, '| Has results:', dupCheckHasResults);
+  console.log('[Dupes] Post requested for:', platform, '| checked:', dupCheckCompleted, '| hasResults:', dupCheckHasResults);
 
   if(!dupCheckCompleted){
-    // Not checked yet — show mandatory advisory modal
-    console.log('[Dupes] Post blocked — dupes not checked');
-    const proceed = await _showDupGate(platform, false);
-    if(!proceed) return;
-    console.log('[Dupes] User chose to proceed anyway');
-  } else if(dupCheckHasResults){
-    // Checked AND found matches — show stronger warning with match preview
-    console.log('[Dupes] Dupes check completed — matches found, showing warning');
-    const proceed = await _showDupGate(platform, true);
-    if(!proceed) return;
-    console.log('[Dupes] User chose to proceed despite duplicates found');
-  } else {
-    // Checked, clean — silent pass through
-    console.log('[Dupes] Dupes check completed — no matches, proceeding');
+    // Check hasn't run yet — run it now, then re-show strip result
+    console.log('[Dupes] Post blocked — dupes not checked, running check first');
+    _dupStripPostTarget = platform; // remember where user wanted to post
+    await checkDuplicates({auto:false});
+    // After check: if clean → _markDupCheckDone(false) → _executePost fires below via strip
+    // If dupes found → strip shows "Post Anyway" button → user decides
+    // Either way we return here; strip handles the next step
+    if(!dupCheckHasResults){
+      // Clean — auto-proceed
+      _dupStripPostTarget = null;
+      await _executePost(platform);
+    }
+    // If dupes found, strip is now showing with "Post Anyway" button — user decides
+    return;
   }
+
+  if(dupCheckHasResults){
+    // Already checked, dupes found — show strip confirmation (not modal)
+    console.log('[Dupes] Dupes found — showing inline strip for confirmation');
+    _dupStripPostTarget = platform;
+    // Strip is already visible from when check ran — just ensure it's in "found" state
+    // If strip was dismissed, re-show it
+    const strip = document.getElementById('dup-status-strip');
+    if(!strip || strip.style.display === 'none'){
+      // Rebuild strip with stored results
+      const area = document.getElementById('dup-area');
+      const existingItems = area ? [...area.querySelectorAll('.dup-item')].slice(0,3).map(el=>({
+        id:   el.querySelector('.dup-id')?.textContent||'',
+        title:el.querySelector('.dup-ttl')?.textContent||'',
+        score:parseInt(el.querySelector('.dup-score')?.textContent)||50,
+        url:  el.querySelector('.dup-lnk')?.href||'#',
+      })) : [];
+      _updateDupStrip('found', { matches:existingItems, count:existingItems.length, platform });
+    }
+    // Scroll strip into view
+    if(strip) strip.scrollIntoView({behavior:'smooth', block:'nearest'});
+    return; // wait for "Post Anyway" click
+  }
+
+  // Clean and checked — silent post
+  console.log('[Dupes] Dupes check completed — no matches, proceeding');
+  await _executePost(platform);
+}
+
+// ── _executePost: the actual posting logic (no gate, no checks) ──
+async function _executePost(platform){
 
   // ── PROCEED WITH POST ───────────────────────────────────────
   ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
