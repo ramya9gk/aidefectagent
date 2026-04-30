@@ -529,6 +529,21 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+<!-- ══ DUP GATE MODAL — fixed overlay, always visible ══ -->
+<div class="confirm-overlay" id="dup-gate-overlay" role="dialog" aria-modal="true"
+     aria-labelledby="dg-title" aria-describedby="dg-body" style="z-index:350">
+  <div class="confirm-box" style="max-width:460px;width:92%">
+    <div class="confirm-icon" id="dg-icon" aria-hidden="true">🔍</div>
+    <div class="confirm-title" id="dg-title">Duplicates Not Checked</div>
+    <div class="confirm-msg" id="dg-body" style="text-align:left;font-size:12.5px"></div>
+    <!-- Duplicate matches preview — shown only when dupes found -->
+    <div id="dg-matches" style="display:none;margin:10px 0 6px;border-radius:9px;overflow:hidden;border:1px solid var(--b2)"></div>
+    <div class="confirm-btns" style="flex-direction:column;gap:8px" id="dg-btns">
+      <!-- wired dynamically -->
+    </div>
+  </div>
+</div>
+
 <!-- ══ KEYBOARD SHORTCUTS MODAL ══ -->
 <div class="kb-modal" id="kb-modal" role="dialog" aria-modal="true" aria-labelledby="kb-modal-title">
   <div class="kb-box">
@@ -1797,7 +1812,12 @@ function initShortcuts() {
     if(e.key==='?'&&!e.ctrlKey&&!e.metaKey){const t=document.activeElement.tagName; if(t!=='INPUT'&&t!=='TEXTAREA'){showKB();return;}}
     const c=e.ctrlKey||e.metaKey;
     // TC-142a FIX: Escape key closes keyboard shortcut modal and dashboard panel
-    if(e.key==='Escape'){ closeKB(); closeDash(); return; }
+    if(e.key==='Escape'){ closeKB(); closeDash();
+      // Close dup gate overlay on Escape too
+      const dg = document.getElementById('dup-gate-overlay');
+      if(dg && dg.classList.contains('open')){ dg.classList.remove('open'); }
+      return;
+    }
     if(c&&e.key==='g'){e.preventDefault();sendDefect();}
     else if(c&&e.key==='p'){e.preventDefault();const b=document.getElementById('btn-post');if(b&&!b.disabled)postTicket();}
     else if(c&&e.key==='d'){e.preventDefault();checkDuplicates();}
@@ -3209,21 +3229,28 @@ function dismissTCPrompt(){
 async function postToSpecificPlatform(platform){
   if(!curTicket){ toast('No ticket to post','warn'); return; }
 
-  // ── DUP-CHECK GATE ─────────────────────────────────────────
-  // If dupes haven't been checked for this ticket, show a warning.
-  // User can still proceed — this is advisory, not a hard block.
-  console.log('[Dupes] Dupes check status:', dupCheckCompleted, '| Has results:', dupCheckHasResults);
+  // ── DUP-CHECK GATE ──────────────────────────────────────────
+  // EVERY post action goes through this gate.
+  // Gate shows a floating modal — always visible regardless of scroll position.
+  // User can proceed anyway but is always informed.
+  console.log('[Dupes] Post blocked — dupes not checked:', !dupCheckCompleted, '| Has results:', dupCheckHasResults);
 
   if(!dupCheckCompleted){
-    // Silently run the check first — if it completes quickly we use its result
+    // Not checked yet — show mandatory advisory modal
+    console.log('[Dupes] Post blocked — dupes not checked');
     const proceed = await _showDupGate(platform, false);
-    if(!proceed) return; // user cancelled
+    if(!proceed) return;
+    console.log('[Dupes] User chose to proceed anyway');
   } else if(dupCheckHasResults){
-    // Already checked AND found duplicates — show stronger warning
+    // Checked AND found matches — show stronger warning with match preview
+    console.log('[Dupes] Dupes check completed — matches found, showing warning');
     const proceed = await _showDupGate(platform, true);
     if(!proceed) return;
+    console.log('[Dupes] User chose to proceed despite duplicates found');
+  } else {
+    // Checked, clean — silent pass through
+    console.log('[Dupes] Dupes check completed — no matches, proceeding');
   }
-  // dupCheckCompleted && !dupCheckHasResults → silent pass through
 
   // ── PROCEED WITH POST ───────────────────────────────────────
   ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
@@ -3286,74 +3313,122 @@ async function postToSpecificPlatform(platform){
   }
 }
 
-// ── Dup-check gate dialog ─────────────────────────────────────
-// Returns true = proceed with post, false = cancel
-// hasFoundDupes = whether last check found matches
+// ── Dup-check gate modal ──────────────────────────────────────
+// Uses #dup-gate-overlay — a fixed-position modal (like confirm-overlay).
+// This is always visible regardless of scroll position, ticket card state,
+// or whether #dup-area exists in DOM.
+// Returns Promise<boolean>: true = proceed, false = cancel / check first
 async function _showDupGate(targetPlatform, hasFoundDupes){
   return new Promise(resolve => {
-    const area = document.getElementById('dup-area');
-    if(!area) { resolve(true); return; }
+    const overlay = document.getElementById('dup-gate-overlay');
+    if(!overlay){
+      // Fallback: overlay element not in DOM (should never happen)
+      console.warn('[Dupes] dup-gate-overlay missing — blocking post as precaution');
+      resolve(false);
+      return;
+    }
 
     const pName = targetPlatform==='all' ? 'all systems'
                 : targetPlatform==='jira' ? 'Jira'
                 : targetPlatform==='azure_devops' ? 'Azure DevOps'
                 : 'GitHub';
 
-    const existingDupesHTML = hasFoundDupes
-      ? `<div style="margin:8px 0;font-size:11px;color:var(--amber)">⚠ Similar issues were found in your last check. Posting may create a duplicate.</div>`
-      : '';
+    // ── Configure modal content ──────────────────────────────
+    const iconEl   = document.getElementById('dg-icon');
+    const titleEl  = document.getElementById('dg-title');
+    const bodyEl   = document.getElementById('dg-body');
+    const matchEl  = document.getElementById('dg-matches');
+    const btnsEl   = document.getElementById('dg-btns');
 
-    const icon    = hasFoundDupes ? '⚠️' : '🔍';
-    const heading = hasFoundDupes
-      ? '⚠ Similar issues found'
-      : '⚠ Duplicates not checked';
-    const body    = hasFoundDupes
-      ? `Similar issues already exist. Review them before posting to ${pName}.`
-      : `You haven't checked for existing issues before posting to ${pName}.`;
-    const panelClass = hasFoundDupes ? 'dup-high' : '';
-    const hdrStyle   = hasFoundDupes
-      ? 'color:var(--red);border-color:var(--red-bd)'
-      : 'color:var(--amber);border-color:var(--amber-bd)';
+    if(hasFoundDupes){
+      iconEl.textContent  = '⚠️';
+      titleEl.textContent = 'Similar Issues Found';
+      titleEl.style.color = 'var(--red)';
+      bodyEl.innerHTML    =
+        `<strong>Similar issues were found</strong> in your last duplicate check for <strong>${pName}</strong>.<br><br>` +
+        `Posting may create a duplicate ticket. Review the matches below before proceeding.`;
+    } else {
+      iconEl.textContent  = '🔍';
+      titleEl.textContent = 'Duplicates Not Checked';
+      titleEl.style.color = '';
+      bodyEl.innerHTML    =
+        `⚠️ You haven't checked for duplicate issues before posting to <strong>${pName}</strong>.<br><br>` +
+        `Please check for existing similar issues to avoid creating duplicates.`;
+    }
 
-    area.innerHTML = `<div class="dup-panel ${panelClass}" id="dup-gate-panel">
-      <div class="dup-hdr" style="${hdrStyle}">
-        ${icon} ${heading}
-      </div>
-      <div style="padding:10px 13px;font-size:12px;color:var(--t1);line-height:1.6">
-        ${body}
-        ${existingDupesHTML}
-      </div>
-      <div class="dup-actions">
-        <button class="abtn warn" id="dup-gate-check" onclick="">
-          🔍 Check Dupes now
-        </button>
-        <button class="abtn danger" id="dup-gate-proceed" onclick="">
-          📤 Proceed anyway
-        </button>
-        <button class="hbtn" id="dup-gate-cancel" onclick="">
-          ✕ Cancel
-        </button>
-      </div>
-    </div>`;
+    // ── Show top dupe matches if found ──────────────────────
+    if(hasFoundDupes && matchEl){
+      // Pull currently rendered dup-items from #dup-area for preview
+      const dupArea = document.getElementById('dup-area');
+      const dupItems = dupArea ? dupArea.querySelectorAll('.dup-item') : [];
+      if(dupItems.length){
+        const preview = Array.from(dupItems).slice(0,3).map(item => {
+          const id    = item.querySelector('.dup-id')?.textContent || '';
+          const title = item.querySelector('.dup-ttl')?.textContent || '';
+          const score = item.querySelector('.dup-score')?.textContent || '';
+          return `<div style="padding:8px 12px;border-bottom:1px solid var(--b1);display:flex;gap:8px;align-items:center;background:var(--s2)">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);flex-shrink:0">${esc(id)}</span>
+            <span style="flex:1;font-size:11px;color:var(--t1);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${esc(title)}</span>
+            <span style="font-size:10px;color:var(--red);flex-shrink:0">${esc(score)}</span>
+          </div>`;
+        }).join('');
+        matchEl.innerHTML = preview;
+        matchEl.style.display = 'block';
+      } else {
+        matchEl.style.display = 'none';
+      }
+    } else {
+      if(matchEl) matchEl.style.display = 'none';
+    }
 
-    // Scroll gate into view
-    area.scrollIntoView({behavior:'smooth', block:'nearest'});
+    // ── Wire action buttons ──────────────────────────────────
+    btnsEl.innerHTML = `
+      <button id="dg-btn-check" style="width:100%;padding:11px 16px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;min-height:44px">
+        🔍 Check Dupes Now
+      </button>
+      <button id="dg-btn-proceed" style="width:100%;padding:10px 16px;background:transparent;color:var(--t2);border:1px solid var(--b3);border-radius:9px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation;min-height:44px">
+        📤 Proceed Anyway
+      </button>
+      <button id="dg-btn-cancel" style="width:100%;padding:9px 16px;background:transparent;color:var(--t3);border:none;border-radius:9px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation;min-height:44px">
+        ✕ Cancel
+      </button>`;
 
-    // Wire up buttons (avoid inline onclick to prevent resolve closure issues)
-    document.getElementById('dup-gate-check').onclick = async () => {
-      area.innerHTML = '';
+    // ── Open modal ───────────────────────────────────────────
+    overlay.classList.add('open');
+
+    // Focus the primary CTA for keyboard accessibility
+    requestAnimationFrame(() => {
+      const checkBtn = document.getElementById('dg-btn-check');
+      if(checkBtn) checkBtn.focus();
+    });
+
+    // ── Close helper ─────────────────────────────────────────
+    function closeGate(){ overlay.classList.remove('open'); }
+
+    // ── Button handlers ──────────────────────────────────────
+    document.getElementById('dg-btn-check').onclick = async () => {
+      closeGate();
+      console.log('[Dupes] User triggered duplicate check from gate');
       await checkDuplicates({auto:false});
-      // After manual check, user decides — do not auto-proceed
+      // After manual check completes, resolve false — let user
+      // decide to click Post again (now dupCheckCompleted = true)
       resolve(false);
     };
-    document.getElementById('dup-gate-proceed').onclick = () => {
-      area.innerHTML = '';
-      console.log('[Dupes] User chose to proceed anyway');
+
+    document.getElementById('dg-btn-proceed').onclick = () => {
+      closeGate();
+      console.log('[Dupes] User chose to proceed anyway — skipping dup check');
       resolve(true);
     };
-    document.getElementById('dup-gate-cancel').onclick = () => {
-      area.innerHTML = '';
+
+    document.getElementById('dg-btn-cancel').onclick = () => {
+      closeGate();
       resolve(false);
+    };
+
+    // ── Backdrop click = cancel ──────────────────────────────
+    overlay.onclick = (e) => {
+      if(e.target === overlay){ closeGate(); resolve(false); }
     };
   });
 }
