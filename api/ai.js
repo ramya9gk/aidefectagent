@@ -26,11 +26,16 @@ export default async function handler(req, res) {
   const body = req.body;
   const { provider: requestedProvider, ...forwardBody } = body;
 
-  // ── Gemini: single source of truth ────────────────────────────
-  const GEMINI_CONFIG = {
-    model:   'gemini-1.5-flash',
-    baseUrl: 'https://generativelanguage.googleapis.com/v1',
-  };
+  // ── Gemini config: matches user's Google AI Studio account ────
+  // This account has Gemini 3.x Preview models ONLY.
+  // GA models (gemini-1.5-flash etc.) are NOT available on this account.
+  // All preview models use v1beta endpoint — NOT /v1/ (which returns 404 here).
+  // Model chain mirrors Shuddhi QA which is confirmed working on same account.
+  const GEMINI_MODELS = [
+    { model: 'gemini-3.1-pro-preview',        apiVer: 'v1beta' }, // PRIMARY   — Shuddhi QA confirmed
+    { model: 'gemini-3.1-flash-lite-preview', apiVer: 'v1beta' }, // FALLBACK  — cost-efficient
+    { model: 'gemini-3-flash-preview',        apiVer: 'v1beta' }, // LAST RESORT
+  ];
 
   // ── Detect error type from API response text ───────────────────
   function classifyError(status, msg = '') {
@@ -134,11 +139,10 @@ ${schemas}
     }
 
     // ── GEMINI ────────────────────────────────────────────────────
-    // Model: gemini-1.5-flash | Endpoint: /v1/ (GA stable, not v1beta)
+    // Uses GEMINI_MODELS chain defined at top of handler.
+    // This account has Gemini 3.x preview models ONLY (v1beta endpoint).
+    // GA models (gemini-1.5-*) are NOT available on this account.
     if (provider === 'gemini') {
-      const url = `${GEMINI_CONFIG.baseUrl}/models/${GEMINI_CONFIG.model}:generateContent?key=${key}`;
-      console.log(`[Bug Forge AI] Gemini model: ${GEMINI_CONFIG.model}`);
-
       const contents = (messages || []).map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: typeof m.content === 'string' ? m.content
@@ -153,30 +157,52 @@ ${schemas}
       };
       if (sysForGemini) geminiBody.systemInstruction = { parts: [{ text: sysForGemini }] };
 
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(geminiBody),
-      });
+      let lastErrMsg = '';
 
-      if (!r.ok) {
-        const raw     = await r.text().catch(() => '');
-        let parsed    = {}; try { parsed = JSON.parse(raw); } catch(e) {}
-        const msg     = parsed?.error?.message || raw.slice(0, 200);
-        const errType = classifyError(r.status, msg);
-        const isSwitch = errType === 'rate_limit' || errType === 'quota' || errType === 'billing' || errType === 'model_error';
-        console.error(`[Bug Forge AI] Gemini ${r.status} [${errType}]:`, msg);
-        return res.status(isSwitch ? 429 : r.status).json({
-          error: msg, errorType: errType, provider: 'gemini',
-          switchProvider: isSwitch,
-        });
+      for (const { model: tryModel, apiVer } of GEMINI_MODELS) {
+        const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${tryModel}:generateContent?key=${key}`;
+        console.log(`[Bug Forge AI] Gemini trying: ${tryModel} (${apiVer})`);
+
+        let r;
+        try {
+          r = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(geminiBody),
+          });
+        } catch (netErr) {
+          lastErrMsg = netErr.message;
+          console.error(`[Bug Forge AI] Gemini network error (${tryModel}):`, netErr.message);
+          continue;
+        }
+
+        if (r.ok) {
+          const d = await r.json();
+          const rawText = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const content = tools ? parseToolUseFromText(rawText) : [{ type: 'text', text: rawText }];
+          console.log(`[Bug Forge AI] Gemini success: ${tryModel}`);
+          return res.json({ content, stop_reason: 'end_turn', _provider: 'gemini', _model: tryModel });
+        }
+
+        const raw = await r.text().catch(() => '');
+        let parsed = {}; try { parsed = JSON.parse(raw); } catch(e) {}
+        lastErrMsg = parsed?.error?.message || raw.slice(0, 200);
+        const errType = classifyError(r.status, lastErrMsg);
+        console.error(`[Bug Forge AI] Gemini ${tryModel} HTTP ${r.status} [${errType}]:`, lastErrMsg.slice(0, 150));
+
+        if (r.status === 401 || r.status === 403) {
+          return res.status(r.status).json({ error: `BUGGEMINI_API_KEY invalid: ${lastErrMsg}`, provider: 'gemini', errorType: 'auth' });
+        }
+        if (r.status === 429) {
+          return res.status(429).json({ error: `Gemini rate limited: ${lastErrMsg}`, switchProvider: true, provider: 'gemini', errorType: 'rate_limit' });
+        }
+        // 404 / 400 model unavailable → try next in chain
       }
 
-      const d       = await r.json();
-      const rawText = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const content = tools ? parseToolUseFromText(rawText) : [{ type: 'text', text: rawText }];
-      console.log(`[Bug Forge AI] Gemini success: ${GEMINI_CONFIG.model}`);
-      return res.json({ content, stop_reason: 'end_turn', _provider: 'gemini', _model: GEMINI_CONFIG.model });
+      return res.status(429).json({
+        error: `Gemini unavailable. Last error: ${lastErrMsg}`,
+        switchProvider: true, provider: 'gemini', errorType: 'model_error',
+      });
     }
 
     // ── GROQ ──────────────────────────────────────────────────────
