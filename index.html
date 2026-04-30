@@ -10,7 +10,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Bug Forge AI"/>
 <meta name="description" content="Bug Forge AI — AI-powered bug ticket generator for Jira, Azure DevOps, GitHub"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#0a0d14" media="(prefers-color-scheme: dark)"/>
+<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)"/>
 <title>Bug Forge AI — AI Bug Ticket Generator</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js" defer></script>
@@ -20,7 +25,10 @@
 [data-theme="dark"]{ --bg:#0a0d14; --s1:#12151f; --s2:#171b27; --s3:#1d2234; --s4:#252b41; --b1:rgba(255,255,255,.05); --b2:rgba(255,255,255,.09); --b3:rgba(255,255,255,.15); --b4:rgba(255,255,255,.22); --t1:#e5e9f5; --t2:#9aa4bf; --t3:#5e6a85; --shadow:var(--shadow-md);
 }
 [data-theme="light"]{ --bg:#f4f5fa; --s1:#ffffff; --s2:#f6f7fb; --s3:#eceef5; --s4:#dfe2ed; --b1:rgba(0,0,0,.06); --b2:rgba(0,0,0,.1); --b3:rgba(0,0,0,.16); --b4:rgba(0,0,0,.22); --t1:#111421; --t2:#4a5268; --t3:#6b7280; --accent2:#4338ca; --green:#15803d; --amber:#b45309; --red:#b91c1c; --jira:#1d4ed8; --shadow:0 4px 20px rgba(0,0,0,.08);
-} html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-serif;overflow:hidden;transition:background .3s,color .3s;-webkit-font-smoothing:antialiased} .app{display:grid;grid-template-rows:auto 1fr;height:100vh;position:relative} .topbar{ display:flex;align-items:center;gap:16px; padding:14px 22px; border-bottom:1px solid var(--b1); background:var(--bg); flex-shrink:0; z-index:5;
+} html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-serif;overflow:hidden;transition:background .3s,color .3s;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media(max-width:960px){ html,body{overflow:clip;/* allows iOS rubber-band at edges while blocking layout bleed */} /* Scrollable areas handle their own scroll on mobile */ .card{overflow:visible}
+}
+.app{display:grid;grid-template-rows:auto 1fr;height:100vh;position:relative} .topbar{ display:flex;align-items:center;gap:16px; padding:14px 22px; border-bottom:1px solid var(--b1); background:var(--bg); flex-shrink:0; z-index:5;
 }
 .brand{display:flex;align-items:center;gap:11px;min-width:0}
 .brand-logo{ width:36px;height:36px;border-radius:10px; display:flex;align-items:center;justify-content:center;flex-shrink:0; overflow:hidden; box-shadow:0 4px 14px rgba(139,92,246,.4);
@@ -73,7 +81,7 @@
 }
 .card-title{ font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase; color:var(--t2);
 }
-.card-body{flex:1;overflow-y:auto;min-height:0}
+.card-body{flex:1;overflow-y:auto;min-height:0;touch-action:pan-y;-webkit-overflow-scrolling:touch}
 .card-body::-webkit-scrollbar{width:4px}
 .card-body::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 .card-body::-webkit-scrollbar-thumb:hover{background:var(--b3)} .form-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px} .field-label{ display:flex;align-items:center;justify-content:space-between; font-size:12px;font-weight:500;color:var(--t1);margin-bottom:7px;
@@ -95,7 +103,7 @@
 .dz-preview-size{font-size:10px;color:var(--t2);margin-top:2px}
 .dz-remove{background:var(--s3);border:1px solid var(--b2);color:var(--t2);cursor:pointer;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--transition);flex-shrink:0}
 .dz-remove:hover{color:var(--red);border-color:var(--red-bd);background:var(--red-bg)} .describe-wrap{position:relative}
-.describe-box{ width:100%;background:var(--s2); border:1px solid var(--b2);border-radius:var(--rl); padding:12px 14px; font-size:13px;line-height:1.55;color:var(--t1); font-family:'Inter',sans-serif;outline:none; resize:none;min-height:90px;max-height:170px; transition:border-color .15s,background .15s;
+.describe-box{ width:100%;background:var(--s2); border:1px solid var(--b2);border-radius:var(--rl); padding:12px 14px; font-size:16px;line-height:1.55;color:var(--t1); font-family:'Inter',sans-serif;outline:none; resize:none;min-height:90px;max-height:170px; transition:border-color .15s,background .15s;
 }
 .describe-box:focus{border-color:var(--accent);background:var(--s1)}
 .describe-box::placeholder{color:var(--t3)} .ex-chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -105,7 +113,7 @@
 .ex-chip.active{background:var(--accent-bg);border-color:var(--accent-bd);color:var(--accent2)} .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .form-field{display:flex;flex-direction:column;gap:6px}
 .form-field-lbl{font-size:11px;color:var(--t2);font-weight:500}
-.select-in,.text-in{ width:100%;background:var(--s2); border:1px solid var(--b2);border-radius:9px; padding:9px 11px;font-size:12px;color:var(--t1); font-family:'Inter',sans-serif;outline:none; transition:border-color .15s,background .15s;cursor:pointer;
+.select-in,.text-in{ width:100%;background:var(--s2); border:1px solid var(--b2);border-radius:9px; padding:9px 11px;font-size:16px;color:var(--t1); font-family:'Inter',sans-serif;outline:none; transition:border-color .15s,background .15s;cursor:pointer;
 }
 .select-in:hover,.text-in:hover{border-color:var(--b3)}
 .select-in:focus,.text-in:focus{border-color:var(--accent);background:var(--s1)}
@@ -269,7 +277,7 @@
 .tc-item{margin-bottom:10px;border:1px solid var(--b2);border-radius:8px;overflow:hidden}
 .tc-item:last-child{margin-bottom:0}
 .tc-scenario{padding:7px 10px;background:var(--s3);font-size:11px;font-weight:500;color:var(--accent2);border-bottom:1px solid var(--b2)}
-.tc-body{padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t2);line-height:1.8;white-space:pre-wrap}
+.tc-body{padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t2);line-height:1.8;white-space:pre-wrap;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 .dup-panel{margin:0 16px 12px;border:1.5px solid var(--amber-bd);border-radius:12px;overflow:hidden;background:var(--amber-bg)}
 .dup-panel.dup-high{border-color:var(--red-bd);background:var(--red-bg)}
 .dup-panel.dup-clear{border-color:var(--green-bd);background:var(--green-bg)}
@@ -294,7 +302,7 @@
 .ef{display:flex;flex-direction:column;gap:3px}
 .ef.full{grid-column:span 2}
 .ef-lbl{font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--t3)}
-.ef-in{background:var(--s3);border:1px solid var(--b2);border-radius:7px;padding:6px 9px;font-size:12px;color:var(--t1);font-family:'Inter',sans-serif;outline:none;width:100%;transition:border-color .15s}
+.ef-in{background:var(--s3);border:1px solid var(--b2);border-radius:7px;padding:6px 9px;font-size:16px;color:var(--t1);font-family:'Inter',sans-serif;outline:none;width:100%;transition:border-color .15s}
 .ef-in:focus{border-color:var(--accent)}
 textarea.ef-in{resize:vertical;min-height:55px;line-height:1.5}
 select.ef-in{cursor:pointer}
@@ -402,7 +410,7 @@ select.ef-in{cursor:pointer}
 .cfg-dot{width:6px;height:6px;border-radius:50%;background:var(--t3);flex-shrink:0}
 .cfg-dot.ok{background:var(--green);box-shadow:0 0 6px var(--green)}
 .cfg-dot.err{background:var(--red);box-shadow:0 0 6px var(--red)}
-.cfg-in{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--t1);font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .15s}
+.cfg-in{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:8px 10px;font-size:16px;color:var(--t1);font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .15s}
 .cfg-in:focus{border-color:var(--accent)}
 .cfg-in::placeholder{color:var(--t3)}
 .btn-sv{width:100%;padding:9px;background:var(--s2);border:1px solid var(--b2);border-radius:9px;color:var(--t1);font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--transition)}
@@ -436,7 +444,7 @@ select.ef-in{cursor:pointer}
 .ppill.p-ado{background:var(--ado-bg);border-color:var(--ado-bd);color:var(--ado)}
 .ppill.p-gh{background:var(--gh-bg);border-color:var(--gh-bd);color:var(--gh)} .kb-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center}
 .kb-modal.open{display:flex}
-.kb-box{background:var(--s1);border:1px solid var(--b3);border-radius:var(--rxl);padding:26px;min-width:400px;max-width:90vw;box-shadow:var(--shadow-lg)}
+.kb-box{background:var(--s1);border:1px solid var(--b3);border-radius:var(--rxl);padding:26px;min-width:min(400px,90vw);max-width:90vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
 .kb-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
 .kb-close{background:none;border:none;color:var(--t2);cursor:pointer;font-size:18px;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center}
 .kb-close:hover{background:var(--s2);color:var(--t1)}
@@ -459,7 +467,7 @@ select.ef-in{cursor:pointer}
 .dash-chart-wrap{background:var(--s2);border:1px solid var(--b2);border-radius:var(--rl);padding:14px;margin-bottom:14px}
 .dash-chart-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.9px;color:var(--t3);margin-bottom:12px} .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:300;display:none;align-items:center;justify-content:center;animation:fadeIn .15s}
 .confirm-overlay.open{display:flex}
-.confirm-box{background:var(--s1);border:1px solid var(--b3);border-radius:var(--rxl);padding:26px;max-width:360px;width:90%;box-shadow:var(--shadow-lg)}
+.confirm-box{background:var(--s1);border:1px solid var(--b3);border-radius:var(--rxl);padding:26px;max-width:360px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
 .confirm-icon{font-size:30px;margin-bottom:12px;text-align:center}
 .confirm-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--t1);margin-bottom:8px;text-align:center}
 .confirm-msg{font-size:12.5px;color:var(--t2);line-height:1.6;text-align:center;margin-bottom:20px}
@@ -468,20 +476,33 @@ select.ef-in{cursor:pointer}
 .confirm-btn-cancel:hover{background:var(--s3);color:var(--t1)}
 .confirm-btn-ok{padding:9px 20px;border:none;border-radius:9px;background:var(--red);color:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .15s}
 .confirm-btn-ok:hover{opacity:.85} .toast-wrap{position:fixed;bottom:22px;right:22px;display:flex;flex-direction:column;gap:8px;z-index:400;pointer-events:none}
-.toast{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--b3);border-radius:11px;padding:10px 14px;font-size:12.5px;color:var(--t1);animation:toastIn .25s ease;min-width:240px;box-shadow:var(--shadow-md);pointer-events:auto}
+.toast{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--b3);border-radius:11px;padding:10px 14px;font-size:12.5px;color:var(--t1);animation:toastIn .25s ease;min-width:min(240px,85vw);max-width:min(420px,92vw);box-shadow:var(--shadow-md);pointer-events:auto}
 .toast.success{border-color:var(--green-bd);background:var(--green-bg);color:var(--green)}
 .toast.error{border-color:var(--red-bd);background:var(--red-bg);color:var(--red)}
 .toast.warn{border-color:var(--amber-bd);background:var(--amber-bg);color:var(--amber)}
 @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}} #file-input{display:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0} #input-area{display:none !important}
 #bulk-panel.in-drawer{display:block !important} button:focus-visible,.abtn:focus-visible,.hbtn:focus-visible,.send-btn:focus-visible,.action-btn:focus-visible,.generate-btn:focus-visible,.tpl-btn:focus-visible,.ex-chip:focus-visible,.tf-tab:focus-visible,.sec-hdr:focus-visible,.ptab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
-.cfg-in:focus-visible,.ef-in:focus-visible,.select-in:focus-visible,.text-in:focus-visible,.describe-box:focus-visible{outline:2px solid var(--accent);outline-offset:1px} @media(max-width:960px){ .workspace{grid-template-columns:1fr;gap:14px;padding:14px} .settings-drawer{width:100%} .dashboard-panel{width:100%} .card:last-child{min-height:260px}
-}
-@media(max-width:680px){ .topbar{padding:10px 12px;gap:7px} .brand-sub{display:none} .topbar-status{display:none} .hbtn:not(.settings-gear):not(.theme-btn) span.hbtn-txt{display:none} .hbtn:not(.settings-gear):not(.theme-btn){padding:7px 9px;font-size:11px} .workspace{padding:8px;gap:8px} .card-hdr{padding:11px 14px 9px} .form-body{padding:12px 14px;gap:11px} .form-footer{padding:9px 14px} .ticket-area{padding:12px 14px} .form-row-2,.form-row-actions{grid-template-columns:1fr} .dropzone{padding:16px 14px;min-height:100px} .dz-icon{width:28px;height:28px} .dz-title{font-size:12px} .dz-sub{font-size:11px} .generate-btn{font-size:14px;padding:15px 20px} .msg-bub{max-width:95%} .ex-chips{flex-wrap:wrap} .dup-actions{flex-direction:column} .settings-drawer .sidebar{-webkit-overflow-scrolling:touch}
-}
-@media(max-width:420px){ .workspace{padding:6px;gap:6px} .workspace{grid-template-columns:minmax(0,1fr)} .brand-name{font-size:13px} .topbar{padding:9px 10px} .topbar-btns .hbtn svg{flex-shrink:0} .settings-drawer{width:100vw;max-width:100vw} .form-body{padding:10px 12px;gap:10px} .card-hdr{padding:10px 12px 8px} #post-actions{flex-wrap:wrap} #post-actions .abtn{flex:1 1 calc(50% - 5px);min-width:0} .feat-btns{flex-wrap:wrap} .feat-btns .abtn{flex:1 1 calc(50% - 5px)}
-}
-</style>
+.cfg-in:focus-visible,.ef-in:focus-visible,.select-in:focus-visible,.text-in:focus-visible,.describe-box:focus-visible{outline:2px solid var(--accent);outline-offset:1px} /* ══════════════════════════════════════════════════════ RESPONSIVE — Bug Forge AI 320→360→420→640→680→960→1024px+ ══════════════════════════════════════════════════════ */ /* ── Tablet ≤960px ────────────────────────────────── */
+@media(max-width:960px){ .workspace{grid-template-columns:1fr;gap:14px;padding:14px} .settings-drawer{width:min(440px,100%)} .dashboard-panel{width:100%} .card:last-child{min-height:260px}
+} /* ── Mobile ≤680px ────────────────────────────────── */
+@media(max-width:680px){ .topbar{padding:10px 12px;gap:6px} .brand-sub{display:none} .topbar-status{display:none} .hbtn:not(.settings-gear):not(.theme-btn) span.hbtn-txt{display:none} .hbtn:not(.settings-gear):not(.theme-btn){padding:8px 10px;font-size:11px;min-height:44px;min-width:36px} .workspace{padding:8px;gap:8px} .card-hdr{padding:11px 14px 9px} .form-body{padding:12px 14px;gap:11px} .form-footer{padding:9px 14px} .ticket-area{padding:12px 14px;touch-action:pan-y} .form-row-2,.form-row-actions{grid-template-columns:1fr} .dropzone{padding:16px 14px;min-height:100px} .dz-icon{width:28px;height:28px} .dz-title{font-size:12px} .dz-sub{font-size:11px} .generate-btn{font-size:15px;padding:16px 20px;min-height:52px;width:100%} .abtn{min-height:44px;display:inline-flex;align-items:center;justify-content:center} .hbtn{min-height:44px} .msg-bub{max-width:95%} .ex-chips{flex-wrap:wrap;gap:6px} .dup-actions{flex-direction:column;gap:6px} .dup-actions .abtn,.dup-actions .hbtn{width:100%;justify-content:center;min-height:44px} .kb-box{padding:20px;min-width:min(360px,92vw);max-height:90vh;overflow-y:auto} .confirm-box{padding:20px;max-height:90vh;overflow-y:auto} .settings-drawer .sidebar{-webkit-overflow-scrolling:touch;touch-action:pan-y} #platform-post-btns{flex-wrap:wrap;gap:6px} #platform-post-btns .abtn{flex:1 1 calc(50% - 5px);min-width:0;justify-content:center;min-height:44px} .feat-btns{flex-wrap:wrap;gap:6px} .feat-btns .abtn{flex:1 1 calc(50% - 5px);min-width:0} #feat-actions,div[id="feat-actions"]{flex-wrap:wrap;gap:6px} /* Settings toggle touch area */ .toggle-sw{min-height:44px;padding:12px 4px;margin:-12px 0} /* cross-dup section spacing */ #cross-dup-systems{padding:12px} /* Ticket card body scrolls independently on mobile */ .card:last-child{min-height:unset;max-height:none}
+} /* ── Small mobile ≤420px ──────────────────────────── */
+@media(max-width:420px){ .workspace{padding:6px;gap:6px;grid-template-columns:minmax(0,1fr)} .brand-name{font-size:13px} .topbar{padding:9px 10px} .topbar-btns .hbtn svg{flex-shrink:0} .settings-drawer{width:100vw;max-width:100vw} .form-body{padding:10px 12px;gap:10px} .card-hdr{padding:10px 12px 8px} #post-actions{flex-wrap:wrap} #post-actions .abtn{flex:1 1 calc(50% - 5px);min-width:0} #feat-actions{flex-wrap:wrap !important;gap:5px} #feat-actions .abtn{flex:1 1 calc(50% - 4px);min-width:0;font-size:11px} /* Post buttons: 2-per-row */ #platform-post-btns .abtn{flex:1 1 calc(50% - 5px)} /* tc-prompt buttons: full width */ #tc-prompt-area{padding:10px 12px} #tc-prompt-area .abtn{width:100%;min-height:44px;justify-content:center} .dup-actions{gap:5px} .toast-container{left:8px;right:8px;align-items:stretch} .toast{min-width:0;width:100%} /* Settings: cross-dup checkboxes larger */ #cross-dup-systems label{padding:6px 0;font-size:13px} /* Ticket content text — prevent overflow */ .tk-summary{font-size:13px;word-break:break-word} .tk-body .tk-row{flex-wrap:wrap}
+} /* ── Very small ≤360px ────────────────────────────── */
+@media(max-width:360px){ .brand-logo{width:28px;height:28px} .topbar-btns{gap:2px} .topbar-btns .hbtn:not(.settings-gear):not(.theme-btn){padding:7px 7px} .workspace{padding:4px;gap:4px} .generate-btn{font-size:14px;padding:14px 16px}
+} /* ── iOS safe area (notch/home bar) ───────────────── */
+@supports(padding-bottom:env(safe-area-inset-bottom)){ .form-footer{padding-bottom:calc(10px + env(safe-area-inset-bottom))} .topbar{padding-top:max(14px,calc(10px + env(safe-area-inset-top)))} .settings-drawer{padding-bottom:env(safe-area-inset-bottom)} .toast-container{bottom:calc(24px + env(safe-area-inset-bottom))}
+} /* ── Tablet landscape: 641px–1024px — 2-column, compacted ── */
+@media(min-width:641px) and (max-width:1024px){ .settings-drawer{width:min(400px,50vw)} .dashboard-panel{width:min(480px,90vw)}
+} /* ── Input font-size ≥16px everywhere (prevent iOS zoom) ── */
+@media(max-width:960px){ .cfg-in,.ef-in,.select-in,.describe-box, input[type="text"],input[type="email"],input[type="search"], input[type="number"],textarea,select{font-size:16px !important}
+} /* ── Touch interaction ─────────────────────────────── */
+.abtn,.hbtn,.generate-btn,.action-btn,.provider-btn,.ex-chip{touch-action:manipulation}
+.card-body,.settings-drawer .sidebar,.ticket-area{scroll-behavior:smooth}
+.action-btn{min-height:44px;min-width:44px;padding:10px 12px} .toggle-sw{min-height:44px;min-width:44px;padding:10px 4px;margin:-10px -4px} #tc-prompt-area .abtn{min-height:44px;flex:1} #bulk-in{width:100%;box-sizing:border-box} #platform-post-btns{flex-wrap:wrap}
+#platform-post-btns .abtn{min-height:44px} .tc-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.tc-table{min-width:480px} /* allows scroll rather than squish */ </style>
 <script>
 (function(){var t=localStorage.getItem('da_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();
 // Register service worker for offline fallback
@@ -621,7 +642,7 @@ if('serviceWorker' in navigator){
   </header>
 
   <!-- ══ WORKSPACE: form + ticket ══ -->
-  <main class="workspace">
+  <main class="workspace" id="workspace">
 
     <!-- ═══ LEFT CARD: NEW BUG form ═══ -->
     <section class="card" aria-labelledby="newbug-heading">
@@ -654,7 +675,7 @@ if('serviceWorker' in navigator){
               <span class="field-hint">Enter to generate</span>
             </div>
             <div class="describe-wrap">
-              <textarea id="din" class="describe-box" aria-label="Describe your defect" aria-multiline="true" placeholder="Example: Login page crashes on Chrome v120 after entering OTP. Include platform, browser version, steps to reproduce, expected vs actual result."></textarea>
+              <textarea id="din" class="describe-box" aria-label="Describe your defect" aria-multiline="true" placeholder="Example: Login page crashes on Chrome v120 after entering OTP. Include platform, browser version, steps to reproduce, expected vs actual result." oninput="_resetDupCheckState('description changed')"></textarea>
             </div>
           </div>
 
@@ -1067,7 +1088,6 @@ if('serviceWorker' in navigator){
 <div class="toast-wrap" id="toasts" aria-live="polite" aria-atomic="false" role="status"></div>
 <script>
 
-
 // Clear ALL localStorage on page load — fresh start every time.
 // Nothing persists between sessions: credentials, history, theme, config.
 localStorage.clear();
@@ -1086,7 +1106,6 @@ const CFG = {
   get aiProvider() { return typeof ProviderManager !== 'undefined' ? ProviderManager.getActive() : 'claude'; },
   set aiProvider(v) { if (typeof ProviderManager !== 'undefined') ProviderManager.setActive(v, true); },
 };
-
 
 // Full ProviderManager adapted from Shuddhi QA production code.
 // Single source of truth for all AI calls in Bug Forge AI.
@@ -1215,7 +1234,6 @@ const ProviderManager = (function() {
 })();
 window.ProviderManager = ProviderManager;
 
-
 function _updateProviderUI(provider) {
   const meta = ProviderManager.getConfig(provider) || {};
   // Update pill buttons
@@ -1243,7 +1261,6 @@ function _updateProviderUI(provider) {
 }
 window._updateProviderUI = _updateProviderUI;
 
-
 function getActiveProvider() { return ProviderManager.getActive(); }
 function setProvider(p) {
   ProviderManager.setActive(p, true);
@@ -1255,15 +1272,12 @@ function setProvider(p) {
 window.getActiveProvider = getActiveProvider;
 window.setProvider       = setProvider;
 
-
 // Tracks how many times each provider has failed across sessions.
 // Used to show quota/billing advice after repeated failures.
 const _failureCount = { claude: 0, gemini: 0, groq: 0 };
 const _QUOTA_ADVICE_THRESHOLD = 3; // show advice after N consecutive failures
 
-
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
 
 const ERROR_MESSAGES = {
   rate_limit:  (p) => `${p} rate limit reached. Trying another provider…`,
@@ -1274,7 +1288,6 @@ const ERROR_MESSAGES = {
   server:      (p) => `${p} server error. Trying another provider…`,
   unknown:     (p) => `${p} request failed. Retrying…`,
 };
-
 
 async function callAI(messages, opts = {}) {
   // ALWAYS start fresh — background tasks must not poison state
@@ -1336,7 +1349,6 @@ async function callAI(messages, opts = {}) {
         return d;
       }
 
-      
       const errType    = d.errorType || 'unknown';
       const isSwitch   = r.status === 429 || d.switchProvider === true;
       const LABELS     = { claude: 'Claude', gemini: 'Gemini', groq: 'Groq' };
@@ -1396,8 +1408,6 @@ async function callAIGenerate(messages, opts = {}) {
   return callAI(messages, { ...opts, model: GENERATE_MODELS[p] });
 }
 
-
-
 // Jira / ADO / GitHub block direct browser requests (CORS).
 // All platform API calls are routed through /api/proxy (Vercel serverless).
 // Anthropic calls go direct (they support browser access via special header).
@@ -1406,8 +1416,57 @@ async function pfetch(url, options={}) {
   return fetch(proxyUrl, options);
 }
 
-
 let chatHist=[], isProc=false, curTicket=null;
+
+// ── Duplicate-check gate state ──────────────────────────────
+// dupCheckCompleted tracks whether the user has reviewed duplicates
+// for the current ticket. Resets when bug data or platform changes.
+let dupCheckCompleted = false;
+let dupCheckHasResults = false; // true if last check found matches
+
+function _resetDupCheckState(reason=''){
+  if(dupCheckCompleted || dupCheckHasResults){
+    console.log('[Dupes] State reset:', reason||'ticket changed');
+  }
+  dupCheckCompleted = false;
+  dupCheckHasResults = false;
+  // Update button badge immediately
+  _updateDupBtn();
+}
+
+function _markDupCheckDone(hasResults){
+  dupCheckCompleted = true;
+  dupCheckHasResults = !!hasResults;
+  console.log('[Dupes] Check completed. Duplicates found:', hasResults);
+  _updateDupBtn();
+}
+
+function _updateDupBtn(){
+  const btn = document.getElementById('btn-dup');
+  if(!btn) return;
+  if(dupCheckCompleted && !dupCheckHasResults){
+    // Clean — green check
+    btn.innerHTML = '✅ Dupes';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green-bd)';
+    btn.style.background = 'var(--green-bg)';
+    btn.style.boxShadow = '';
+  } else if(dupCheckCompleted && dupCheckHasResults){
+    // Found — amber warning
+    btn.innerHTML = '⚠ Dupes ●';
+    btn.style.color = 'var(--amber)';
+    btn.style.borderColor = 'var(--amber-bd)';
+    btn.style.background = 'var(--amber-bg)';
+    btn.style.boxShadow = '0 0 8px var(--amber-bd)';
+  } else {
+    // Not checked yet — pulsing glow to draw attention
+    btn.innerHTML = '⚠ Dupes';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+    btn.style.background = '';
+    btn.style.boxShadow = '0 0 0 2px var(--amber-bd)';
+  }
+}
 // pendingShot is exposed on window so adapter IIFE code can read/clear it.
 // (Using `let` at script scope doesn't attach to `window`, which caused the
 // adapter's `window.pendingShot = null` to silently diverge from this variable.)
@@ -1419,7 +1478,6 @@ catch(e){ localStorage.removeItem('da_log'); console.warn('Session history corru
 let bulkItems=[], isBulk=false, editOpen=false;
 let sevCharts={}, voiceRec=null, isListening=false;
 let activeTemplate=null;
-
 
 const TEMPLATES = {
   'Login/Auth':   { env:'Browser: Chrome/Safari | OS: Windows/macOS | Platform: Web', components:['Authentication','Session'], tags:'Login;Auth;Regression' },
@@ -1449,7 +1507,6 @@ function applyTemplate(name) {
   toast(`Template "${name}" applied`, 'success');
 }
 
-
 async function scoreSeverity(description) {
   const d = await callAI(
     [{role:'user',content:`Score this defect severity 0-100 and give one-line reasoning. Format: {"score":85,"level":"Critical","reasoning":"Blocks all users from login — production impact"}\n\nDefect: ${description}`}],
@@ -1467,7 +1524,6 @@ function renderSeverityScore(score, level, reasoning, container) {
   container.appendChild(el);
   setTimeout(()=>{ const f=document.getElementById('sev-fill'); if(f) f.style.width=score+'%'; },100);
 }
-
 
 async function scoreQuality(ticket) {
   // API key server-side
@@ -1501,7 +1557,6 @@ function renderQualityBadge(q) {
   if(card) card.insertBefore(el, card.querySelector('.tk-body'));
 }
 
-
 async function suggestRootCause() {
   if(!curTicket) return; // Anthropic key server-side
   const btn=document.getElementById('btn-rc'); if(btn){btn.disabled=true;btn.textContent='Analyzing...';}
@@ -1517,7 +1572,6 @@ async function suggestRootCause() {
   } catch(e) { area.innerHTML=''; toast('Root cause failed: '+e.message,'error'); }
   if(btn){btn.disabled=false;btn.innerHTML='🔍 Root Cause';}
 }
-
 
 async function generateTestCases() {
   if(!curTicket) return;
@@ -1540,7 +1594,6 @@ function copyTestCases() {
   const el=document.getElementById('tc-content'); if(!el) return;
   navigator.clipboard.writeText(el.innerText); toast('Test cases copied!','success');
 }
-
 
 function toggleCommentForm() {
   const f=document.getElementById('existing-form');
@@ -1566,7 +1619,6 @@ async function addComment() {
   } catch(e) { toast(e.message,'error'); }
 }
 
-
 async function fetchAndAssignSprint(platform, ticketId) {
   try {
     if(platform==='jira' && CFG.jiraBoard) {
@@ -1582,7 +1634,6 @@ async function fetchAndAssignSprint(platform, ticketId) {
     }
   } catch(e) { /* Sprint assign is best-effort, non-blocking */ }
 }
-
 
 async function showLinkEpic() {
   const area=document.getElementById('link-area'); if(!area||!curTicket) return;
@@ -1604,7 +1655,6 @@ async function linkParent() {
   } catch(e) { toast(e.message,'error'); }
 }
 
-
 async function sendNotifications(ticket, result) {
   if(!CFG.slack && !CFG.teams) return;
   try {
@@ -1625,7 +1675,6 @@ async function sendNotifications(ticket, result) {
     if(d.slack==='not_configured'&&d.teams==='not_configured') {} // silently skip
   } catch(e) { /* non-blocking */ }
 }
-
 
 function toggleVoice() { if(isListening) stopVoice(); else startVoice(); }
 function startVoice() {
@@ -1668,7 +1717,6 @@ function stopVoice() {
   }
 })();
 
-
 function exportCSV() {
   if(!sessionLog.length){toast('No tickets to export','warn');return;}
   const headers=['Ticket ID','Platform','Title','Severity','URL','Created'];
@@ -1685,7 +1733,6 @@ function exportPrint() {
   w.document.write(`<!DOCTYPE html><html><head><title>Defect Report</title><style>body{font-family:Arial,sans-serif;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f5f5f5}h1{font-size:18px}</style></head><body><h1>Bug Forge AI — Session Report (${new Date().toLocaleDateString()})</h1><table><thead><tr><th>ID</th><th>Platform</th><th>Title</th><th>Severity</th><th>Created</th><th>URL</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
   w.document.close(); w.print();
 }
-
 
 function openDash() {
   document.getElementById('dash-overlay').classList.add('open');
@@ -1732,7 +1779,6 @@ function renderDashboard() {
   }
 }
 
-
 function toggleTheme() {
   const html=document.documentElement;
   const isDark=html.getAttribute('data-theme')==='dark';
@@ -1745,7 +1791,6 @@ function initTheme() {
   document.documentElement.setAttribute('data-theme',saved);
   document.getElementById('theme-btn').textContent=saved==='dark'?'🌙':'☀️';
 }
-
 
 function initShortcuts() {
   document.addEventListener('keydown',e=>{
@@ -1775,7 +1820,6 @@ function closeKB(){
   // Return focus to trigger button
   const btn=document.getElementById('send-btn'); if(btn) btn.focus();
 }
-
 
 let _confirmResolve=null, _confirmTriggerEl=null;
 
@@ -1816,7 +1860,6 @@ function resolveConfirm(result){
   _confirmTriggerEl=null;
 }
 
-
 const TOOLS=[
   {name:'create_jira_bug',description:'Create a bug ticket in Jira Cloud. Default for web, mobile, API, Salesforce bugs.',
    input_schema:{type:'object',required:['project','summary','description','steps_to_reproduce','expected_result','actual_result','severity','priority','environment','components','labels','acceptance_criteria'],
@@ -1833,8 +1876,6 @@ ROUTING: "Azure DevOps"|"ADO"|"D365"|"Dynamics"|"pipeline"|"PUAT"|"sprint"→cre
 QUALITY: [Module] summary max 80 chars, specific steps, severity Critical=crash/High=major/Medium=partial/Low=cosmetic, 3-5 acceptance criteria. Infer all details. ADO: severity "1 - Critical", priority number 1-4. Call tool immediately.
 ADO FIELDS: repro_steps MUST be an array of individual step strings e.g. ["Navigate to login page","Enter valid credentials","Click Submit"]. NEVER put all steps in one string. system_info is environment/browser/OS ONLY e.g. "Chrome 120, Windows 11, UAT env". acceptance_criteria MUST be an array of strings.`;
 
-
-
 const T2P=n=>({create_jira_bug:'jira',create_azure_devops_bug:'azure_devops',create_github_issue:'github'}[n]||'jira');
 function sevClass(s){return{Critical:'sc','1 - Critical':'sc',High:'sh','2 - High':'sh',Medium:'sm','3 - Medium':'sm',Low:'sl','4 - Low':'sl'}[s]||'sm';}
 function highlightPill(p){['jira','ado','gh'].forEach(x=>document.getElementById('pill-'+x).className='ppill'+(x===p?' p-'+x:''));}
@@ -1844,7 +1885,6 @@ function platIcon(p,sz=16){
   if(p==='azure_devops')return`<svg width="${sz}" height="${sz}" viewBox="0 0 32 32" fill="none"><path d="M27 6L20 2.5 10.5 10 4 13v7l4.5 1.5L20 29.5 27 26V6z" fill="white"/></svg>`;
   return`<svg width="${sz}" height="${sz}" viewBox="0 0 32 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 2C8.27 2 2 8.27 2 16c0 6.19 4 11.43 9.57 13.29.7.13.96-.3.96-.67v-2.36c-3.89.85-4.71-1.87-4.71-1.87-.64-1.62-1.55-2.05-1.55-2.05-1.27-.87.1-.85.1-.85 1.4.1 2.13 1.44 2.13 1.44 1.25 2.14 3.28 1.52 4.08 1.16.12-.9.49-1.52.89-1.87-3.11-.35-6.37-1.55-6.37-6.9 0-1.52.54-2.77 1.44-3.74-.14-.35-.63-1.77.13-3.68 0 0 1.18-.38 3.86 1.44A13.3 13.3 0 0116 8.36c1.19.01 2.38.16 3.5.47 2.67-1.82 3.84-1.44 3.84-1.44.77 1.91.28 3.33.14 3.68.9.97 1.44 2.22 1.44 3.74 0 5.36-3.27 6.54-6.38 6.89.5.43.95 1.28.95 2.59v3.83c0 .37.25.8.96.67C25.99 27.43 30 22.19 30 16 30 8.27 23.73 2 16 2z" fill="white"/></svg>`;
 }
-
 
 const aiAv=()=>`<div class="msg-av ai" style="padding:0;overflow:hidden;background:none;border-radius:9px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 72 72"><defs><linearGradient id="avbf-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4338ca"/><stop offset="45%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#ec4899"/></linearGradient><linearGradient id="avbf-line" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#6366f1"/></linearGradient><linearGradient id="avbf-spark" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fde047"/><stop offset="60%" stop-color="#fb923c"/><stop offset="100%" stop-color="#ef4444"/></linearGradient><radialGradient id="avbf-glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fde047" stop-opacity="0.7"/><stop offset="100%" stop-color="#fde047" stop-opacity="0"/></radialGradient></defs><rect width="72" height="72" rx="16" fill="url(#avbf-bg)"/><rect width="72" height="72" rx="16" fill="url(#avbf-glow)" opacity="0.25"/><g transform="translate(36 38) rotate(-6) translate(-22 -18)"><rect x="1" y="3" width="44" height="36" rx="6" fill="rgba(0,0,0,.25)"/><rect width="44" height="36" rx="6" fill="#ffffff"/><rect x="5" y="6" width="18" height="3.5" rx="1.5" fill="#6366f1"/><rect x="5" y="14" width="34" height="2.5" rx="1" fill="url(#avbf-line)" opacity="0.85"/><rect x="5" y="19" width="30" height="2.5" rx="1" fill="#94a3b8" opacity="0.6"/><rect x="5" y="24" width="26" height="2.5" rx="1" fill="#94a3b8" opacity="0.55"/><rect x="5" y="29" width="20" height="2.5" rx="1" fill="#94a3b8" opacity="0.5"/></g><circle cx="18" cy="54" r="4" fill="#22c55e"/><circle cx="18" cy="54" r="4" fill="none" stroke="#ffffff" stroke-width="1.3"/><g transform="translate(52 20)"><circle cx="0" cy="0" r="14" fill="url(#avbf-glow)"/><path d="M0 -10 L2.5 -2.5 L10 0 L2.5 2.5 L0 10 L-2.5 2.5 L-10 0 L-2.5 -2.5 Z" fill="url(#avbf-spark)" stroke="#ffffff" stroke-width="0.8" stroke-linejoin="round"/></g></svg></div>`;
 const usrAv=()=>`<div class="msg-av user"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="white" opacity=".7"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="white" stroke-width="1.5" fill="none" opacity=".7"/></svg></div>`;
@@ -1856,7 +1896,6 @@ function addThink(steps){const chat=document.getElementById('chat');const d=docu
   chat.scrollTop=chat.scrollHeight;}
 function advStep(n){for(let i=0;i<n;i++){const ts=document.getElementById('ts'+i),si=document.getElementById('si'+i);if(ts)ts.className='think-step done';if(si)si.className='si done';}const ts=document.getElementById('ts'+n),si=document.getElementById('si'+n);if(ts)ts.className='think-step active';if(si)si.className='si spin';}
 function rmThink(){const el=document.getElementById('think');if(el)el.remove();const s=document.getElementById('ticket-skel');if(s)s.remove();}
-
 
 // BUG-006 FIX: HTML entity encoder — applied to ALL user-supplied fields before innerHTML injection
 const esc=s=>s==null?'':(s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
@@ -1888,7 +1927,7 @@ function buildTicketHTML(t,platform,tid){
     </div>
     <div class="tk-foot">
       <div class="tf-tabs"><button class="tf-tab active" id="tab-preview" onclick="switchTab('preview')">Preview</button><button class="tf-tab" id="tab-json" onclick="switchTab('json')">JSON</button></div>
-      <div class="tk-acts">
+      <div class="tk-acts" id="feat-actions">
         <button class="abtn" id="btn-copy" onclick="copyJSON()"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M10 1.5H4a2 2 0 00-2 2V12a.5.5 0 001 0V3.5a1 1 0 011-1h6a.5.5 0 000-1zm-4 2.5h6a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>Copy</button>
         <button class="abtn" id="btn-edit" onclick="toggleEdit()">✏ Edit</button>
         <button class="abtn info" id="btn-quality" onclick="scoreQuality(JSON.parse(JSON.stringify(curTicket)))">⭐ Quality</button>
@@ -1900,10 +1939,10 @@ function buildTicketHTML(t,platform,tid){
       <!-- Platform posting buttons — shown after generation, hidden after posting -->
       <div id="platform-post-btns" style="display:flex;gap:7px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--b1);background:var(--s2);border-radius:0 0 10px 10px">
         <div style="font-size:11px;color:var(--t2);width:100%;margin-bottom:4px">📤 Post ticket to:</div>
-        <button class="abtn primary" id="btn-post-jira" onclick="postToSpecificPlatform('jira')" style="background:var(--accent);flex:1;min-width:100px">🔵 Post to Jira</button>
-        <button class="abtn primary" id="btn-post-ado" onclick="postToSpecificPlatform('azure_devops')" style="background:#0078d4;flex:1;min-width:100px">🔷 Post to ADO</button>
-        <button class="abtn primary" id="btn-post-gh" onclick="postToSpecificPlatform('github')" style="background:#24292e;flex:1;min-width:100px">⚫ GitHub</button>
-        <button class="abtn primary" id="btn-post-all" onclick="postToSpecificPlatform('all')" style="background:linear-gradient(135deg,var(--accent),#0078d4);flex:1;min-width:100px">🌐 Post to All</button>
+        <button class="abtn primary" id="btn-post-jira" onclick="postToSpecificPlatform('jira')" style="background:var(--accent);flex:1;min-width:0">🔵 Post to Jira</button>
+        <button class="abtn primary" id="btn-post-ado" onclick="postToSpecificPlatform('azure_devops')" style="background:#0078d4;flex:1;min-width:0">🔷 Post to ADO</button>
+        <button class="abtn primary" id="btn-post-gh" onclick="postToSpecificPlatform('github')" style="background:#24292e;flex:1;min-width:0">⚫ GitHub</button>
+        <button class="abtn primary" id="btn-post-all" onclick="postToSpecificPlatform('all')" style="background:linear-gradient(135deg,var(--accent),#0078d4);flex:1;min-width:0">🌐 Post to All</button>
       </div>
       <!-- Test cases section — hidden until ticket is posted -->
       <div id="tc-prompt-area" style="display:none;padding:10px 14px;border-top:1px solid var(--b1)">
@@ -1934,7 +1973,6 @@ function switchTab(tab){
   else jp.style.display='none';
 }
 function copyJSON(){if(!curTicket)return;navigator.clipboard.writeText(JSON.stringify(curTicket,null,2));const b=document.getElementById('btn-copy');if(b){b.textContent='✓ Copied!';setTimeout(()=>b.innerHTML='<svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M10 1.5H4a2 2 0 00-2 2V12a.5.5 0 001 0V3.5a1 1 0 011-1h6a.5.5 0 000-1zm-4 2.5h6a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>Copy',1800);}}
-
 
 function toggleEdit(){
   const area=document.getElementById('edit-area'); if(!area||!curTicket)return;
@@ -2001,8 +2039,6 @@ function saveEdits(){
   toast('Edits saved — ticket ready to post','success');
 }
 
-
-
 const _dupCache = new Map();
 const _DUP_CACHE_TTL = 3 * 60 * 1000;
 function _dupCacheKey(platform, kw) { return `${platform}::${kw.slice(0,60)}`; }
@@ -2020,7 +2056,8 @@ async function checkDuplicates(opts={}){
   if(!area || !curTicket) return;
   const primaryPlatform = curTicket._platform;
   const btn = document.getElementById('btn-dup');
-  if(btn){ btn.disabled=true; btn.textContent='Checking…'; }
+  if(btn){ btn.disabled=true; btn.textContent='Checking…'; btn.style.boxShadow=''; }
+  console.log('[Dupes] Duplicate check triggered');
 
   area.innerHTML=`<div style="padding:10px 16px;font-size:12px;color:var(--t2);display:flex;align-items:center;gap:8px">
     <span style="width:12px;height:12px;border:2px solid var(--amber);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span>
@@ -2041,11 +2078,9 @@ async function checkDuplicates(opts={}){
     const kw = kws.join(' ');
     if(!kw){ area.innerHTML=''; if(btn){btn.disabled=false;btn.innerHTML='⚠ Dupes';} return; }
 
-    
     let primaryDupes = [];
     primaryDupes = await _fetchDupes(primaryPlatform, kw, kws, titleStr);
 
-    
     // Only runs if enabled in Settings. Never blocks or delays generation.
     // Each system call is independent — failure of one doesn't affect others.
     let crossResults = {}; // { jira: [], ado: [], github: [] }
@@ -2075,7 +2110,6 @@ async function checkDuplicates(opts={}){
       });
     }
 
-    
     if(primaryDupes.length >= 1){
       try{
         const newBug = `Title: ${titleStr}\nDescription: ${descStr.slice(0,300)}\nSteps: ${stepsStr.slice(0,200)}`;
@@ -2100,7 +2134,6 @@ async function checkDuplicates(opts={}){
     const highConf = primaryDupes.filter(d=>(d.score??50)>=80);
     const hasCross = Object.values(crossResults).some(arr => arr.length > 0);
 
-    
     if(!primaryDupes.length && !hasCross){
       if(auto){ area.innerHTML=''; }
       else{
@@ -2111,7 +2144,8 @@ async function checkDuplicates(opts={}){
           </div>
         </div>`;
       }
-      if(btn){btn.disabled=false;btn.innerHTML='⚠ Dupes';}
+      _markDupCheckDone(false); // clean — no dupes
+      if(btn){btn.disabled=false;}
       return;
     }
 
@@ -2145,7 +2179,6 @@ async function checkDuplicates(opts={}){
       </div>`;
     };
 
-    
     const primaryLabel = primaryPlatform==='jira' ? 'Jira' : primaryPlatform==='azure_devops' ? 'Azure DevOps' : 'GitHub';
     const primaryBadgeClass = primaryPlatform==='jira' ? 'jira' : primaryPlatform==='azure_devops' ? 'ado' : 'github';
     let html = `<div class="dup-group-hdr">🎯 Primary — ${primaryLabel}</div>`;
@@ -2155,7 +2188,6 @@ async function checkDuplicates(opts={}){
       html += `<div style="padding:8px 13px;font-size:11px;color:var(--t3)">✓ No duplicates in ${primaryLabel}</div>`;
     }
 
-    
     if(hasCross){
       html += `<div class="dup-group-hdr" style="margin-top:4px">🌐 Other Systems</div>`;
       const sysNames = { jira:'Jira', ado:'Azure DevOps', github:'GitHub' };
@@ -2182,13 +2214,16 @@ async function checkDuplicates(opts={}){
       </div>
     </div>`;
 
+    _markDupCheckDone(true); // dupes found
+
   }catch(e){
     if(auto){ area.innerHTML=''; console.warn('Dupe check error:', e); }
     else{ area.innerHTML=`<div style="padding:9px 16px;font-size:12px;color:var(--red)">Duplicate check failed: ${esc(e.message)}</div>`; }
+    // On error, mark as completed so user isn't blocked — they saw the error
+    _markDupCheckDone(false);
   }
-  if(btn){ btn.disabled=false; btn.innerHTML='⚠ Dupes'; }
+  if(btn){ btn.disabled=false; }
 }
-
 
 async function _fetchDupes(platform, kw, kws, titleStr){
   const cacheKey = _dupCacheKey(platform, kw);
@@ -2220,7 +2255,6 @@ async function _fetchDupes(platform, kw, kws, titleStr){
   _dupCacheSet(cacheKey, results);
   return results;
 }
-
 
 async function markAsDuplicate(existingId, existingUrl){
   if(!curTicket || !curTicket._postedId){
@@ -2259,7 +2293,6 @@ async function markAsDuplicate(existingId, existingUrl){
   }
 }
 
-
 // Quick shortcut: click a dupe in the panel and open the Comment-on-existing form
 function commentOnDuplicate(){
   const firstDupe=document.querySelector('#dup-area .dup-item .dup-id');
@@ -2277,7 +2310,6 @@ function commentOnDuplicate(){
     toggleCommentForm();
   }
 }
-
 
 async function postTicket(){
   const platform=curTicket?._platform; if(!platform)return;
@@ -2300,7 +2332,6 @@ async function postTicket(){
       result=await postGH(curTicket);
     }
 
-    
     if(window.pendingShot?.file){
       try{
         const b64=await fileToBase64(window.pendingShot.file);
@@ -2404,7 +2435,6 @@ async function postADO(t, screenshotUrl){
   // Credentials in Vercel env vars — check project selected
   if(!CFG.adoProj) throw new Error('Please select an ADO project from the sidebar');
 
-  
   let rawSteps = t.repro_steps || t.steps_to_reproduce || [];
   if (typeof rawSteps === 'string') {
     // AI sometimes returns all steps as one string — split into individual lines
@@ -2437,7 +2467,6 @@ async function postADO(t, screenshotUrl){
   const steps = rawSteps.map((s,i) => `<li>${i+1}. ${esc(s)}</li>`).join('');
   const crit  = (t.acceptance_criteria||[]).map((c,i) => `<li>${esc(c)}</li>`).join('');
 
-  
   // ADO's ReproSteps field is the primary field testers read. Consolidate everything.
   const reproHTML = [
     // 1 — Description / Summary
@@ -2516,7 +2545,6 @@ async function postGH(t){
   return api('github', { action:'create_issue', config:ghCfg(), payload:{ title, body, labels } });
 }
 
-
 function initDragDrop(){
   const chat=document.getElementById('chat'),ov=document.getElementById('drop-ov');
   chat.addEventListener('dragover',e=>{e.preventDefault();ov.classList.add('active');});
@@ -2528,7 +2556,6 @@ function initDragDrop(){
   });
   document.getElementById('file-input').addEventListener('change',e=>{const f=e.target.files[0];if(f)handleShot(f);e.target.value='';});
 
-  
   document.addEventListener('paste',e=>{
     const items=Array.from(e.clipboardData?.items||[]);
     const img=items.find(i=>i.type.startsWith('image/'));
@@ -2545,11 +2572,11 @@ function initDragDrop(){
   });
 }
 function handleShot(file){
-  // Size cap: 5 MB (README advertises this)
   if (file.size > 5 * 1024 * 1024) {
     toast(`File too large (${(file.size/1024/1024).toFixed(1)} MB). Max is 5 MB.`, 'warn');
     return;
   }
+  _resetDupCheckState('screenshot changed');
   const reader=new FileReader();
   reader.onload=e=>{
     window.pendingShot={dataUrl:e.target.result,name:file.name,file};
@@ -2605,7 +2632,6 @@ function fileToBase64(file){
   });
 }
 
-
 function addToHistory(platform,ticketId,title,url,severity){
   sessionLog.unshift({platform,ticketId,title,url,severity,time:Date.now()});
   if(sessionLog.length>40)sessionLog.pop();
@@ -2628,7 +2654,6 @@ function renderHistory(){
     return`<div class="hist-item" onclick="window.open('${safeUrl}','_blank')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.open('${safeUrl}','_blank')}"><div class="hist-plat" style="background:${pBg[e.platform]||'var(--s3)'}">${platIcon(e.platform,11)}</div><div class="hist-info"><div class="hist-id" style="color:${pClr[e.platform]||'var(--accent2)'}">${esc(e.ticketId)}</div><div class="hist-ttl">${esc(e.title||'Untitled')}</div></div><span class="hist-time">${ago(e.time)}</span></div>`;
   }).join('');
 }
-
 
 function toggleBulk(){
   isBulk=!isBulk;
@@ -2668,7 +2693,6 @@ async function runBulk(){
       if(tb){
         const platform=T2P(tb.name),ticket={...tb.input,_platform:platform};
 
-        
         // Reuses the same search logic as checkDuplicates() but
         // silently skips posting if a high-confidence dupe is found.
         let isDupe=false;
@@ -2726,7 +2750,6 @@ async function runBulk(){
 }
 function clearBulk(){bulkItems=[];document.getElementById('bulk-in').value='';document.getElementById('bulk-rows').innerHTML='';document.getElementById('bpw').style.display='none';document.getElementById('bpb').style.width='0%';document.getElementById('bulk-acts').style.display='none';}
 
-
 const EXAMPLES=['Login button not responding on iPhone Safari after latest update — user taps and nothing happens','Payment gateway returns 504 timeout during checkout — cart not cleared but charge attempted','Analytics dashboard crashes white screen when applying date range filter','API returns 404 on GET requests — started after last deployment'];
 function setEx(i){document.getElementById('din').value=EXAMPLES[i];}
 
@@ -2734,7 +2757,6 @@ async function sendDefect(){
   const input=document.getElementById('din'),txt=input.value.trim();
   if(!txt||isProc)return;
 
-  
   // This ensures new API keys take effect immediately and cooldowns
   // from background tasks (scoreSeverity, checkDuplicates etc.) don't
   // block the user.
@@ -2777,6 +2799,7 @@ async function sendDefect(){
     highlightPill(platform==='azure_devops'?'ado':platform==='github'?'gh':'jira');
     advStep(2);
     curTicket={...tb.input,_platform:platform};
+    _resetDupCheckState('new ticket generated');
     // Apply template defaults if template is active
     if(activeTemplate&&TEMPLATES[activeTemplate]){
       const tpl=TEMPLATES[activeTemplate];
@@ -2795,7 +2818,6 @@ async function sendDefect(){
     wrap.innerHTML=buildTicketHTML(curTicket,platform,fakeId);
     chat.appendChild(wrap);
 
-    
     setTimeout(() => { try { checkDuplicates({auto:true}); } catch(e) { console.warn('Auto-dupe check failed:', e); } }, 400);
 
   }catch(e){
@@ -2819,8 +2841,6 @@ async function sendDefect(){
     document.getElementById('agent-txt').textContent='Agent ready';
   }
 }
-
-
 
 async function validateCfg(section) {
   const btn = event.target;
@@ -2908,8 +2928,6 @@ async function validateCfg(section) {
     btn.textContent = orig; btn.disabled = false;
   }
 }
-
-
 
 function dismissTestCaseAsk(){
   const el=document.getElementById('tc-ask-msg');
@@ -3047,8 +3065,6 @@ function copyInlineTC(){
   toast('Test cases copied!','success');
 }
 
-
-
 // loadAdoOrgs() kept as a safe no-op — called from init but no longer
 // needed since org is now a free-text input. Projects load via loadAdoProjects().
 async function loadAdoOrgs() {
@@ -3104,7 +3120,6 @@ async function onAdoOrgChange(orgName) {
   if (orgName) await loadProjects('ado');
   updateDots();
 }
-
 
 async function loadProjects(platform) {
   const isJira = platform === 'jira';
@@ -3186,8 +3201,6 @@ async function loadProjects(platform) {
   }
 }
 
-
-
 function dismissTCPrompt(){
   const el=document.getElementById('tc-prompt-area');
   if(el) el.innerHTML='<div style="font-size:11px;color:var(--t3);padding:4px 0">No problem! You can generate test cases anytime using 🧪 Test Cases button above.</div>';
@@ -3196,7 +3209,23 @@ function dismissTCPrompt(){
 async function postToSpecificPlatform(platform){
   if(!curTicket){ toast('No ticket to post','warn'); return; }
 
-  // Disable all post buttons
+  // ── DUP-CHECK GATE ─────────────────────────────────────────
+  // If dupes haven't been checked for this ticket, show a warning.
+  // User can still proceed — this is advisory, not a hard block.
+  console.log('[Dupes] Dupes check status:', dupCheckCompleted, '| Has results:', dupCheckHasResults);
+
+  if(!dupCheckCompleted){
+    // Silently run the check first — if it completes quickly we use its result
+    const proceed = await _showDupGate(platform, false);
+    if(!proceed) return; // user cancelled
+  } else if(dupCheckHasResults){
+    // Already checked AND found duplicates — show stronger warning
+    const proceed = await _showDupGate(platform, true);
+    if(!proceed) return;
+  }
+  // dupCheckCompleted && !dupCheckHasResults → silent pass through
+
+  // ── PROCEED WITH POST ───────────────────────────────────────
   ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
     const b=document.getElementById(id); if(b) b.disabled=true;
   });
@@ -3215,11 +3244,9 @@ async function postToSpecificPlatform(platform){
       else if(p==='azure_devops') result = await postADO(curTicket);
       else result = await postGH(curTicket);
 
-      // Store real ticket ID for test case linking
       curTicket._postedId = result.id;
       curTicket._rawId = result.rawId || result.id.replace('#','');
 
-      // Sprint + notifications
       await fetchAndAssignSprint(p, result.id);
       await sendNotifications(curTicket, result);
       addToHistory(p, result.id, curTicket.summary||curTicket.title, result.url, curTicket.severity);
@@ -3230,7 +3257,6 @@ async function postToSpecificPlatform(platform){
     }
   }
 
-  // Show results
   const pNames = {'jira':'Jira','azure_devops':'ADO','github':'GitHub'};
   const successHTML = results.filter(r=>r.ok).map(r=>
     `✓ <a class="post-link" href="${r.url}" target="_blank">${r.id}</a> created in ${pNames[r.platform]||r.platform}`
@@ -3247,20 +3273,89 @@ async function postToSpecificPlatform(platform){
 
   if(results.some(r=>r.ok)){
     toast(`Ticket created successfully!`,'success');
-    // Hide platform buttons, show test case prompt
     const postBtns = document.getElementById('platform-post-btns');
     if(postBtns) postBtns.style.display='none';
     const tcPrompt = document.getElementById('tc-prompt-area');
     if(tcPrompt) tcPrompt.style.display='block';
-    // Also hide old tc-ask-msg if visible
     const tcAsk = document.getElementById('tc-ask-msg');
     if(tcAsk) tcAsk.style.display='none';
   } else {
-    // Re-enable buttons on failure
     ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
       const b=document.getElementById(id); if(b) b.disabled=false;
     });
   }
+}
+
+// ── Dup-check gate dialog ─────────────────────────────────────
+// Returns true = proceed with post, false = cancel
+// hasFoundDupes = whether last check found matches
+async function _showDupGate(targetPlatform, hasFoundDupes){
+  return new Promise(resolve => {
+    const area = document.getElementById('dup-area');
+    if(!area) { resolve(true); return; }
+
+    const pName = targetPlatform==='all' ? 'all systems'
+                : targetPlatform==='jira' ? 'Jira'
+                : targetPlatform==='azure_devops' ? 'Azure DevOps'
+                : 'GitHub';
+
+    const existingDupesHTML = hasFoundDupes
+      ? `<div style="margin:8px 0;font-size:11px;color:var(--amber)">⚠ Similar issues were found in your last check. Posting may create a duplicate.</div>`
+      : '';
+
+    const icon    = hasFoundDupes ? '⚠️' : '🔍';
+    const heading = hasFoundDupes
+      ? '⚠ Similar issues found'
+      : '⚠ Duplicates not checked';
+    const body    = hasFoundDupes
+      ? `Similar issues already exist. Review them before posting to ${pName}.`
+      : `You haven't checked for existing issues before posting to ${pName}.`;
+    const panelClass = hasFoundDupes ? 'dup-high' : '';
+    const hdrStyle   = hasFoundDupes
+      ? 'color:var(--red);border-color:var(--red-bd)'
+      : 'color:var(--amber);border-color:var(--amber-bd)';
+
+    area.innerHTML = `<div class="dup-panel ${panelClass}" id="dup-gate-panel">
+      <div class="dup-hdr" style="${hdrStyle}">
+        ${icon} ${heading}
+      </div>
+      <div style="padding:10px 13px;font-size:12px;color:var(--t1);line-height:1.6">
+        ${body}
+        ${existingDupesHTML}
+      </div>
+      <div class="dup-actions">
+        <button class="abtn warn" id="dup-gate-check" onclick="">
+          🔍 Check Dupes now
+        </button>
+        <button class="abtn danger" id="dup-gate-proceed" onclick="">
+          📤 Proceed anyway
+        </button>
+        <button class="hbtn" id="dup-gate-cancel" onclick="">
+          ✕ Cancel
+        </button>
+      </div>
+    </div>`;
+
+    // Scroll gate into view
+    area.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+    // Wire up buttons (avoid inline onclick to prevent resolve closure issues)
+    document.getElementById('dup-gate-check').onclick = async () => {
+      area.innerHTML = '';
+      await checkDuplicates({auto:false});
+      // After manual check, user decides — do not auto-proceed
+      resolve(false);
+    };
+    document.getElementById('dup-gate-proceed').onclick = () => {
+      area.innerHTML = '';
+      console.log('[Dupes] User chose to proceed anyway');
+      resolve(true);
+    };
+    document.getElementById('dup-gate-cancel').onclick = () => {
+      area.innerHTML = '';
+      resolve(false);
+    };
+  });
 }
 
 function switchPlatformTab(tab) {
@@ -3276,8 +3371,6 @@ function switchPlatformTab(tab) {
   });
   CFG.activePlatformTab = tab;
 }
-
-
 
 const ORG_CODE = new URLSearchParams(window.location.search).get('org') || '';
 
@@ -3331,7 +3424,6 @@ async function loadOrgConfig() {
 // so server-side API can fetch credentials from KV
 const _origOrgCode = ORG_CODE;
 
-
 function tSec(id){const b=document.getElementById('bod-'+id),a=document.getElementById('arr-'+id);const o=b.classList.toggle('open');a.classList.toggle('open',o);}
 function saveCfg(section){
   const v=id=>{const el=document.getElementById(id);return el?el.value:'';};
@@ -3358,7 +3450,6 @@ function updateDots(){
   dot('dot-slack',!!CFG.slack);dot('dot-teams',!!CFG.teams);
 }
 
-
 function restoreConfig(){
   const restore=(id,val,mask)=>{const el=document.getElementById(id);if(el)el.value=val?(mask?'●'.repeat(12):val):'';}; 
   restore('ci-ant',CFG.ant,true);restore('ci-jira-url',CFG.jiraUrl);restore('ci-jira-email',CFG.jiraEmail);
@@ -3383,6 +3474,7 @@ async function clearChat(){
     if(!ok) return;
   }
   chatHist=[];curTicket=null;clearPills();
+  _resetDupCheckState('session cleared');
   // Clear duplicate detection area
   const dupArea = document.getElementById('dup-area');
   if(dupArea) dupArea.innerHTML='';
@@ -3404,7 +3496,6 @@ function toast(msg,type='info'){
   const t=document.createElement('div');t.className='toast '+type;t.textContent=msg;wrap.appendChild(t);
   setTimeout(()=>t.remove(),3500);
 }
-
 
 // Credentials (API keys, URLs, tokens) persist in localStorage — user shouldn't re-enter every time.
 // Session state (chat, tickets, bulk) resets on every page load — fresh start each time.
@@ -3468,7 +3559,6 @@ window.addEventListener('load',()=>{
   initShortcuts();
   document.getElementById('din').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendDefect();}});
 
-  
   // Also loads projects + ADO orgs after confirming API is reachable
   setTimeout(async ()=>{
     try {
@@ -3493,7 +3583,6 @@ window.addEventListener('load',()=>{
     }
   }, 1200);
 });
-
 
 function toggleMobileSidebar() {
   const sidebar = document.querySelector('.sidebar');
@@ -3789,6 +3878,33 @@ window.addEventListener('resize', function() {
     setTimeout(syncProjectMirror, 1500);
     setTimeout(syncProjectMirror, 3000);
     updateDropzonePreview();
+
+    // iOS keyboard avoidance + cross-browser fixes
+    if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){
+      document.addEventListener('focusin', e => {
+        const el = e.target;
+        if(el && (el.tagName==='INPUT'||el.tagName==='TEXTAREA'||el.tagName==='SELECT')){
+          setTimeout(() => {
+            el.scrollIntoView({behavior:'smooth', block:'nearest', inline:'nearest'});
+          }, 350); // 350ms: after iOS keyboard animation completes
+        }
+      });
+    }
+    // Already handled by touch-action:manipulation in CSS, but add JS fallback
+    document.addEventListener('touchend', e => {
+      if(e.target.matches('.abtn,.hbtn,.generate-btn,.action-btn,.provider-btn')){
+        e.preventDefault(); // prevent ghost click delay on iOS
+        e.target.click();
+      }
+    }, {passive:false});
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        syncProjectMirror();
+        // Force reflow of workspace grid after rotation
+        const ws = document.getElementById('workspace') || document.querySelector('.workspace');
+        if(ws){ ws.style.display='none'; ws.offsetHeight; ws.style.display=''; }
+      }, 300);
+    });
   });
 
 })();
