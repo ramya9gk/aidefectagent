@@ -1454,23 +1454,29 @@ let chatHist=[], isProc=false, curTicket=null;
 // for the current ticket. Resets when bug data or platform changes.
 let dupCheckCompleted = false;
 let dupCheckHasResults = false; // true if last check found matches
+let _dupFoundMatches   = [];    // persists found matches across UI interactions (dismiss etc.)
+let _dupCheckRanClean  = false; // true only when checkDuplicates ran to completion (not early-exit)
 
 function _resetDupCheckState(reason=''){
   if(dupCheckCompleted || dupCheckHasResults){
     console.log('[Dupes] State reset:', reason||'ticket changed');
   }
-  dupCheckCompleted = false;
+  dupCheckCompleted  = false;
   dupCheckHasResults = false;
+  _dupFoundMatches   = [];       // clear stored matches
+  _dupCheckRanClean  = false;
+  _dupStripPostTarget = null;
   _updateDupBtn();
   _updateDupStrip('idle');
 }
 
 function _markDupCheckDone(hasResults, matches=[], platform=''){
-  dupCheckCompleted = true;
+  dupCheckCompleted  = true;
   dupCheckHasResults = !!hasResults;
-  console.log('[Dupes] Check completed. Duplicates found:', hasResults);
+  _dupFoundMatches   = matches;   // persist so strip can rebuild after dismiss
+  _dupCheckRanClean  = true;      // check completed — gate can use result
+  console.log('[Dupes] Check completed. Duplicates found:', hasResults, '| Count:', matches.length);
   _updateDupBtn();
-  // Update the inline strip
   if(hasResults){
     _updateDupStrip('found', { matches, count:matches.length, platform });
   } else {
@@ -1525,6 +1531,16 @@ function _updateDupStrip(state, data={}){
     ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
       const b=document.getElementById(id); if(b){b.style.opacity='0.4';b.style.pointerEvents='none';}
     });
+    // BUG 4 FIX: safety timeout — re-enable buttons after 10s in case check hangs
+    clearTimeout(strip._safetyTimer);
+    strip._safetyTimer = setTimeout(() => {
+      ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
+        const b=document.getElementById(id); if(b){b.style.opacity='';b.style.pointerEvents='';}
+      });
+      if(strip.classList.contains('dss-checking')){
+        strip.style.display='none'; // hide stuck spinner silently
+      }
+    }, 10000);
     return;
   }
   // Re-enable post buttons after any completed state
@@ -2181,90 +2197,184 @@ function _dupCacheSet(key, data) { _dupCache.set(key, { data, ts: Date.now() });
 async function checkDuplicates(opts={}){
   const {auto=false} = opts;
   const area = document.getElementById('dup-area');
-  if(!area || !curTicket) return;
+  if(!area || !curTicket){
+    // dup-area not in DOM yet — mark check as "unable to run" so gate stays active
+    _dupCheckRanClean = false;
+    ['btn-post-jira','btn-post-ado','btn-post-gh','btn-post-all'].forEach(id=>{
+      const b=document.getElementById(id); if(b){b.style.opacity='';b.style.pointerEvents='';}
+    });
+    console.warn('[Dupes] dup-area not in DOM — check skipped, gate remains active');
+    return;
+  }
+
   const primaryPlatform = curTicket._platform;
   const btn = document.getElementById('btn-dup');
   if(btn){ btn.disabled=true; btn.textContent='Checking…'; btn.style.boxShadow=''; }
-  console.log('[Dupes] Duplicate check triggered');
+  console.log('[Dupes] Duplicate check triggered — platform:', primaryPlatform);
   _updateDupStrip('checking', { platform: primaryPlatform });
 
+  // Loading indicator in dup-area
   area.innerHTML=`<div style="padding:10px 16px;font-size:12px;color:var(--t2);display:flex;align-items:center;gap:8px">
     <span style="width:12px;height:12px;border:2px solid var(--amber);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span>
-    Scanning for duplicates${CFG.crossDupEnabled ? ' across all systems' : ` in ${primaryPlatform==='jira'?'Jira':primaryPlatform==='azure_devops'?'Azure DevOps':'GitHub'}`}…
+    Scanning for duplicates…
   </div>`;
 
   try{
-    
+    // ══ TIER 1: KEYWORD EXTRACTION ══════════════════════════════
     const STOP = new Set(('a an the and or but for nor so yet in on at to from of with by as is was were be been being have has had do does did will would could should shall may might must can not no if then than this that these those it its their our your my me you i he she they them us we when while where which who whom whose what why how all any each every some new old more most less least very really just only over under into onto about upon also still yet already bug issue error crash fail fails failed fixing unable cannot').split(' '));
     const titleStr = (curTicket.summary||curTicket.title||'');
     const descStr  = (curTicket.description||curTicket.body||'').slice(0,400);
     const stepsStr = (curTicket.repro_steps||curTicket.steps_to_reproduce||[]).slice(0,3).join(' ');
-    const src = [titleStr, descStr, stepsStr, (curTicket.components||[]).join(' ')].join(' ');
+    const envStr   = (curTicket.environment||curTicket.system_info||'');
+    const src = [titleStr, descStr, stepsStr].join(' ');
     const words = src.toLowerCase().replace(/[^\w\s]/g,' ').split(/\s+/)
       .filter(w => w.length>=4 && !STOP.has(w) && !/^\d+$/.test(w));
     const seen=new Set(); const kws=[];
     for(const w of words){ if(!seen.has(w)){ seen.add(w); kws.push(w); if(kws.length>=8) break; } }
     const kw = kws.join(' ');
+
     if(!kw){
-      area.innerHTML='<div class="dup-panel dup-clear"><div class="dup-hdr" style="color:var(--t3);border-color:var(--b2)">⚠ Not enough text to scan for duplicates — safe to post.</div></div>';
+      area.innerHTML=`<div class="dup-panel dup-clear"><div class="dup-hdr" style="color:var(--t3);border-color:var(--b2)">
+        ⚠ Not enough text to scan for duplicates — safe to post.
+      </div></div>`;
       _markDupCheckDone(false, [], primaryPlatform);
-      if(btn){btn.disabled=false;}
+      if(btn) btn.disabled=false;
       return;
     }
 
+    // ══ TIER 2: PLATFORM KEYWORD SEARCH ═════════════════════════
+    // Run primary platform + optional cross-system in parallel
     let primaryDupes = [];
-    primaryDupes = await _fetchDupes(primaryPlatform, kw, kws, titleStr);
+    let crossResults = {};
 
-    // Only runs if enabled in Settings. Never blocks or delays generation.
-    // Each system call is independent — failure of one doesn't affect others.
-    let crossResults = {}; // { jira: [], ado: [], github: [] }
+    const fetchPrimary = _fetchDupes(primaryPlatform, kw, kws, titleStr);
+
+    let fetchCross = Promise.resolve([]);
     if(CFG.crossDupEnabled){
       const otherSystems = ['jira','azure_devops','github'].filter(p => {
-        if(p === primaryPlatform) return false;           // already in Layer 1
+        if(p === primaryPlatform) return false;
         const sysKey = p === 'azure_devops' ? 'ado' : p;
-        return CFG.crossDupSystems[sysKey] !== false;     // respect per-system toggles
+        return CFG.crossDupSystems[sysKey] !== false;
       });
-
-      // Fire all cross-system requests in parallel
       const crossPromises = otherSystems.map(async sys => {
         try {
           const results = await _fetchDupes(sys, kw, kws, titleStr);
           return { sys, results };
         } catch(e) {
-          console.warn(`[Cross-dup] ${sys} failed silently:`, e.message);
-          return { sys, results: [] };  // fail silently — never block
+          console.warn('[Cross-dup] '+sys+' failed silently:', e.message);
+          return { sys, results: [] };
         }
       });
-      const settled = await Promise.allSettled(crossPromises);
-      settled.forEach(r => {
-        if(r.status === 'fulfilled' && r.value.results.length) {
-          const sysKey = r.value.sys === 'azure_devops' ? 'ado' : r.value.sys;
-          crossResults[sysKey] = r.value.results;
+      fetchCross = Promise.allSettled(crossPromises).then(settled => {
+        settled.forEach(r => {
+          if(r.status === 'fulfilled' && r.value.results.length){
+            const sysKey = r.value.sys === 'azure_devops' ? 'ado' : r.value.sys;
+            crossResults[sysKey] = r.value.results;
+          }
+        });
+      });
+    }
+
+    // ══ TIER 3: SEMANTIC EMBEDDING SEARCH ═══════════════════════
+    // Runs in parallel with keyword search.
+    // Embeds the new bug and ranks keyword candidates by cosine similarity.
+    // Catches duplicates keyword search misses due to vocabulary differences.
+    let semanticBonus = []; // extra candidates from semantic search
+    const newBugText = `${titleStr} ${descStr}`.trim();
+
+    const fetchSemantic = (async () => {
+      try{
+        // We embed the new bug against the keyword-found candidates.
+        // This re-ranks them semantically and can boost buried candidates.
+        // We do this here because we don't have a pre-built vector index —
+        // so we embed on-demand against the candidates we already fetched.
+        // This costs 1 extra API call but dramatically improves ranking.
+        const candidatesForEmbed = await fetchPrimary; // reuse same promise
+        if(!candidatesForEmbed.length) return;
+
+        const candidatePayload = candidatesForEmbed.slice(0,8).map(c => ({
+          id: c.id, title: c.title,
+          description: c.title // we only have title from search results
+        }));
+
+        const r = await fetch('/api/embeddings', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: newBugText, candidates: candidatePayload })
+        });
+        const d = await r.json();
+        if(d.fallback || d.error){
+          console.log('[Tier3] Embeddings unavailable, using keyword results only');
+          return;
+        }
+        // Merge semantic scores into candidates
+        if(d.ranked){
+          semanticBonus = d.ranked.map(r => ({
+            ...r,
+            semanticScore: r.semanticScore,
+            _source: 'semantic'
+          }));
+          console.log('[Tier3] Semantic scores:', semanticBonus.map(r=>r.id+':'+r.semanticScore));
+        }
+      }catch(e){
+        console.warn('[Tier3] Semantic search failed silently:', e.message);
+      }
+    })();
+
+    // Await all 3 tiers
+    [primaryDupes] = await Promise.all([fetchPrimary, fetchCross, fetchSemantic]);
+
+    // ══ MERGE TIER 2 + TIER 3 SIGNALS ════════════════════════════
+    // Merge semantic scores into primaryDupes
+    if(semanticBonus.length){
+      semanticBonus.forEach(sem => {
+        const existing = primaryDupes.find(d => d.id === sem.id);
+        if(existing){
+          // Combine: take the higher of keyword-inferred score and semantic score
+          existing._semanticScore = sem.semanticScore;
         }
       });
     }
 
+    // ══ TIER 4: AI HOLISTIC SCORING ══════════════════════════════
+    // Now score all candidates with AI — this is the "slow but accurate" step
     if(primaryDupes.length >= 1){
       try{
-        const newBug = `Title: ${titleStr}\nDescription: ${descStr.slice(0,300)}\nSteps: ${stepsStr.slice(0,200)}`;
-        const candidates = primaryDupes.slice(0,8).map((d,i)=>`[${i}] ${d.id}: ${d.title}`).join('\n');
+        const newBug = `Title: ${titleStr}\nDescription: ${descStr.slice(0,300)}\nSteps: ${stepsStr.slice(0,200)}\nEnvironment: ${envStr.slice(0,100)}`;
+        // Include semantic scores in the prompt so AI knows which are already close
+        const candidates = primaryDupes.slice(0,8).map((d,i) => {
+          const semHint = d._semanticScore ? ` [semantic:${d._semanticScore}%]` : '';
+          return `[${i}] ${d.id}: ${d.title}${semHint}`;
+        }).join('\n');
+
         const resp = await callAI(
           [{role:'user',content:
             `You are a QA expert. Rate how likely each existing bug is a duplicate of the new bug.\n`+
-            `Return ONLY a JSON array: [{"i":0,"score":85,"reason":"Same crash on login page with OTP"},...]\n`+
-            `Score 0-100: 90+=definite duplicate, 70-89=very likely, 50-69=possibly related, <50=unrelated.\n\n`+
+            `Return ONLY a JSON array: [{"i":0,"score":85,"reason":"Same crash on login page with OTP"}]\n`+
+            `Score 0-100: 90+=definite duplicate, 70-89=very likely, 50-69=possibly related, <50=unrelated.\n`+
+            `Semantic similarity hints are provided in brackets — use them to inform your scores.\n\n`+
             `NEW BUG:\n${newBug}\n\nEXISTING BUGS:\n${candidates}`
           }],
           {max_tokens:500}
         );
         const txt = resp.content?.[0]?.text||'';
-        const scores = JSON.parse(txt.match(/\[[\s\S]*?\]/)?.[0]||'[]');
+        const scores = JSON.parse(txt.match(/\[\s\S]*?\]/)?.[0]||'[]');
         scores.forEach(s=>{ if(primaryDupes[s.i]){ primaryDupes[s.i].score=s.score; primaryDupes[s.i].reason=s.reason; } });
+
+        // Boost score for high semantic similarity if AI didn't already score high
+        primaryDupes.forEach(d => {
+          if(d._semanticScore >= 85 && (!d.score || d.score < 70)){
+            d.score = Math.max(d.score||0, Math.round(d._semanticScore * 0.9));
+            d.reason = (d.reason||'') + ` [Semantic match: ${d._semanticScore}%]`;
+          }
+        });
+
+        // Filter noise and sort
         primaryDupes = primaryDupes.filter(d=>(d.score??50)>=35).sort((a,b)=>(b.score??50)-(a.score??50));
-      }catch(e){ console.warn('AI scoring failed:', e); }
+      }catch(e){ console.warn('[Tier4] AI scoring failed:', e); }
     }
 
-    // Apply ≥80% threshold — surface only meaningful matches
+    // ══ RENDER RESULTS ════════════════════════════════════════════
     const highConf = primaryDupes.filter(d=>(d.score??50)>=80);
     const hasCross = Object.values(crossResults).some(arr => arr.length > 0);
 
@@ -2274,15 +2384,16 @@ async function checkDuplicates(opts={}){
         area.innerHTML=`<div class="dup-panel dup-clear">
           <div class="dup-hdr" style="color:var(--green);border-color:var(--green-bd)">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="var(--green)"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
-            No duplicates found${CFG.crossDupEnabled ? ' across any system' : ''} — safe to post!
+            No duplicates found${CFG.crossDupEnabled?' across any system':''} — safe to post!
           </div>
         </div>`;
       }
       _markDupCheckDone(false, [], primaryPlatform);
-      if(btn){btn.disabled=false;}
+      if(btn) btn.disabled=false;
       return;
     }
 
+    // Build grouped results HTML
     const panelClass = highConf.length ? 'dup-high' : '';
     const hdrColor   = highConf.length ? 'var(--red)' : 'var(--amber)';
     const hdrBd      = highConf.length ? 'var(--red-bd)' : 'var(--amber-bd)';
@@ -2294,9 +2405,13 @@ async function checkDuplicates(opts={}){
 
     const renderRow = (d, platformBadge='') => {
       const score = d.score ?? 50;
+      const hasSemantic = d._semanticScore && d._semanticScore >= 60;
       const scoreBg    = score>=80 ? 'var(--red-bg)'   : score>=60 ? 'var(--amber-bg)' : 'var(--s3)';
       const scoreColor = score>=80 ? 'var(--red)'       : score>=60 ? 'var(--amber)'    : 'var(--t3)';
       const scoreLabel = score>=80 ? `${score}% match`  : score>=60 ? `${score}% similar` : `${score}% weak`;
+      const semanticBadge = hasSemantic
+        ? `<span style="font-size:9px;padding:1px 6px;border-radius:9px;background:var(--accent-bg);color:var(--accent2);border:1px solid var(--accent-bd);margin-left:4px" title="Semantic similarity: ${d._semanticScore}%">~${d._semanticScore}% semantic</span>`
+        : '';
       return `<div class="dup-item">
         <span class="dup-id">${esc(d.id)}</span>
         <div class="dup-item-main">
@@ -2305,6 +2420,7 @@ async function checkDuplicates(opts={}){
           <div class="dup-meta">
             ${platformBadge}
             <span class="dup-score" style="background:${scoreBg};color:${scoreColor};border:1px solid ${scoreColor}">${scoreLabel}</span>
+            ${semanticBadge}
             <span class="dup-st">${esc(d.status||'')}</span>
             <a class="dup-lnk" href="${d.url}" target="_blank" rel="noopener">↗ View</a>
             <button class="dup-mark-btn" onclick="markAsDuplicate('${esc(d.id)}','${d.url}')">🔗 Link</button>
@@ -2313,20 +2429,18 @@ async function checkDuplicates(opts={}){
       </div>`;
     };
 
-    const primaryLabel = primaryPlatform==='jira' ? 'Jira' : primaryPlatform==='azure_devops' ? 'Azure DevOps' : 'GitHub';
-    const primaryBadgeClass = primaryPlatform==='jira' ? 'jira' : primaryPlatform==='azure_devops' ? 'ado' : 'github';
+    const primaryLabel = primaryPlatform==='jira'?'Jira':primaryPlatform==='azure_devops'?'Azure DevOps':'GitHub';
     let html = `<div class="dup-group-hdr">🎯 Primary — ${primaryLabel}</div>`;
     if(primaryDupes.length){
-      html += primaryDupes.slice(0,5).map(d => renderRow(d, '')).join('');
+      html += primaryDupes.slice(0,5).map(d => renderRow(d,'')).join('');
     } else {
       html += `<div style="padding:8px 13px;font-size:11px;color:var(--t3)">✓ No duplicates in ${primaryLabel}</div>`;
     }
-
     if(hasCross){
       html += `<div class="dup-group-hdr" style="margin-top:4px">🌐 Other Systems</div>`;
-      const sysNames = { jira:'Jira', ado:'Azure DevOps', github:'GitHub' };
+      const sysNames   = { jira:'Jira', ado:'Azure DevOps', github:'GitHub' };
       const sysClasses = { jira:'jira', ado:'ado', github:'github' };
-      Object.entries(crossResults).forEach(([sys, items]) => {
+      Object.entries(crossResults).forEach(([sys,items]) => {
         if(!items.length) return;
         const badge = `<span class="dup-platform-badge ${sysClasses[sys]}">${sysNames[sys]}</span>`;
         html += items.slice(0,3).map(d => renderRow(d, badge)).join('');
@@ -2341,19 +2455,24 @@ async function checkDuplicates(opts={}){
       <div class="dup-actions">
         ${highConf.length
           ? `<button class="abtn danger" onclick="markAsDuplicate('${esc(highConf[0].id)}','${highConf[0].url}')">🔗 Mark as duplicate of ${esc(highConf[0].id)}</button>`
-          : `<button class="abtn warn" onclick="document.getElementById('dup-area').innerHTML='';postTicket()">Continue creating</button>`}
+          : `<button class="abtn warn" onclick="document.getElementById('dup-area').innerHTML='';_updateDupStrip('idle');_dupStripPostTarget=null">Continue creating</button>`}
         <button class="abtn info" onclick="commentOnDuplicate()">💬 Comment on existing</button>
-        ${highConf.length ? `<button class="abtn warn" onclick="document.getElementById('dup-area').innerHTML='';postTicket()">Continue creating</button>` : ''}
+        ${highConf.length ? `<button class="abtn warn" onclick="document.getElementById('dup-area').innerHTML='';_updateDupStrip('idle');_dupStripPostTarget=null">Continue creating</button>` : ''}
         <button class="hbtn" onclick="document.getElementById('dup-area').innerHTML=''">Dismiss</button>
       </div>
     </div>`;
 
-    // Collect all found dupes for the strip
+    // Collect all found dupes for strip + global store
     const allFoundDupes = [...primaryDupes, ...Object.values(crossResults).flat()].slice(0,5);
     _markDupCheckDone(true, allFoundDupes, primaryPlatform);
 
+    // If user was waiting to post, show the "Post Anyway" strip with dupes
+    if(_dupStripPostTarget){
+      _updateDupStrip('found', { matches:allFoundDupes, count:allFoundDupes.length, platform:_dupStripPostTarget });
+    }
+
   }catch(e){
-    if(auto){ area.innerHTML=''; console.warn('Dupe check error:', e); }
+    if(auto){ area.innerHTML=''; console.warn('[Dupes] Auto-check error:', e); }
     else{ area.innerHTML=`<div style="padding:9px 16px;font-size:12px;color:var(--red)">Duplicate check failed: ${esc(e.message)}</div>`; }
     _updateDupStrip('error');
     _markDupCheckDone(false, [], primaryPlatform||'');
@@ -2954,7 +3073,10 @@ async function sendDefect(){
     wrap.innerHTML=buildTicketHTML(curTicket,platform,fakeId);
     chat.appendChild(wrap);
 
-    setTimeout(() => { try { checkDuplicates({auto:true}); } catch(e) { console.warn('Auto-dupe check failed:', e); } }, 0);
+    // Fire dup check after DOM is painted (double rAF ensures ticket-wrap is in DOM)
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      try { checkDuplicates({auto:true}); } catch(e) { console.warn('Auto-dupe check failed:', e); }
+    }));
 
   }catch(e){
     rmThink(); clearPills();
@@ -3355,12 +3477,20 @@ async function postToSpecificPlatform(platform){
     // After check: if clean → _markDupCheckDone(false) → _executePost fires below via strip
     // If dupes found → strip shows "Post Anyway" button → user decides
     // Either way we return here; strip handles the next step
+    if(!_dupCheckRanClean){
+      // checkDuplicates returned early (dup-area missing) — show gate modal fallback
+      console.warn('[Dupes] Check could not run — showing gate modal');
+      const proceed = await _showDupGate(platform, false);
+      if(proceed) await _executePost(platform);
+      _dupStripPostTarget = null;
+      return;
+    }
     if(!dupCheckHasResults){
-      // Clean — auto-proceed
+      // Check ran cleanly, no dupes — auto-proceed
       _dupStripPostTarget = null;
       await _executePost(platform);
     }
-    // If dupes found, strip is now showing with "Post Anyway" button — user decides
+    // If dupes found, strip is now visible with "Post Anyway" button — user decides
     return;
   }
 
@@ -3368,21 +3498,15 @@ async function postToSpecificPlatform(platform){
     // Already checked, dupes found — show strip confirmation (not modal)
     console.log('[Dupes] Dupes found — showing inline strip for confirmation');
     _dupStripPostTarget = platform;
-    // Strip is already visible from when check ran — just ensure it's in "found" state
-    // If strip was dismissed, re-show it
+    // Use globally stored matches — NOT DOM scraping (DOM may have been cleared by Dismiss)
     const strip = document.getElementById('dup-status-strip');
-    if(!strip || strip.style.display === 'none'){
-      // Rebuild strip with stored results
-      const area = document.getElementById('dup-area');
-      const existingItems = area ? [...area.querySelectorAll('.dup-item')].slice(0,3).map(el=>({
-        id:   el.querySelector('.dup-id')?.textContent||'',
-        title:el.querySelector('.dup-ttl')?.textContent||'',
-        score:parseInt(el.querySelector('.dup-score')?.textContent)||50,
-        url:  el.querySelector('.dup-lnk')?.href||'#',
-      })) : [];
-      _updateDupStrip('found', { matches:existingItems, count:existingItems.length, platform });
+    if(!strip || strip.style.display === 'none' || strip.classList.contains('dss-clean')){
+      _updateDupStrip('found', {
+        matches: _dupFoundMatches,
+        count:   _dupFoundMatches.length,
+        platform
+      });
     }
-    // Scroll strip into view
     if(strip) strip.scrollIntoView({behavior:'smooth', block:'nearest'});
     return; // wait for "Post Anyway" click
   }
@@ -3501,18 +3625,16 @@ async function _showDupGate(targetPlatform, hasFoundDupes){
 
     // ── Show top dupe matches if found ──────────────────────
     if(hasFoundDupes && matchEl){
-      // Pull currently rendered dup-items from #dup-area for preview
-      const dupArea = document.getElementById('dup-area');
-      const dupItems = dupArea ? dupArea.querySelectorAll('.dup-item') : [];
-      if(dupItems.length){
-        const preview = Array.from(dupItems).slice(0,3).map(item => {
-          const id    = item.querySelector('.dup-id')?.textContent || '';
-          const title = item.querySelector('.dup-ttl')?.textContent || '';
-          const score = item.querySelector('.dup-score')?.textContent || '';
+      // Use globally stored matches — never scrape DOM (may have been cleared)
+      const previewMatches = _dupFoundMatches.slice(0,3);
+      if(previewMatches.length){
+        const preview = previewMatches.map(m => {
+          const score = m.score ?? 50;
+          const scoreColor = score>=80 ? '#ef4444' : score>=60 ? '#f59e0b' : '#94a3b8';
           return `<div style="padding:8px 12px;border-bottom:1px solid var(--b1);display:flex;gap:8px;align-items:center;background:var(--s2)">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);flex-shrink:0">${esc(id)}</span>
-            <span style="flex:1;font-size:11px;color:var(--t1);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${esc(title)}</span>
-            <span style="font-size:10px;color:var(--red);flex-shrink:0">${esc(score)}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);flex-shrink:0">${esc(m.id)}</span>
+            <span style="flex:1;font-size:11px;color:var(--t1);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${esc(m.title)}</span>
+            <span style="font-size:10px;color:${scoreColor};flex-shrink:0;font-weight:600">${score}%</span>
           </div>`;
         }).join('');
         matchEl.innerHTML = preview;
