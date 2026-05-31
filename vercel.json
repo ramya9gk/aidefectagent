@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "bug-forge-ai",
   "headers": [
     {
       "source": "/(.*)",
@@ -56,7 +55,6 @@
   ],
   "functions": {
     "api/*.js": {
-      "memory": 256,
       "maxDuration": 60
     }
   }
