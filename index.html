@@ -1878,7 +1878,7 @@ async function linkParent() {
 }
 
 async function sendNotifications(ticket, result) {
-  if(!CFG.slack && !CFG.teams) return;
+  if(!CFG.slack && !CFG.teams && !ORG_CODE) return; // org mode: webhooks live server-side in KV
   try {
     const sev=ticket.severity||'Medium';
     const sevEmoji={'Critical':'🔴','High':'🟠','Medium':'🟡','Low':'🟢','1 - Critical':'🔴','2 - High':'🟠','3 - Medium':'🟡','4 - Low':'🟢'}[sev]||'🟡';
@@ -1890,7 +1890,7 @@ async function sendNotifications(ticket, result) {
     ]};
     const teamsPayload={"@type":"MessageCard","@context":"http://schema.org/extensions","themeColor":sevColor,"summary":"New Bug","sections":[{"activityTitle":`🐛 ${ticket.summary||ticket.title||'New Bug'}`,"activitySubtitle":`${result.id} · ${sev}`,"facts":[{"name":"Ticket","value":result.id},{"name":"Severity","value":sev}]}],"potentialAction":[{"@type":"OpenUri","name":"View Ticket","targets":[{"os":"default","uri":result.url}]}]};
     // Webhook URLs come from the UI config (browser-entered), passed per-request
-    const notifyRes=await fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:{slack:slackPayload,teams:teamsPayload},config:{slack:CFG.slack||'',teams:CFG.teams||''}})});
+    const notifyRes=await fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:{slack:slackPayload,teams:teamsPayload},config:{slack:CFG.slack||'',teams:CFG.teams||'',orgCode:ORG_CODE||''}})});
     const d=await notifyRes.json();
     if(d.slack==='sent') toast('Slack notification sent','success');
     if(d.teams==='sent') toast('Teams notification sent','success');
@@ -3991,8 +3991,14 @@ async function loadOrgConfig() {
     // ── Branding ──
     if (cfg.orgName) {
       document.title = `${cfg.orgName} — Bug Forge AI`;
-      const ln = document.querySelector('.logo-name'); if (ln) ln.textContent = cfg.orgName;
+      const bn = document.querySelector('.brand-name'); if (bn) bn.textContent = cfg.orgName;
       const agentTxt = document.getElementById('agent-txt'); if (agentTxt) agentTxt.textContent = `${cfg.orgName} · Agent ready`;
+    }
+    // Optional org logo (only accept http(s)/data image URLs to avoid injection)
+    if (cfg.logo && /^(https?:|data:image\/)/i.test(cfg.logo)) {
+      const bl = document.querySelector('.brand-logo');
+      if (bl) { const img = document.createElement('img'); img.src = cfg.logo; img.alt = cfg.orgName || 'logo';
+        img.style.cssText = 'width:36px;height:36px;object-fit:contain;border-radius:10px'; bl.innerHTML = ''; bl.appendChild(img); }
     }
 
     // ── Apply non-secret org config (tokens stay in KV, used server-side) ──

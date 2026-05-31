@@ -11,9 +11,23 @@ export default async function handler(req, res) {
 
   const { payload, config } = req.body;
 
-  // Webhook URLs come from the UI config (browser-entered) — not from Vercel env.
-  const slackUrl = config?.slack || '';
-  const teamsUrl = config?.teams || '';
+  // Multi-tenant: if an orgCode is supplied, pull the org's webhooks from KV
+  // (kept server-side). Otherwise use the browser-entered config.
+  let _org = {};
+  if (config?.orgCode) {
+    const kvUrl = process.env.BUGFORGE_REST_API_KV_REST_API_URL || process.env.KV_REST_API_URL;
+    const kvTok = process.env.BUGFORGE_REST_API_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN;
+    if (kvUrl) {
+      try {
+        const kr = await fetch(`${kvUrl}/get/org:${config.orgCode}`, { headers: { Authorization: `Bearer ${kvTok}` } });
+        const kd = await kr.json();
+        if (kd.result) _org = JSON.parse(kd.result);
+      } catch(e) { /* fall back to browser config */ }
+    }
+  }
+
+  const slackUrl = _org.slack || _org.slackWebhook || config?.slack || '';
+  const teamsUrl = _org.teamsWebhook || _org.teams || config?.teams || '';
 
   const results = { slack: null, teams: null };
 

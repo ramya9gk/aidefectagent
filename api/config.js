@@ -73,7 +73,7 @@ export default async function handler(req, res) {
       adoProj:        config.adoProj || '',
       ghOwner:        config.ghOwner || '',
       ghRepo:         config.ghRepo || '',
-      teamsWebhook:   config.teamsWebhook || '',
+      hasTeams:       !!config.teamsWebhook,
       plan:           config.plan || 'free',
       createdAt:      config.createdAt || '',
       // Platform status — what's configured vs what's missing
