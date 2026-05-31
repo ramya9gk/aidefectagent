@@ -29,11 +29,11 @@ export default async function handler(req, res) {
   const jiraUrl   = _org.jiraUrl   || config?.jiraUrl   || '';
   const jiraEmail = _org.jiraEmail || config?.jiraEmail || '';
   const jiraToken = _org.jiraToken || config?.jiraToken || '';
-  const jiraProj   = config?.jiraProj   || '';
-  const jiraBoard  = config?.jiraBoard  || '';
-  const jiraIssueType    = config?.jiraIssueType    || '';
-  const jiraAssignee     = config?.jiraAssignee     || '';
-  const jiraReporterEmail= config?.jiraReporterEmail || jiraEmail;
+  const jiraProj   = _org.jiraProj   || config?.jiraProj   || '';
+  const jiraBoard  = _org.jiraBoard  || config?.jiraBoard  || '';
+  const jiraIssueType    = _org.jiraIssueType    || config?.jiraIssueType    || '';
+  const jiraAssignee     = _org.jiraAssignee     || config?.jiraAssignee     || '';
+  const jiraReporterEmail= _org.jiraReporterEmail || config?.jiraReporterEmail || jiraEmail;
 
   if (!jiraUrl)   return res.status(400).json({ error: 'Jira URL not set. Enter it in Settings → Platforms → Jira.' });
   if (!jiraEmail) return res.status(400).json({ error: 'Jira email not set. Enter it in Settings → Platforms → Jira.' });
