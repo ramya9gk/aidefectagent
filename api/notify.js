@@ -51,8 +51,9 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload.teams),
       });
-      results.teams = r.ok ? 'sent' : 'failed';
-    } catch { results.teams = 'failed'; }
+      if (r.ok) { results.teams = 'sent'; }
+      else { const t = await r.text().catch(() => ''); results.teams = 'failed'; results.teamsError = `${r.status} ${t.slice(0,250)}`; }
+    } catch(e) { results.teams = 'failed'; results.teamsError = e.message; }
   } else if (!teamsUrl) {
     results.teams = 'not_configured';
   }
