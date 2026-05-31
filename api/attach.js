@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       if (!jiraUrl || !jiraEmail || !jiraToken) return res.json({ ok: false, error: 'Jira credentials missing' });
 
       const auth = 'Basic ' + Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
-      const base = jiraUrl.replace(/\/$/, '');
+      const base = (/^https?:\/\//i.test(jiraUrl) ? jiraUrl : 'https://' + jiraUrl).replace(/\/$/, '');
 
       // Use FormData for multipart upload
       const { FormData, Blob } = await import('node:buffer').catch(() => ({ FormData: null, Blob: null }));

@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     }
 
     const auth = 'Basic ' + Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
-    const base = jiraUrl.replace(/\/$/, '');
+    const base = (/^https?:\/\//i.test(jiraUrl) ? jiraUrl : 'https://' + jiraUrl).replace(/\/$/, '');
 
     try {
       const r = await fetch(`${base}/rest/api/3/project/search?maxResults=50&orderBy=name`, {

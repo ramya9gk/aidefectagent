@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       }
 
       const auth = 'Basic ' + Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
-      const base = jiraUrl.replace(/\/$/, '');
+      const base = (/^https?:\/\//i.test(jiraUrl) ? jiraUrl : 'https://' + jiraUrl).replace(/\/$/, '');
       const proj = jiraProj.trim().toUpperCase();
 
       const created = [];
