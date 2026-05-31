@@ -12,11 +12,13 @@ export default async function handler(req, res) {
   const { action, config, payload } = req.body;
 
   // Multi-tenant: load from KV if orgCode provided
+  const _kvUrl = process.env.BUGFORGE_REST_API_KV_REST_API_URL   || process.env.KV_REST_API_URL;
+  const _kvTok = process.env.BUGFORGE_REST_API_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN;
   let _orgA = {};
-  if (config?.orgCode && process.env.KV_REST_API_URL) {
+  if (config?.orgCode && _kvUrl) {
     try {
-      const _r = await fetch(`${process.env.KV_REST_API_URL}/get/org:${config.orgCode}`, {
-        headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` }
+      const _r = await fetch(`${_kvUrl}/get/org:${config.orgCode}`, {
+        headers: { Authorization: `Bearer ${_kvTok}` }
       });
       const _d = await _r.json();
       if (_d.result) _orgA = JSON.parse(_d.result);
