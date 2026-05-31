@@ -2865,9 +2865,9 @@ function _notifSaveLs(){
 function jiraCfg() { _jiraReadInputs(); return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraAssignee: CFG.jiraAssignee||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'', orgCode: ORG_CODE||'' }; }
 function adoCfg()  {
   _adoReadInputs();
-  return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam, adoAssignee: CFG.adoAssignee||'' };
+  return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam, adoAssignee: CFG.adoAssignee||'', orgCode: ORG_CODE||'' };
 }
-function ghCfg()   { _ghReadInputs(); return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken, ghAssignee: CFG.ghAssignee||'', ghLabels: CFG.ghLabels||'' }; }
+function ghCfg()   { _ghReadInputs(); return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken, ghAssignee: CFG.ghAssignee||'', ghLabels: CFG.ghLabels||'', orgCode: ORG_CODE||'' }; }
 
 // Jira POST
 async function postJira(t){
@@ -3356,7 +3356,7 @@ async function validateCfg(section) {
 
     else if (section === 'jira') {
       _jiraReadInputs();
-      if (!CFG.jiraUrl || !CFG.jiraEmail || !CFG.jiraToken) {
+      if (!ORG_CODE && (!CFG.jiraUrl || !CFG.jiraEmail || !CFG.jiraToken)) {
         _showConnStatus('jira','error','Enter your Jira URL, email and API token in Settings before testing.');
         toast('Enter Jira URL, email and token first','warn'); return;
       }
@@ -3379,7 +3379,7 @@ async function validateCfg(section) {
 
     else if (section === 'ado') {
       _adoReadInputs();
-      if (!CFG.adoOrg || !CFG.adoPat) {
+      if (!ORG_CODE && (!CFG.adoOrg || !CFG.adoPat)) {
         _showConnStatus('ado','error','Enter your Azure DevOps organisation and PAT in Settings before testing.');
         toast('Enter ADO organisation and PAT first','warn'); return;
       }
@@ -3402,7 +3402,7 @@ async function validateCfg(section) {
 
     else if (section === 'gh') {
       _ghReadInputs();
-      if (!CFG.ghOwner || !CFG.ghRepo || !CFG.ghToken) {
+      if (!ORG_CODE && (!CFG.ghOwner || !CFG.ghRepo || !CFG.ghToken)) {
         _showConnStatus('gh','error','Enter your GitHub owner, repository and token in Settings before testing.');
         toast('Enter GitHub owner, repo and token first','warn'); return;
       }
@@ -3973,50 +3973,70 @@ function switchPlatformTab(tab) {
 
 const ORG_CODE = new URLSearchParams(window.location.search).get('org') || '';
 
+// True when the app is opened with ?org=CODE (multi-tenant). Credentials are
+// then managed centrally in KV (server-side) — the browser never sees tokens.
+let IS_ORG_MODE = false;
+
 async function loadOrgConfig() {
-  if (!ORG_CODE) return; // No org in URL — use env vars (single-tenant mode)
+  if (!ORG_CODE) return; // No org in URL — single-tenant (browser-stored creds)
   try {
-    const r = await fetch(`/api/config?org=${ORG_CODE}`);
+    const r = await fetch(`/api/config?org=${encodeURIComponent(ORG_CODE)}`);
+    const cfg = await r.json().catch(() => ({}));
     if (!r.ok) {
-      const e = await r.json();
-      toast(`Org not found: ${e.error || ORG_CODE}`, 'error');
+      toast(`Organisation "${ORG_CODE}": ${cfg.error || 'not found'}`, 'error');
       return;
     }
-    const cfg = await r.json();
-    // Apply org config to app
+    IS_ORG_MODE = true;
+
+    // ── Branding ──
     if (cfg.orgName) {
-      document.querySelector('.logo-name') && (document.querySelector('.logo-name').textContent = cfg.orgName);
       document.title = `${cfg.orgName} — Bug Forge AI`;
-    }
-    // Pre-fill project dropdowns
-    if (cfg.jiraUrl) CFG.jiraUrl = cfg.jiraUrl;
-    if (cfg.jiraProj) CFG.jiraProj = cfg.jiraProj;
-    if (cfg.adoOrg)  {
-      CFG.adoOrg  = cfg.adoOrg;
-      // Populate the new textbox so user sees their org
-      const orgText = document.getElementById('ado-org-text');
-      if (orgText) orgText.value = cfg.adoOrg;
-    }
-    if (cfg.adoProj) CFG.adoProj = cfg.adoProj;
-    if (cfg.ghOwner) CFG.ghOwner = cfg.ghOwner;
-    if (cfg.ghRepo)  CFG.ghRepo  = cfg.ghRepo;
-
-    // Show org banner in header
-    const agentTxt = document.getElementById('agent-txt');
-    if (agentTxt && cfg.orgName) {
-      agentTxt.textContent = `${cfg.orgName} · Agent ready`;
+      const ln = document.querySelector('.logo-name'); if (ln) ln.textContent = cfg.orgName;
+      const agentTxt = document.getElementById('agent-txt'); if (agentTxt) agentTxt.textContent = `${cfg.orgName} · Agent ready`;
     }
 
-    // Load projects with org context
+    // ── Apply non-secret org config (tokens stay in KV, used server-side) ──
+    CFG.jiraUrl = cfg.jiraUrl || ''; CFG.jiraProj = cfg.jiraProj || '';
+    CFG.adoOrg  = cfg.adoOrg  || ''; CFG.adoProj  = cfg.adoProj  || '';
+    CFG.ghOwner = cfg.ghOwner || ''; CFG.ghRepo   = cfg.ghRepo   || '';
+    _set('jira-url-input', cfg.jiraUrl);
+    _set('ado-org-text', cfg.adoOrg);
+    const aoi = document.getElementById('ado-org-input'); if (aoi) aoi.value = cfg.adoOrg || '';
+    _set('gh-owner-input', cfg.ghOwner); _set('gh-repo-input', cfg.ghRepo);
+
+    // ── Lock org-managed credentials in the UI ──
+    _applyOrgLock(cfg);
+
+    // ── Load project dropdowns via the server (uses the org's KV creds) ──
     setTimeout(() => {
-      if (cfg.hasJira)   loadProjects('jira');
+      if (cfg.hasJira) loadProjects('jira');
       if (cfg.hasAdo && cfg.adoOrg) loadProjects('ado');
-    }, 500);
+      updateDots();
+    }, 300);
 
-    console.log(`✅ Bug Forge AI loaded for org: ${cfg.orgName}`);
+    console.log(`✅ Org loaded: ${cfg.orgName} | jira=${cfg.hasJira} ado=${cfg.hasAdo} gh=${cfg.hasGitHub}`);
   } catch(e) {
     console.warn('Org config load failed:', e.message);
   }
+}
+
+// In org mode, hide the secret inputs (token/PAT/key) and lock the org-managed
+// fields, replacing them with a "managed by your organisation" status note.
+function _applyOrgLock(cfg) {
+  // Hide credential-entry rows whose values live server-side
+  ['jira-email-input','jira-token-input','ado-pat-input','gh-token-input'].forEach(id => {
+    const el = document.getElementById(id); const row = el && el.closest('.cfg-row');
+    if (row) row.style.display = 'none';
+  });
+  // Make the org-managed text fields read-only
+  ['jira-url-input','ado-org-text','gh-owner-input','gh-repo-input'].forEach(id => {
+    const el = document.getElementById(id); if (el) { el.readOnly = true; el.style.opacity = '0.8'; }
+  });
+  // Status notes per platform
+  if (cfg.hasJira)   _showConnStatus('jira','success',`Connected via ${cfg.orgName} — credentials managed by your organisation`);
+  else if (cfg.jiraUrl) _showConnStatus('jira','testing',`Set up by your organisation — finishing configuration`);
+  if (cfg.hasAdo)    _showConnStatus('ado','success',`Connected via ${cfg.orgName} — credentials managed by your organisation`);
+  if (cfg.hasGitHub) _showConnStatus('gh','success',`Connected via ${cfg.orgName} — credentials managed by your organisation`);
 }
 
 // Override postJira/postADO/postGH to pass org code
@@ -4176,7 +4196,8 @@ function resetSessionOnLoad() {
 }
 
 window.addEventListener('load',()=>{
-  restoreConfig();   // restore credentials only
+  restoreConfig();   // restore browser-stored credentials (single-tenant)
+  loadOrgConfig();   // multi-tenant: if ?org= present, load & apply that org's config
   updateDots();
   resetSessionOnLoad(); // reset all session/chat state
   renderHistory();

@@ -11,12 +11,27 @@ export default async function handler(req, res) {
 
   const { platform, adoOrg, config } = req.body;
 
+  // Multi-tenant: if an orgCode is supplied, load that org's full creds from KV
+  // (browser never holds the tokens in org mode). Merge over the browser config.
+  let cfg = config || {};
+  if (cfg.orgCode) {
+    const kvUrl = process.env.BUGFORGE_REST_API_KV_REST_API_URL || process.env.KV_REST_API_URL;
+    const kvTok = process.env.BUGFORGE_REST_API_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN;
+    if (kvUrl) {
+      try {
+        const kr = await fetch(`${kvUrl}/get/org:${cfg.orgCode}`, { headers: { Authorization: `Bearer ${kvTok}` } });
+        const kd = await kr.json();
+        if (kd.result) cfg = { ...cfg, ...JSON.parse(kd.result) };
+      } catch(e) { /* fall through to whatever config has */ }
+    }
+  }
+
   // ── JIRA projects ──────────────────────────────────────────
   if (platform === 'jira') {
-    // Credentials come from the UI config (browser-entered) — not from Vercel env.
-    const jiraUrl   = config?.jiraUrl   || '';
-    const jiraEmail = config?.jiraEmail || '';
-    const jiraToken = config?.jiraToken || '';
+    // Credentials from KV (org mode) or the browser config (single-tenant).
+    const jiraUrl   = cfg.jiraUrl   || '';
+    const jiraEmail = cfg.jiraEmail || '';
+    const jiraToken = cfg.jiraToken || '';
 
     if (!jiraUrl || !jiraEmail || !jiraToken) {
       return res.json({ projects: [], error: 'Enter your Jira URL, email and API token in Settings.' });
@@ -43,7 +58,7 @@ export default async function handler(req, res) {
   // ── ADO organisations ──────────────────────────────────────
   // Uses the Azure DevOps profile + accounts API to list all orgs the PAT can access.
   if (platform === 'azure_devops_orgs') {
-    const adoPat = config?.adoPat || '';
+    const adoPat = cfg.adoPat || '';
     if (!adoPat) return res.json({ orgs: [], error: 'Enter your Azure DevOps PAT in Settings.' });
 
     const auth = 'Basic ' + Buffer.from(`:${adoPat}`).toString('base64');
@@ -83,8 +98,8 @@ export default async function handler(req, res) {
   // ── ADO projects ───────────────────────────────────────────
   // ADO_PAT from env var (secure), org name from browser (user types it)
   if (platform === 'azure_devops') {
-    const adoPat = config?.adoPat || '';
-    const org    = adoOrg || config?.adoOrg || '';
+    const adoPat = cfg.adoPat || '';
+    const org    = adoOrg || cfg.adoOrg || '';
 
     if (!adoPat) {
       return res.json({ projects: [], error: 'Enter your Azure DevOps PAT in Settings.' });
