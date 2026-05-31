@@ -41,7 +41,7 @@ export default async function handler(req, res) {
   if (!jiraProj)  return res.status(400).json({ error: 'Jira project not set. Select a project in Settings → Platforms → Jira.' });
 
   const auth = 'Basic ' + Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
-  const base = jiraUrl.replace(/\/$/, '');
+  const base = (/^https?:\/\//i.test(jiraUrl) ? jiraUrl : 'https://' + jiraUrl).replace(/\/$/, '');
   const proj = jiraProj.trim().toUpperCase();
 
   // ── Auto-detect valid issue type for this project ──────────
