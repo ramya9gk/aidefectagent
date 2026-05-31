@@ -24,7 +24,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' });
 
   const body = req.body;
-  const { provider: requestedProvider, ...forwardBody } = body;
+  // Credentials come from the UI (browser) only — never from Vercel env vars.
+  const { provider: requestedProvider, apiKey: requestedKey, ...forwardBody } = body;
 
   // ── Gemini config: matches user's Google AI Studio account ────
   // This account has Gemini 3.x Preview models ONLY.
@@ -55,27 +56,21 @@ export default async function handler(req, res) {
     return 'unknown';
   }
 
-  // ── Resolve provider + key ─────────────────────────────────────
-  function resolveProvider(requested) {
-    const preferred = (requested || process.env.AI_PROVIDER || '').toLowerCase();
-    const keys = {
-      claude: process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY,
-      gemini: process.env.BUGGEMINI_API_KEY,
-      groq:   process.env.BUGGROQ_API_KEY,
-    };
-    const order = preferred
-      ? [preferred, ...['claude','gemini','groq'].filter(p => p !== preferred)]
-      : ['claude','gemini','groq'];
-    for (const p of order) {
-      if (keys[p]) return { provider: p, key: keys[p] };
-    }
-    return null;
+  // ── Resolve provider + key (config-only) ───────────────────────
+  // The client sends { provider, apiKey } from the user's browser-stored
+  // credentials. We never read process.env for keys. Provider fallback is
+  // handled client-side (callAI re-invokes with a different provider+key).
+  function resolveProvider(requested, key) {
+    const provider = (requested || '').toLowerCase();
+    if (!['claude', 'gemini', 'groq'].includes(provider)) return null;
+    if (!key) return null;
+    return { provider, key };
   }
 
-  const resolved = resolveProvider(requestedProvider);
+  const resolved = resolveProvider(requestedProvider, requestedKey);
   if (!resolved) {
-    return res.status(500).json({
-      error: 'No AI provider configured. Add ANTHROPIC_API_KEY, BUGGEMINI_API_KEY, or BUGGROQ_API_KEY to Vercel Environment Variables.',
+    return res.status(400).json({
+      error: 'No AI API key provided. Enter your Claude, Gemini, or Groq API key in Settings.',
       errorType: 'auth',
     });
   }

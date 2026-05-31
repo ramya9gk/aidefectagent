@@ -22,19 +22,21 @@ export default async function handler(req, res) {
       if (_d.result) _org = JSON.parse(_d.result);
     } catch(e) {}
   }
-  const jiraUrl   = _org.jiraUrl   || process.env.JIRA_URL   || config?.jiraUrl   || '';
-  const jiraEmail = _org.jiraEmail || process.env.JIRA_EMAIL  || config?.jiraEmail || '';
-  const jiraToken = _org.jiraToken || process.env.JIRA_TOKEN  || config?.jiraToken || '';
-  const jiraProj   = process.env.JIRA_PROJECT|| config?.jiraProj   || '';
-  const jiraBoard  = process.env.JIRA_BOARD  || config?.jiraBoard  || '';
-  const jiraIssueType    = process.env.JIRA_ISSUE_TYPE     || config?.jiraIssueType    || '';
-  const jiraAssignee     = process.env.JIRA_ASSIGNEE_EMAIL || config?.jiraAssignee     || '';
-  const jiraReporterEmail= process.env.JIRA_REPORTER_EMAIL || config?.jiraReporterEmail || jiraEmail;
+  // Credentials come from the UI config (browser-entered). Optional multi-tenant
+  // KV (_org, only when ?org= is used) takes precedence. Vercel env vars are NOT read.
+  const jiraUrl   = _org.jiraUrl   || config?.jiraUrl   || '';
+  const jiraEmail = _org.jiraEmail || config?.jiraEmail || '';
+  const jiraToken = _org.jiraToken || config?.jiraToken || '';
+  const jiraProj   = config?.jiraProj   || '';
+  const jiraBoard  = config?.jiraBoard  || '';
+  const jiraIssueType    = config?.jiraIssueType    || '';
+  const jiraAssignee     = config?.jiraAssignee     || '';
+  const jiraReporterEmail= config?.jiraReporterEmail || jiraEmail;
 
-  if (!jiraUrl)   return res.status(400).json({ error: 'JIRA_URL not set. Add to Vercel Environment Variables.' });
-  if (!jiraEmail) return res.status(400).json({ error: 'JIRA_EMAIL not set. Add to Vercel Environment Variables.' });
-  if (!jiraToken) return res.status(400).json({ error: 'JIRA_TOKEN not set. Add to Vercel Environment Variables.' });
-  if (!jiraProj)  return res.status(400).json({ error: 'JIRA_PROJECT not set. Add to Vercel Environment Variables.' });
+  if (!jiraUrl)   return res.status(400).json({ error: 'Jira URL not set. Enter it in Settings → Platforms → Jira.' });
+  if (!jiraEmail) return res.status(400).json({ error: 'Jira email not set. Enter it in Settings → Platforms → Jira.' });
+  if (!jiraToken) return res.status(400).json({ error: 'Jira API token not set. Enter it in Settings → Platforms → Jira.' });
+  if (!jiraProj)  return res.status(400).json({ error: 'Jira project not set. Select a project in Settings → Platforms → Jira.' });
 
   const auth = 'Basic ' + Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
   const base = jiraUrl.replace(/\/$/, '');

@@ -10,14 +10,14 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { platform, testCases, bugId, rawBugId, config } = req.body;
-  // Read from Vercel env vars first, fall back to browser config
-  const jiraUrl   = process.env.JIRA_URL     || config?.jiraUrl   || '';
-  const jiraEmail = process.env.JIRA_EMAIL   || config?.jiraEmail || '';
-  const jiraToken = process.env.JIRA_TOKEN   || config?.jiraToken || '';
-  const jiraProj  = process.env.JIRA_PROJECT || config?.jiraProj  || '';
-  const adoOrg    = process.env.ADO_ORG      || config?.adoOrg    || '';
-  const adoProj   = process.env.ADO_PROJECT  || config?.adoProj   || '';
-  const adoPat    = process.env.ADO_PAT      || config?.adoPat    || '';
+  // Credentials come from the UI config (browser-entered) — not from Vercel env.
+  const jiraUrl   = config?.jiraUrl   || '';
+  const jiraEmail = config?.jiraEmail || '';
+  const jiraToken = config?.jiraToken || '';
+  const jiraProj  = config?.jiraProj  || '';
+  const adoOrg    = config?.adoOrg    || '';
+  const adoProj   = config?.adoProj   || '';
+  const adoPat    = config?.adoPat    || '';
 
   try {
     // ══ JIRA ══════════════════════════════════════════════════

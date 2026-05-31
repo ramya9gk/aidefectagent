@@ -22,15 +22,17 @@ export default async function handler(req, res) {
       if (_d.result) _orgA = JSON.parse(_d.result);
     } catch(e) {}
   }
-  const adoOrg  = _orgA.adoOrg  || process.env.ADO_ORG     || config?.adoOrg  || '';
-  const adoProj = _orgA.adoProj || process.env.ADO_PROJECT  || config?.adoProj || '';
-  const adoPat  = _orgA.adoPat  || process.env.ADO_PAT      || config?.adoPat  || '';
-  const adoTeam     = process.env.ADO_TEAM         || config?.adoTeam     || '';
-  const adoAssignee = process.env.ADO_ASSIGNEE_EMAIL || config?.adoAssignee || '';
+  // Credentials come from the UI config (browser-entered). Optional multi-tenant
+  // KV (_orgA, only when ?org= is used) takes precedence. Vercel env vars are NOT read.
+  const adoOrg  = _orgA.adoOrg  || config?.adoOrg  || '';
+  const adoProj = _orgA.adoProj || config?.adoProj || '';
+  const adoPat  = _orgA.adoPat  || config?.adoPat  || '';
+  const adoTeam     = config?.adoTeam     || '';
+  const adoAssignee = config?.adoAssignee || '';
 
-  if (!adoOrg)  return res.status(400).json({ error: 'ADO_ORG not set. Add to Vercel Environment Variables.' });
-  if (!adoPat)  return res.status(400).json({ error: 'ADO_PAT not set. Add to Vercel Environment Variables.' });
-  if (!adoProj) return res.status(400).json({ error: 'ADO_PROJECT not set. Add to Vercel Environment Variables.' });
+  if (!adoOrg)  return res.status(400).json({ error: 'Azure DevOps organisation not set. Enter it in Settings → Platforms → ADO.' });
+  if (!adoPat)  return res.status(400).json({ error: 'Azure DevOps PAT not set. Enter it in Settings → Platforms → ADO.' });
+  if (!adoProj) return res.status(400).json({ error: 'Azure DevOps project not set. Select a project in Settings → Platforms → ADO.' });
 
   const auth = 'Basic ' + Buffer.from(`:${adoPat}`).toString('base64');
   const proj = encodeURIComponent(adoProj);

@@ -24,13 +24,15 @@ export default async function handler(req, res) {
     } catch(e) { console.warn('KV lookup failed:', e.message); }
   }
 
-  const ghOwner = orgCfgGh.ghOwner || process.env.GITHUB_OWNER || config?.ghOwner || '';
-  const ghRepo  = orgCfgGh.ghRepo  || process.env.GITHUB_REPO  || config?.ghRepo  || '';
-  const ghToken = orgCfgGh.ghToken || process.env.GITHUB_TOKEN || config?.ghToken  || '';
+  // Credentials come from the UI config (browser-entered). Optional multi-tenant
+  // KV (orgCfgGh, only when ?org= is used) takes precedence. Vercel env vars are NOT read.
+  const ghOwner = orgCfgGh.ghOwner || config?.ghOwner || '';
+  const ghRepo  = orgCfgGh.ghRepo  || config?.ghRepo  || '';
+  const ghToken = orgCfgGh.ghToken || config?.ghToken || '';
 
-  if (!ghOwner) return res.status(400).json({ error: 'GITHUB_OWNER not set. Add to Vercel Environment Variables.' });
-  if (!ghRepo)  return res.status(400).json({ error: 'GITHUB_REPO not set. Add to Vercel Environment Variables.' });
-  if (!ghToken) return res.status(400).json({ error: 'GITHUB_TOKEN not set. Add to Vercel Environment Variables.' });
+  if (!ghOwner) return res.status(400).json({ error: 'GitHub owner not set. Enter it in Settings → Platforms → GitHub.' });
+  if (!ghRepo)  return res.status(400).json({ error: 'GitHub repository not set. Enter it in Settings → Platforms → GitHub.' });
+  if (!ghToken) return res.status(400).json({ error: 'GitHub token not set. Enter it in Settings → Platforms → GitHub.' });
 
   const auth = `token ${ghToken}`;
   const base = `https://api.github.com/repos/${ghOwner}/${ghRepo}`;

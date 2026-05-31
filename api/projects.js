@@ -9,16 +9,17 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { platform, adoOrg } = req.body;
+  const { platform, adoOrg, config } = req.body;
 
   // ── JIRA projects ──────────────────────────────────────────
   if (platform === 'jira') {
-    const jiraUrl   = process.env.JIRA_URL   || '';
-    const jiraEmail = process.env.JIRA_EMAIL || '';
-    const jiraToken = process.env.JIRA_TOKEN || '';
+    // Credentials come from the UI config (browser-entered) — not from Vercel env.
+    const jiraUrl   = config?.jiraUrl   || '';
+    const jiraEmail = config?.jiraEmail || '';
+    const jiraToken = config?.jiraToken || '';
 
     if (!jiraUrl || !jiraEmail || !jiraToken) {
-      return res.json({ projects: [], error: 'Jira credentials not set in Vercel env vars' });
+      return res.json({ projects: [], error: 'Enter your Jira URL, email and API token in Settings.' });
     }
 
     const auth = 'Basic ' + Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64');
@@ -42,8 +43,8 @@ export default async function handler(req, res) {
   // ── ADO organisations ──────────────────────────────────────
   // Uses the Azure DevOps profile + accounts API to list all orgs the PAT can access.
   if (platform === 'azure_devops_orgs') {
-    const adoPat = process.env.ADO_PAT || '';
-    if (!adoPat) return res.json({ orgs: [], error: 'ADO_PAT not set in Vercel env vars' });
+    const adoPat = config?.adoPat || '';
+    if (!adoPat) return res.json({ orgs: [], error: 'Enter your Azure DevOps PAT in Settings.' });
 
     const auth = 'Basic ' + Buffer.from(`:${adoPat}`).toString('base64');
 
@@ -54,7 +55,7 @@ export default async function handler(req, res) {
         { headers: { Authorization: auth, Accept: 'application/json' } }
       );
       if (profileR.status === 401 || profileR.status === 203) {
-        return res.json({ orgs: [], error: 'ADO PAT is invalid or expired — update ADO_PAT in Vercel' });
+        return res.json({ orgs: [], error: 'ADO PAT is invalid or expired — update it in Settings' });
       }
       if (!profileR.ok) return res.json({ orgs: [], error: `Profile API ${profileR.status}` });
       const profile = await profileR.json();
@@ -82,11 +83,11 @@ export default async function handler(req, res) {
   // ── ADO projects ───────────────────────────────────────────
   // ADO_PAT from env var (secure), org name from browser (user types it)
   if (platform === 'azure_devops') {
-    const adoPat = process.env.ADO_PAT || '';
-    const org    = adoOrg || process.env.ADO_ORG || '';
+    const adoPat = config?.adoPat || '';
+    const org    = adoOrg || config?.adoOrg || '';
 
     if (!adoPat) {
-      return res.json({ projects: [], error: 'ADO_PAT not set in Vercel env vars' });
+      return res.json({ projects: [], error: 'Enter your Azure DevOps PAT in Settings.' });
     }
     if (!org) {
       return res.json({ projects: [], error: 'Enter your ADO organisation name first' });
@@ -105,7 +106,7 @@ export default async function handler(req, res) {
         return res.json({ projects: [], error: 'Invalid organisation name or PAT expired' });
       }
       if (r.status === 401) {
-        return res.json({ projects: [], error: 'ADO PAT is invalid or expired — update ADO_PAT in Vercel' });
+        return res.json({ projects: [], error: 'ADO PAT is invalid or expired — update it in Settings' });
       }
       if (r.status === 404) {
         return res.json({ projects: [], error: `Organisation "${org}" not found — check spelling` });

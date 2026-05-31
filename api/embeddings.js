@@ -22,12 +22,13 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' });
 
-  const key = process.env.BUGGEMINI_API_KEY;
+  // Gemini key comes from the UI (browser-stored) — never from Vercel env.
+  const { text, texts, candidates, geminiKey } = req.body || {};
+  const key = geminiKey;
   if (!key) {
-    return res.status(200).json({ error: 'BUGGEMINI_API_KEY not configured', fallback: true });
+    // No key entered — caller falls back to keyword + AI scoring only.
+    return res.status(200).json({ error: 'Gemini API key not provided', fallback: true });
   }
-
-  const { text, texts, candidates } = req.body || {};
 
   try {
 

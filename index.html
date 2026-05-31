@@ -512,6 +512,21 @@ select.ef-in{cursor:pointer}
 .dss-btn-dismiss{padding:7px 12px;background:transparent;color:var(--t3);border:1px solid var(--b2);border-radius:8px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation;min-height:36px}
 .dss-view-link{font-size:11px;color:var(--accent2);text-decoration:none;flex-shrink:0}
 .dss-view-link:hover{text-decoration:underline}
+/* ── Credential connection-status bars + token show/hide ── */
+.conn-status{display:none;align-items:center;gap:7px;margin-top:9px;padding:8px 11px;border-radius:8px;font-size:11.5px;line-height:1.45;border:1px solid var(--b1);background:var(--s2);color:var(--t2)}
+.conn-status.show{display:flex}
+.conn-status.testing{background:var(--s2);border-color:var(--b2);color:var(--t2)}
+.conn-status.success{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
+.conn-status.error{background:var(--red-bg);border-color:var(--red-bd);color:var(--red)}
+.conn-status .cs-spin{width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.cred-field{position:relative;display:flex;align-items:center}
+.cred-field .cfg-in{flex:1;padding-right:42px}
+.pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--t3);cursor:pointer;padding:4px 6px;font-size:11px;font-family:'Inter',sans-serif;border-radius:5px;touch-action:manipulation;min-height:30px}
+.pw-toggle:hover{color:var(--t1);background:var(--s3)}
+.cred-hint{font-size:10px;color:var(--t3);margin-top:4px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.cred-hint a{color:var(--accent2);text-decoration:none}
+.cred-hint a:hover{text-decoration:underline}
+.cred-lock{font-size:10px;color:var(--green);display:inline-flex;align-items:center;gap:4px}
 @media(max-width:960px){ .cfg-in,.ef-in,.select-in,.describe-box, input[type="text"],input[type="email"],input[type="search"], input[type="number"],textarea,select{font-size:16px !important}
 } /* ── Touch interaction ─────────────────────────────── */
 .abtn,.hbtn,.generate-btn,.action-btn,.provider-btn,.ex-chip{touch-action:manipulation}
@@ -871,18 +886,38 @@ if('serviceWorker' in navigator){
           </div>
         </div>
 
-        <!-- Status + env var guidance -->
-        <div id="provider-status-row" style="font-size:11px;color:var(--t3);line-height:1.7;margin-bottom:10px;padding:8px 10px;background:var(--s2);border-radius:8px;border:1px solid var(--b1)">
-          <div id="prov-env-hint">
-            <span id="prov-dot" class="cfg-dot ok"></span>
-            <span id="prov-env-text">Set <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:10px">ANTHROPIC_API_KEY</code> in Vercel → Settings → Environment Variables</span>
+        <!-- API key inputs — entered here, stored in your browser only -->
+        <div class="cfg-row">
+          <div class="cfg-lbl">Claude API key <span class="cred-lock">🔒 browser only</span></div>
+          <div class="cred-field">
+            <input class="cfg-in" id="ai-claude-key" type="password" autocomplete="off" placeholder="sk-ant-..." oninput="_aiReadInputs();_aiSaveLs();updateDots()"/>
+            <button type="button" class="pw-toggle" onclick="_togglePw('ai-claude-key',this)">Show</button>
           </div>
-          <div id="prov-model-hint" style="margin-top:4px;color:var(--accent2)">
-            Using: <span id="prov-model-display">claude-haiku-4-5 / claude-sonnet-4-5</span>
-          </div>
+          <div class="cred-hint"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Create Claude key ↗</a></div>
         </div>
+        <div class="cfg-row">
+          <div class="cfg-lbl">Gemini API key <span class="cred-lock">🔒 browser only</span></div>
+          <div class="cred-field">
+            <input class="cfg-in" id="ai-gemini-key" type="password" autocomplete="off" placeholder="AIza..." oninput="_aiReadInputs();_aiSaveLs();updateDots()"/>
+            <button type="button" class="pw-toggle" onclick="_togglePw('ai-gemini-key',this)">Show</button>
+          </div>
+          <div class="cred-hint"><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Create Gemini key ↗</a> · also powers semantic duplicate detection</div>
+        </div>
+        <div class="cfg-row">
+          <div class="cfg-lbl">Groq API key <span class="cred-lock">🔒 browser only</span></div>
+          <div class="cred-field">
+            <input class="cfg-in" id="ai-groq-key" type="password" autocomplete="off" placeholder="gsk_..." oninput="_aiReadInputs();_aiSaveLs();updateDots()"/>
+            <button type="button" class="pw-toggle" onclick="_togglePw('ai-groq-key',this)">Show</button>
+          </div>
+          <div class="cred-hint"><a href="https://console.groq.com/keys" target="_blank" rel="noopener">Create Groq key ↗</a></div>
+        </div>
+        <div id="prov-model-hint" style="font-size:11px;margin-top:4px;color:var(--accent2)">
+          <span id="prov-dot" class="cfg-dot"></span>
+          Using: <span id="prov-model-display">claude-haiku-4-5 / claude-sonnet-4-5</span>
+        </div>
+        <div id="ant-conn-status" class="conn-status"></div>
 
-        <div style="display:flex;gap:7px">
+        <div style="display:flex;gap:7px;margin-top:10px">
           <button class="btn-sv" style="flex:1" onclick="validateCfg('ant')">✓ Test connection</button>
           <button class="btn-sv" style="flex:0 0 auto;background:var(--s2);color:var(--t2);border:1px solid var(--b2)"
             title="Clear cooldowns and retry counts — use if providers show as unavailable"
@@ -906,37 +941,47 @@ if('serviceWorker' in navigator){
 
         <!-- Jira Panel -->
         <div id="ptab-jira-panel" class="ptab-panel active">
-          <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px;margin-bottom:7px">
-            <span class="cfg-dot ok" id="dot-jira"></span>Credentials secured via Vercel env vars
-          </div>
-          <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.6">
-            Required: <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">JIRA_URL</code>
-            <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">JIRA_EMAIL</code>
-            <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">JIRA_TOKEN</code>
+          <div style="font-size:11px;color:var(--t3);display:flex;align-items:center;gap:6px;margin-bottom:9px">
+            <span class="cfg-dot" id="dot-jira"></span><span class="cred-lock">🔒 Stored in your browser only — never sent to our servers</span>
           </div>
           <div class="cfg-row">
-            <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:10px" id="jira-proj-status">↻ loading...</span></div>
-            <select class="cfg-in" id="jira-proj-select" aria-label="Jira project" onchange="CFG.jiraProj=this.options[this.selectedIndex]?.dataset?.key||this.value;syncProjectMirror()" style="cursor:pointer">
-              <option value="">— select project —</option>
+            <div class="cfg-lbl">Jira URL</div>
+            <input class="cfg-in" id="jira-url-input" type="url" autocomplete="off" placeholder="https://your-org.atlassian.net" oninput="_jiraReadInputs();_jiraSaveLs();updateDots()"/>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Email</div>
+            <input class="cfg-in" id="jira-email-input" type="email" autocomplete="off" placeholder="you@company.com" oninput="_jiraReadInputs();_jiraSaveLs();updateDots()"/>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">API token</div>
+            <div class="cred-field">
+              <input class="cfg-in" id="jira-token-input" type="password" autocomplete="off" placeholder="Jira API token" oninput="_jiraReadInputs();_jiraSaveLs();updateDots()"/>
+              <button type="button" class="pw-toggle" onclick="_togglePw('jira-token-input',this)">Show</button>
+            </div>
+            <div class="cred-hint"><a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener">Create token ↗</a></div>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:10px" id="jira-proj-status"></span></div>
+            <select class="cfg-in" id="jira-proj-select" aria-label="Jira project" onchange="CFG.jiraProj=this.options[this.selectedIndex]?.dataset?.key||this.value;_jiraSaveLs();syncProjectMirror()" style="cursor:pointer">
+              <option value="">— test connection, then select —</option>
             </select>
           </div>
           <div class="cfg-row">
             <div class="cfg-lbl">Assignee email <span style="color:var(--t3);font-size:10px">(optional)</span></div>
-            <input class="cfg-in" id="jira-assignee-input" placeholder="assignee@company.com" oninput="CFG.jiraAssignee=this.value.trim()"/>
+            <input class="cfg-in" id="jira-assignee-input" placeholder="assignee@company.com" oninput="CFG.jiraAssignee=this.value.trim();_jiraSaveLs()"/>
           </div>
+          <div id="jira-conn-status" class="conn-status"></div>
           <div style="display:flex;gap:7px;margin-top:10px">
-            <button class="btn-sv" style="flex:1" onclick="validateCfg('jira')">✓ Test</button>
+            <button class="btn-sv" id="jira-test-btn" style="flex:1" onclick="validateCfg('jira')">✓ Test Connection</button>
             <button class="btn-sv" style="flex:0 0 auto;width:74px" onclick="loadProjects('jira')">↻ Reload</button>
+            <button class="btn-sv" style="flex:0 0 auto;background:var(--s2);color:var(--t3);border:1px solid var(--b2)" title="Clear saved Jira credentials" onclick="_jiraClearCreds()">Clear</button>
           </div>
         </div>
 
         <!-- ADO Panel -->
         <div id="ptab-ado-panel" class="ptab-panel">
-          <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px;margin-bottom:7px">
-            <span class="cfg-dot ok" id="dot-ado"></span>Credentials secured via Vercel env vars
-          </div>
-          <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.6">
-            Required: <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">ADO_PAT</code> — Enter your organisation name then load projects
+          <div style="font-size:11px;color:var(--t3);display:flex;align-items:center;gap:6px;margin-bottom:9px">
+            <span class="cfg-dot" id="dot-ado"></span><span class="cred-lock">🔒 Stored in your browser only — never sent to our servers</span>
           </div>
           <div class="cfg-row">
             <div class="cfg-lbl">Organisation <span style="color:var(--accent2);font-size:10px" id="ado-org-status"></span></div>
@@ -945,7 +990,7 @@ if('serviceWorker' in navigator){
                 placeholder="e.g. my-organisation"
                 style="flex:1"
                 value=""
-                oninput="CFG.adoOrg=this.value.trim();document.getElementById('ado-org-input').value=this.value.trim();updateDots()"
+                oninput="CFG.adoOrg=this.value.trim();document.getElementById('ado-org-input').value=this.value.trim();_adoSaveLs();updateDots()"
                 onkeydown="if(event.key==='Enter'){event.preventDefault();loadAdoProjects()}"
               />
               <button class="hbtn" style="flex-shrink:0;padding:6px 10px;font-size:11px"
@@ -957,17 +1002,27 @@ if('serviceWorker' in navigator){
             </div>
           </div>
           <div class="cfg-row">
+            <div class="cfg-lbl">Personal Access Token (PAT)</div>
+            <div class="cred-field">
+              <input class="cfg-in" id="ado-pat-input" type="password" autocomplete="off" placeholder="ADO PAT (Work Items: Read &amp; Write)" oninput="_adoReadInputs();_adoSaveLs();updateDots()"/>
+              <button type="button" class="pw-toggle" onclick="_togglePw('ado-pat-input',this)">Show</button>
+            </div>
+            <div class="cred-hint"><a href="https://dev.azure.com/" target="_blank" rel="noopener">Create PAT ↗</a> (User Settings → Personal Access Tokens)</div>
+          </div>
+          <div class="cfg-row">
             <div class="cfg-lbl">Project <span style="color:var(--accent2);font-size:10px" id="ado-proj-status">enter org above first</span></div>
-            <select class="cfg-in" id="ado-proj-select" aria-label="ADO project" onchange="CFG.adoProj=this.value;syncProjectMirror();updateDots()" style="cursor:pointer">
+            <select class="cfg-in" id="ado-proj-select" aria-label="ADO project" onchange="CFG.adoProj=this.value;_adoSaveLs();syncProjectMirror();updateDots()" style="cursor:pointer">
               <option value="">— select project —</option>
             </select>
           </div>
           <div class="cfg-row">
             <div class="cfg-lbl">Assign to <span style="color:var(--t3);font-size:10px">(optional)</span></div>
-            <input class="cfg-in" id="ado-assignee-input" placeholder="Display name or email" oninput="CFG.adoAssignee=this.value.trim()"/>
+            <input class="cfg-in" id="ado-assignee-input" placeholder="Display name or email" oninput="CFG.adoAssignee=this.value.trim();_adoSaveLs()"/>
           </div>
+          <div id="ado-conn-status" class="conn-status"></div>
           <div style="display:flex;gap:7px;margin-top:10px">
-            <button class="btn-sv" style="flex:1" onclick="validateCfg('ado')">✓ Test Connection</button>
+            <button class="btn-sv" id="ado-test-btn" style="flex:1" onclick="validateCfg('ado')">✓ Test Connection</button>
+            <button class="btn-sv" style="flex:0 0 auto;background:var(--s2);color:var(--t3);border:1px solid var(--b2)" title="Clear saved Azure DevOps credentials" onclick="_adoClearCreds()">Clear</button>
           </div>
           <!-- Hidden inputs kept for backward-compat with adoCfg() and restoreConfig() -->
           <input type="hidden" id="ado-org-input"/>
@@ -978,23 +1033,38 @@ if('serviceWorker' in navigator){
 
         <!-- GitHub Panel -->
         <div id="ptab-gh-panel" class="ptab-panel">
-          <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px;margin-bottom:7px">
-            <span class="cfg-dot ok" id="dot-gh"></span>Credentials secured via Vercel env vars
+          <div style="font-size:11px;color:var(--t3);display:flex;align-items:center;gap:6px;margin-bottom:9px">
+            <span class="cfg-dot" id="dot-gh"></span><span class="cred-lock">🔒 Stored in your browser only — never sent to our servers</span>
           </div>
-          <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.6">
-            Required: <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">GITHUB_OWNER</code>
-            <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">GITHUB_REPO</code>
-            <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px">GITHUB_TOKEN</code>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Owner <span style="color:var(--t3);font-size:10px">(user or org)</span></div>
+            <input class="cfg-in" id="gh-owner-input" autocomplete="off" placeholder="octocat" oninput="_ghReadInputs();_ghSaveLs();updateDots()"/>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Repository</div>
+            <input class="cfg-in" id="gh-repo-input" autocomplete="off" placeholder="my-repo" oninput="_ghReadInputs();_ghSaveLs();updateDots()"/>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-lbl">Personal Access Token</div>
+            <div class="cred-field">
+              <input class="cfg-in" id="gh-token-input" type="password" autocomplete="off" placeholder="ghp_..." oninput="_ghReadInputs();_ghSaveLs();updateDots()"/>
+              <button type="button" class="pw-toggle" onclick="_togglePw('gh-token-input',this)">Show</button>
+            </div>
+            <div class="cred-hint"><a href="https://github.com/settings/tokens" target="_blank" rel="noopener">Create token ↗</a> (scope: repo)</div>
           </div>
           <div class="cfg-row">
             <div class="cfg-lbl">Assignee <span style="color:var(--t3);font-size:10px">(optional — GitHub username)</span></div>
-            <input class="cfg-in" id="gh-assignee-input" placeholder="github-username" oninput="CFG.ghAssignee=this.value.trim()"/>
+            <input class="cfg-in" id="gh-assignee-input" placeholder="github-username" oninput="CFG.ghAssignee=this.value.trim();_ghSaveLs()"/>
           </div>
           <div class="cfg-row">
             <div class="cfg-lbl">Extra labels <span style="color:var(--t3);font-size:10px">(optional — comma separated)</span></div>
-            <input class="cfg-in" id="gh-labels-input" placeholder="frontend, sprint-1" oninput="CFG.ghLabels=this.value.trim()"/>
+            <input class="cfg-in" id="gh-labels-input" placeholder="frontend, sprint-1" oninput="CFG.ghLabels=this.value.trim();_ghSaveLs()"/>
           </div>
-          <button class="btn-sv" style="margin-top:10px" onclick="validateCfg('gh')">✓ Test GitHub connection</button>
+          <div id="gh-conn-status" class="conn-status"></div>
+          <div style="display:flex;gap:7px;margin-top:10px">
+            <button class="btn-sv" id="gh-test-btn" style="flex:1" onclick="validateCfg('gh')">✓ Test GitHub connection</button>
+            <button class="btn-sv" style="flex:0 0 auto;background:var(--s2);color:var(--t3);border:1px solid var(--b2)" title="Clear saved GitHub credentials" onclick="_ghClearCreds()">Clear</button>
+          </div>
           <input type="hidden" id="ci-gh-owner"/><input type="hidden" id="ci-gh-repo"/>
           <input type="hidden" id="ci-gh-token"/>
         </div>
@@ -1058,16 +1128,20 @@ if('serviceWorker' in navigator){
         <span class="sec-arr" id="arr-notif">▶</span>
       </div>
       <div class="sec-body" id="bod-notif">
-        <div style="padding:2px 0 8px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:7px">
-          <span class="cfg-dot ok" id="dot-slack"></span>Secured via Vercel environment variables
+        <div style="padding:2px 0 9px;font-size:11px;color:var(--t3);display:flex;align-items:center;gap:7px">
+          <span class="cfg-dot" id="dot-slack"></span><span class="cred-lock">🔒 Stored in your browser only — never sent to our servers</span>
         </div>
-        <div style="font-size:11px;color:var(--t3);line-height:1.7;margin-bottom:4px">
-          Set these in <strong>Vercel → Settings → Environment Variables:</strong><br>
-          <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px;display:inline-block;margin-top:4px">SLACK_WEBHOOK_URL</code>
-          <code style="background:var(--s3);padding:1.5px 5px;border-radius:4px;font-size:10px;display:inline-block;margin-top:4px">TEAMS_WEBHOOK_URL</code>
+        <div class="cfg-row">
+          <div class="cfg-lbl">Slack webhook URL <span style="color:var(--t3);font-size:10px">(optional)</span></div>
+          <input class="cfg-in" id="slack-webhook-input" type="url" autocomplete="off" placeholder="https://hooks.slack.com/services/..." oninput="CFG.slack=this.value.trim();_notifSaveLs();updateDots()"/>
+          <div class="cred-hint"><a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener">Create Slack webhook ↗</a></div>
         </div>
+        <div class="cfg-row">
+          <div class="cfg-lbl">Teams webhook URL <span style="color:var(--t3);font-size:10px">(optional)</span></div>
+          <input class="cfg-in" id="teams-webhook-input" type="url" autocomplete="off" placeholder="https://outlook.office.com/webhook/..." oninput="CFG.teams=this.value.trim();_notifSaveLs();updateDots()"/>
+        </div>
+        <span class="cfg-dot" id="dot-teams" style="display:none"></span>
         <input type="hidden" id="ci-slack"/><input type="hidden" id="ci-teams"/>
-        <span id="dot-teams" style="display:none"></span>
       </div>
     </div>
 
@@ -1119,13 +1193,17 @@ if('serviceWorker' in navigator){
 <div class="toast-wrap" id="toasts" aria-live="polite" aria-atomic="false" role="status"></div>
 <script>
 
-// Clear ALL localStorage on page load — fresh start every time.
-// Nothing persists between sessions: credentials, history, theme, config.
-localStorage.clear();
+// Credentials are supplied via Vercel environment variables (server-side) — no
+// secrets are stored in localStorage. The previous blanket localStorage.clear()
+// here ran on EVERY page load and silently wiped the user's theme (da_theme),
+// session history (da_log) and AI-provider choice (bugforge-ai-provider),
+// contradicting the persistence model. We intentionally do NOT clear: chat /
+// ticket / bulk working state is reset in-memory by resetSessionOnLoad(), while
+// preferences and history are preserved across reloads.
 
 const LS = k => '';
 const CFG = {
-  ant:'', jiraUrl:'', jiraEmail:'', jiraIssueType:'', jiraReporterEmail:'',
+  ant:'', geminiKey:'', groqKey:'', jiraUrl:'', jiraEmail:'', jiraIssueType:'', jiraReporterEmail:'',
   jiraToken:'', jiraProj:'', jiraBoard:'',
   adoOrg:'', adoProj:'', adoPat:'', adoTeam:'',
   ghOwner:'', ghRepo:'', ghToken:'',
@@ -1195,6 +1273,13 @@ const ProviderManager = (function() {
     console.log('[ProviderManager] Session reset');
   }
 
+  // Re-read key availability from the UI-entered credentials in CFG.
+  // Called whenever the user edits an API key so hasKey()/dots stay current.
+  function syncKeysFromCfg() {
+    if (typeof CFG === 'undefined') return;
+    _state.keys = { claude: !!CFG.ant, gemini: !!CFG.geminiKey, groq: !!CFG.groqKey };
+  }
+
   function markFailed(provider) {
     _state.failed.add(provider); _state.triedProviders.add(provider); _state.switchCount++;
     const ms = {groq:65000,gemini:62000,claude:120000}[provider]||65000;
@@ -1256,7 +1341,7 @@ const ProviderManager = (function() {
   }
 
   const _api = {
-    init,getActive,getConfig,hasKey,hasAnyKey,isInitialized,
+    init,getActive,getConfig,hasKey,hasAnyKey,isInitialized,syncKeysFromCfg,
     setActive,resetSession,markFailed,isCoolingDown,getMinCooldownSecs,
     getOrderedProviders,startGenerate,endGenerate,isGenerating,
     CONFIGS:PROVIDER_CONFIG,PRIORITY:PROVIDERS,_state,MAX_SWITCHES,
@@ -1272,18 +1357,18 @@ function _updateProviderUI(provider) {
     const btn = document.getElementById('prov-'+id);
     if (btn) btn.classList.toggle('active', id === provider);
   });
-  // Update env hint card
-  const ENV_KEYS = {
-    claude: { key:'ANTHROPIC_API_KEY', models:'claude-haiku-4-5 · claude-sonnet-4-5' },
-    gemini: { key:'BUGGEMINI_API_KEY',    models:'gemini-3.1-pro-preview (v1beta) → gemini-3.1-flash-lite-preview → gemini-3-flash-preview' },
-    groq:   { key:'BUGGROQ_API_KEY',      models:'llama-3.3-70b-versatile' },
+  // Model hint per provider (keys are entered in the UI above, not from Vercel)
+  const MODEL_HINTS = {
+    claude: 'claude-haiku-4-5 · claude-sonnet-4-5',
+    gemini: 'gemini-3.1-pro-preview (v1beta) → gemini-3.1-flash-lite-preview → gemini-3-flash-preview',
+    groq:   'llama-3.3-70b-versatile',
   };
-  const info = ENV_KEYS[provider] || ENV_KEYS.claude;
+  const info = { models: MODEL_HINTS[provider] || MODEL_HINTS.claude };
   const envText    = document.getElementById('prov-env-text');
   const modelDisp  = document.getElementById('prov-model-display');
   const dot        = document.getElementById('prov-dot');
   const hasK       = ProviderManager.hasKey(provider);
-  if (envText)   envText.innerHTML = 'Set <code style="background:var(--s3);padding:1px 4px;border-radius:3px;font-size:10px">'+info.key+'</code> in Vercel → Settings → Environment Variables';
+  if (envText)   envText.textContent = '';
   if (modelDisp) modelDisp.textContent = info.models;
   if (dot)       dot.className = 'cfg-dot' + (hasK ? ' ok' : ' err');
   // Topbar brand subtitle
@@ -1357,6 +1442,8 @@ async function callAI(messages, opts = {}) {
 
     const payload = {
       provider:   prov,
+      // API key comes from the UI (browser-stored) — never from Vercel env
+      apiKey:     ({claude:CFG.ant, gemini:CFG.geminiKey, groq:CFG.groqKey})[prov] || '',
       model:      MODELS[prov] || MODELS.claude,
       max_tokens: opts.max_tokens || 1000,
       messages,
@@ -1804,8 +1891,8 @@ async function sendNotifications(ticket, result) {
       {type:'actions',elements:[{type:'button',text:{type:'plain_text',text:'View Ticket'},url:result.url,style:'primary'}]}
     ]};
     const teamsPayload={"@type":"MessageCard","@context":"http://schema.org/extensions","themeColor":sevColor,"summary":"New Bug","sections":[{"activityTitle":`🐛 ${ticket.summary||ticket.title||'New Bug'}`,"activitySubtitle":`${result.id} · ${sev}`,"facts":[{"name":"Ticket","value":result.id},{"name":"Severity","value":sev}]}],"potentialAction":[{"@type":"OpenUri","name":"View Ticket","targets":[{"os":"default","uri":result.url}]}]};
-    // Webhook URLs are now in Vercel env vars — only send payload
-    const notifyRes=await fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:{slack:slackPayload,teams:teamsPayload}})});
+    // Webhook URLs come from the UI config (browser-entered), passed per-request
+    const notifyRes=await fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:{slack:slackPayload,teams:teamsPayload},config:{slack:CFG.slack||'',teams:CFG.teams||''}})});
     const d=await notifyRes.json();
     if(d.slack==='sent') toast('Slack notification sent','success');
     if(d.teams==='sent') toast('Teams notification sent','success');
@@ -2300,7 +2387,7 @@ async function checkDuplicates(opts={}){
         const r = await fetch('/api/embeddings', {
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ text: newBugText, candidates: candidatePayload })
+          body: JSON.stringify({ text: newBugText, candidates: candidatePayload, geminiKey: CFG.geminiKey||'' })
         });
         const d = await r.json();
         if(d.fallback || d.error){
@@ -2358,7 +2445,7 @@ async function checkDuplicates(opts={}){
           {max_tokens:500}
         );
         const txt = resp.content?.[0]?.text||'';
-        const scores = JSON.parse(txt.match(/\[\s\S]*?\]/)?.[0]||'[]');
+        const scores = JSON.parse(txt.match(/\[[\s\S]*?\]/)?.[0]||'[]');
         scores.forEach(s=>{ if(primaryDupes[s.i]){ primaryDupes[s.i].score=s.score; primaryDupes[s.i].reason=s.reason; } });
 
         // Boost score for high semantic similarity if AI didn't already score high
@@ -2568,6 +2655,12 @@ function commentOnDuplicate(){
 
 async function postTicket(){
   const platform=curTicket?._platform; if(!platform)return;
+  // Duplicate-gate enforcement: this legacy path must never post directly when
+  // duplicates haven't been checked (or were found). Route through the same gate
+  // the primary post buttons use; only continue here once a clean check has run.
+  if(!dupCheckCompleted || dupCheckHasResults){
+    return postToSpecificPlatform(platform);
+  }
   const btn=document.getElementById('btn-post'),area=document.getElementById('post-status-area');
   if(btn)btn.disabled=true;
   const pName=platform==='jira'?'Jira':platform==='azure_devops'?'Azure DevOps':'GitHub';
@@ -2649,16 +2742,134 @@ async function api(endpoint, body) {
   if (!r.ok) throw new Error(d.error || `Server ${r.status}`);
   return d;
 }
-function jiraCfg() { return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'', orgCode: ORG_CODE||'' }; }
-function adoCfg()  {
-  // Priority: new org textbox → hidden legacy input → CFG.adoOrg
-  const orgText  = document.getElementById('ado-org-text');
-  const orgInput = document.getElementById('ado-org-input');
-  const org = orgText?.value?.trim() || orgInput?.value?.trim() || CFG.adoOrg || '';
-  if (org) CFG.adoOrg = org;
-  return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam };
+// ════════════════════════════════════════════════════════════════
+// Credential layer — all credentials are entered in the UI and stored
+// in the browser (localStorage) only. Nothing is read from Vercel env.
+// Tokens/PATs/keys are base64-encoded at rest (obfuscation, not crypto).
+// ════════════════════════════════════════════════════════════════
+function _b64enc(s){ try{ return s ? btoa(unescape(encodeURIComponent(s))) : ''; }catch(e){ return ''; } }
+function _b64dec(s){ try{ return s ? decodeURIComponent(escape(atob(s))) : ''; }catch(e){ return ''; } }
+// Returns the trimmed field value (''=intentionally empty, so it can CLEAR a
+// credential) or null only when the element is absent (so CFG is preserved).
+function _val(id){ const el=document.getElementById(id); return el ? el.value.trim() : null; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value = v||''; }
+
+function _togglePw(id, btn){
+  const el=document.getElementById(id); if(!el) return;
+  el.type = el.type==='password' ? 'text' : 'password';
+  if(btn) btn.textContent = el.type==='password' ? 'Show' : 'Hide';
 }
-function ghCfg()   { return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken }; }
+
+// Connection-status bar: state ∈ 'testing' | 'success' | 'error' | ''(hide)
+function _showConnStatus(section, state, msg){
+  const el=document.getElementById(section+'-conn-status');
+  if(!el) return;
+  if(!state){ el.className='conn-status'; el.innerHTML=''; return; }
+  el.className='conn-status show '+state;
+  const icon = state==='testing'
+    ? '<span class="cs-spin"></span>'
+    : state==='success' ? '✓' : '⚠';
+  el.innerHTML = `${icon}<span>${esc(msg||'')}</span>`;
+}
+
+// ── AI provider keys (Claude / Gemini / Groq) ──
+function _aiReadInputs(){
+  CFG.ant       = (_val('ai-claude-key') ?? CFG.ant) || '';
+  CFG.geminiKey = (_val('ai-gemini-key') ?? CFG.geminiKey) || '';
+  CFG.groqKey   = (_val('ai-groq-key')   ?? CFG.groqKey) || '';
+}
+function _aiSaveLs(){
+  _aiReadInputs();
+  localStorage.setItem('da_ant',    _b64enc(CFG.ant));
+  localStorage.setItem('da_gemini', _b64enc(CFG.geminiKey));
+  localStorage.setItem('da_groq',   _b64enc(CFG.groqKey));
+  if(typeof ProviderManager!=='undefined' && ProviderManager.syncKeysFromCfg) ProviderManager.syncKeysFromCfg();
+}
+
+// ── Jira ──
+function _jiraReadInputs(){
+  CFG.jiraUrl      = (_val('jira-url-input')      ?? CFG.jiraUrl) || '';
+  CFG.jiraEmail    = (_val('jira-email-input')    ?? CFG.jiraEmail) || '';
+  CFG.jiraToken    = (_val('jira-token-input')    ?? CFG.jiraToken) || '';
+  CFG.jiraAssignee = (_val('jira-assignee-input') ?? CFG.jiraAssignee) || '';
+  const sel=document.getElementById('jira-proj-select');
+  if(sel && sel.value) CFG.jiraProj = sel.options[sel.selectedIndex]?.dataset?.key || sel.value;
+}
+function _jiraSaveLs(){
+  _jiraReadInputs();
+  localStorage.setItem('da_jira_url',      CFG.jiraUrl||'');
+  localStorage.setItem('da_jira_email',    CFG.jiraEmail||'');
+  localStorage.setItem('da_jira_token',    _b64enc(CFG.jiraToken));
+  localStorage.setItem('da_jira_proj',     CFG.jiraProj||'');
+  localStorage.setItem('da_jira_assignee', CFG.jiraAssignee||'');
+}
+function _jiraClearCreds(){
+  ['da_jira_url','da_jira_email','da_jira_token','da_jira_proj','da_jira_assignee'].forEach(k=>localStorage.removeItem(k));
+  CFG.jiraUrl=CFG.jiraEmail=CFG.jiraToken=CFG.jiraProj=CFG.jiraAssignee='';
+  _set('jira-url-input','');_set('jira-email-input','');_set('jira-token-input','');_set('jira-assignee-input','');
+  const sel=document.getElementById('jira-proj-select'); if(sel) sel.innerHTML='<option value="">— test connection, then select —</option>';
+  _showConnStatus('jira',''); updateDots(); toast('Jira credentials cleared','info');
+}
+
+// ── Azure DevOps ──
+function _adoReadInputs(){
+  CFG.adoOrg      = (_val('ado-org-text') ?? _val('ado-org-input') ?? CFG.adoOrg) || '';
+  CFG.adoPat      = (_val('ado-pat-input')      ?? CFG.adoPat) || '';
+  CFG.adoAssignee = (_val('ado-assignee-input') ?? CFG.adoAssignee) || '';
+  const sel=document.getElementById('ado-proj-select');
+  if(sel && sel.value) CFG.adoProj = sel.value;
+}
+function _adoSaveLs(){
+  _adoReadInputs();
+  localStorage.setItem('da_ado_org',      CFG.adoOrg||'');
+  localStorage.setItem('da_ado_pat',      _b64enc(CFG.adoPat));
+  localStorage.setItem('da_ado_proj',     CFG.adoProj||'');
+  localStorage.setItem('da_ado_assignee', CFG.adoAssignee||'');
+}
+function _adoClearCreds(){
+  ['da_ado_org','da_ado_pat','da_ado_proj','da_ado_assignee'].forEach(k=>localStorage.removeItem(k));
+  CFG.adoOrg=CFG.adoPat=CFG.adoProj=CFG.adoAssignee='';
+  _set('ado-org-text','');_set('ado-pat-input','');_set('ado-assignee-input','');
+  const oi=document.getElementById('ado-org-input'); if(oi) oi.value='';
+  const sel=document.getElementById('ado-proj-select'); if(sel) sel.innerHTML='<option value="">— select project —</option>';
+  _showConnStatus('ado',''); updateDots(); toast('Azure DevOps credentials cleared','info');
+}
+
+// ── GitHub ──
+function _ghReadInputs(){
+  CFG.ghOwner = (_val('gh-owner-input') ?? CFG.ghOwner) || '';
+  CFG.ghRepo  = (_val('gh-repo-input')  ?? CFG.ghRepo) || '';
+  CFG.ghToken = (_val('gh-token-input') ?? CFG.ghToken) || '';
+  CFG.ghAssignee = (_val('gh-assignee-input') ?? CFG.ghAssignee) || '';
+  CFG.ghLabels   = (_val('gh-labels-input')   ?? CFG.ghLabels) || '';
+}
+function _ghSaveLs(){
+  _ghReadInputs();
+  localStorage.setItem('da_gh_owner', CFG.ghOwner||'');
+  localStorage.setItem('da_gh_repo',  CFG.ghRepo||'');
+  localStorage.setItem('da_gh_token', _b64enc(CFG.ghToken));
+}
+function _ghClearCreds(){
+  ['da_gh_owner','da_gh_repo','da_gh_token'].forEach(k=>localStorage.removeItem(k));
+  CFG.ghOwner=CFG.ghRepo=CFG.ghToken='';
+  _set('gh-owner-input','');_set('gh-repo-input','');_set('gh-token-input','');
+  _showConnStatus('gh',''); updateDots(); toast('GitHub credentials cleared','info');
+}
+
+// ── Notifications (Slack / Teams webhooks) ──
+function _notifSaveLs(){
+  CFG.slack = (_val('slack-webhook-input') ?? CFG.slack) || '';
+  CFG.teams = (_val('teams-webhook-input') ?? CFG.teams) || '';
+  localStorage.setItem('da_slack', CFG.slack||'');
+  localStorage.setItem('da_teams', CFG.teams||'');
+}
+
+function jiraCfg() { _jiraReadInputs(); return { jiraUrl: CFG.jiraUrl, jiraEmail: CFG.jiraEmail, jiraToken: CFG.jiraToken, jiraProj: CFG.jiraProj, jiraBoard: CFG.jiraBoard, jiraIssueType: CFG.jiraIssueType||'', jiraAssignee: CFG.jiraAssignee||'', jiraReporterEmail: CFG.jiraReporterEmail||CFG.jiraEmail||'', orgCode: ORG_CODE||'' }; }
+function adoCfg()  {
+  _adoReadInputs();
+  return { adoOrg: CFG.adoOrg, adoProj: CFG.adoProj, adoPat: CFG.adoPat, adoTeam: CFG.adoTeam, adoAssignee: CFG.adoAssignee||'' };
+}
+function ghCfg()   { _ghReadInputs(); return { ghOwner: CFG.ghOwner, ghRepo: CFG.ghRepo, ghToken: CFG.ghToken, ghAssignee: CFG.ghAssignee||'', ghLabels: CFG.ghLabels||'' }; }
 
 // Jira POST
 async function postJira(t){
@@ -3107,80 +3318,112 @@ async function validateCfg(section) {
 
   try {
     if (section === 'ant') {
-      // Test the currently active AI provider DIRECTLY — do NOT go through
-      // callAI() / the fallback loop, because that marks providers as failed
-      // on errors and sets cooldowns that block subsequent generation calls.
+      // Test the currently active AI provider DIRECTLY using the UI-entered key.
+      _aiReadInputs(); _aiSaveLs();
       const provider = ProviderManager.getActive();
       const meta = ProviderManager.getConfig(provider);
       const providerLabel = meta.name || provider;
+      const apiKey = ({claude:CFG.ant, gemini:CFG.geminiKey, groq:CFG.groqKey})[provider] || '';
       const setDot = (ok) => {
-        const d1 = document.getElementById('prov-dot');
-        const d2 = document.getElementById('dot-ant');
         const cls = ok ? 'cfg-dot ok' : 'cfg-dot err';
-        if (d1) d1.className = cls;
-        if (d2) d2.className = cls;
+        const d1 = document.getElementById('prov-dot'); if (d1) d1.className = cls;
+        const d2 = document.getElementById('dot-ant');  if (d2) d2.className = cls;
       };
+      if (!apiKey) {
+        _showConnStatus('ant','error',`Enter your ${providerLabel} API key above before testing.`);
+        toast(`Enter your ${providerLabel} API key first`, 'warn'); setDot(false);
+        return;
+      }
+      _showConnStatus('ant','testing',`Testing ${providerLabel}…`);
       try {
         const r = await fetch('/api/ai', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            provider,
-            model: meta.model,
-            max_tokens: 10,
-            messages: [{ role: 'user', content: 'hi' }],
-          }),
+          body: JSON.stringify({ provider, apiKey, model: meta.model, max_tokens: 10, messages: [{ role: 'user', content: 'hi' }] }),
         });
         const d = await r.json();
         if (r.ok && d.content) {
-          toast(`✅ ${providerLabel} connected!`, 'success');
-          setDot(true);
-          // Update key status in ProviderManager without marking failed
+          _showConnStatus('ant','success',`${providerLabel} connected.`);
+          toast(`✅ ${providerLabel} connected!`, 'success'); setDot(true);
           ProviderManager._state.keys[provider] = true;
         } else {
-          toast(`❌ ${providerLabel}: ${d.error || 'No response'}`, 'error');
-          setDot(false);
-          // Do NOT call markFailed — this is a test, not a generation
+          _showConnStatus('ant','error', d.error || 'No response');
+          toast(`❌ ${providerLabel}: ${d.error || 'No response'}`, 'error'); setDot(false);
         }
       } catch(e) {
-        toast(`❌ ${providerLabel}: ${e.message}`, 'error');
-        setDot(false);
+        _showConnStatus('ant','error', e.message);
+        toast(`❌ ${providerLabel}: ${e.message}`, 'error'); setDot(false);
       }
     }
 
     else if (section === 'jira') {
-      // Credentials are in Vercel env vars — no client-side check needed
+      _jiraReadInputs();
+      if (!CFG.jiraUrl || !CFG.jiraEmail || !CFG.jiraToken) {
+        _showConnStatus('jira','error','Enter your Jira URL, email and API token in Settings before testing.');
+        toast('Enter Jira URL, email and token first','warn'); return;
+      }
+      _showConnStatus('jira','testing','Testing Jira connection…');
       const r = await fetch('/api/jira', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'validate', config: jiraCfg() })
       });
       const d = await r.json();
-      if (d.valid) { toast(`✅ Jira connected! (${d.displayName})`, 'success'); document.getElementById('dot-jira').className = 'cfg-dot ok'; }
-      else { toast(`❌ Jira: ${d.error}`, 'error'); document.getElementById('dot-jira').className = 'cfg-dot err'; }
+      if (d.valid) {
+        _showConnStatus('jira','success',`Connected as ${d.displayName}. Loading projects…`);
+        toast(`✅ Jira connected! (${d.displayName})`, 'success');
+        document.getElementById('dot-jira').className = 'cfg-dot ok';
+        try{ await loadProjects('jira'); }catch(e){}
+      } else {
+        _showConnStatus('jira','error', d.error || 'Invalid credentials');
+        toast(`❌ Jira: ${d.error}`, 'error'); document.getElementById('dot-jira').className = 'cfg-dot err';
+      }
     }
 
     else if (section === 'ado') {
-      // Credentials are in Vercel env vars — no client-side check needed
+      _adoReadInputs();
+      if (!CFG.adoOrg || !CFG.adoPat) {
+        _showConnStatus('ado','error','Enter your Azure DevOps organisation and PAT in Settings before testing.');
+        toast('Enter ADO organisation and PAT first','warn'); return;
+      }
+      _showConnStatus('ado','testing','Testing Azure DevOps connection…');
       const r = await fetch('/api/ado', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'validate', config: adoCfg() })
       });
       const d = await r.json();
-      if (d.valid) { toast(`✅ ADO connected! (${d.displayName})`, 'success'); document.getElementById('dot-ado').className = 'cfg-dot ok'; }
-      else { toast(`❌ ADO: ${d.error}`, 'error'); document.getElementById('dot-ado').className = 'cfg-dot err'; }
+      if (d.valid) {
+        _showConnStatus('ado','success',`Connected: ${d.displayName}. Loading projects…`);
+        toast(`✅ ADO connected! (${d.displayName})`, 'success');
+        document.getElementById('dot-ado').className = 'cfg-dot ok';
+        try{ await loadAdoProjects(); }catch(e){}
+      } else {
+        _showConnStatus('ado','error', d.error || 'Invalid PAT');
+        toast(`❌ ADO: ${d.error}`, 'error'); document.getElementById('dot-ado').className = 'cfg-dot err';
+      }
     }
 
     else if (section === 'gh') {
-      // Token is in Vercel env vars — no client-side check needed
+      _ghReadInputs();
+      if (!CFG.ghOwner || !CFG.ghRepo || !CFG.ghToken) {
+        _showConnStatus('gh','error','Enter your GitHub owner, repository and token in Settings before testing.');
+        toast('Enter GitHub owner, repo and token first','warn'); return;
+      }
+      _showConnStatus('gh','testing','Testing GitHub connection…');
       const r = await fetch('/api/github', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'validate', config: ghCfg() })
       });
       const d = await r.json();
-      if (d.valid) { toast(`✅ GitHub connected! (${d.displayName})`, 'success'); document.getElementById('dot-gh').className = 'cfg-dot ok'; }
-      else { toast(`❌ GitHub: ${d.error}`, 'error'); document.getElementById('dot-gh').className = 'cfg-dot err'; }
+      if (d.valid) {
+        _showConnStatus('gh','success',`Connected: ${d.displayName}.`);
+        toast(`✅ GitHub connected! (${d.displayName})`, 'success'); document.getElementById('dot-gh').className = 'cfg-dot ok';
+      } else {
+        _showConnStatus('gh','error', d.error || 'Invalid token');
+        toast(`❌ GitHub: ${d.error}`, 'error'); document.getElementById('dot-gh').className = 'cfg-dot err';
+      }
     }
   } catch(e) {
+    if(['jira','ado','gh','ant'].includes(section)) _showConnStatus(section,'error',e.message);
     toast(`Connection test failed: ${e.message}`, 'error');
   } finally {
     btn.textContent = orig; btn.disabled = false;
@@ -3393,7 +3636,9 @@ async function loadProjects(platform) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         platform: isJira ? 'jira' : 'azure_devops',
-        adoOrg: isJira ? undefined : (CFG.adoOrg || document.getElementById('ado-org-text')?.value?.trim() || document.getElementById('ado-org-input')?.value?.trim() || '')
+        adoOrg: isJira ? undefined : (CFG.adoOrg || document.getElementById('ado-org-text')?.value?.trim() || document.getElementById('ado-org-input')?.value?.trim() || ''),
+        // Credentials come from the UI (browser) — passed per request, not from Vercel
+        config: isJira ? jiraCfg() : adoCfg()
       })
     });
     // Guard: check content-type before parsing JSON
@@ -3766,40 +4011,64 @@ const _origOrgCode = ORG_CODE;
 
 function tSec(id){const b=document.getElementById('bod-'+id),a=document.getElementById('arr-'+id);const o=b.classList.toggle('open');a.classList.toggle('open',o);}
 function saveCfg(section){
-  const v=id=>{const el=document.getElementById(id);return el?el.value:'';};
-  const sv=(k,val,lk)=>{if(val&&!val.startsWith('●')){CFG[k]=val;localStorage.setItem(lk,val);}};
-  if(section==='ant'){sv('ant',v('ci-ant'),'da_ant');}
-  // Credentials now stored in Vercel env vars — no localStorage needed
-  if(section==='jira'||section==='ado'||section==='gh'||section==='notif'){
-    // No-op: all credentials configured via Vercel environment variables
-    toast('Credentials are configured via Vercel Environment Variables','info');
-    return;
-  }
+  // Credentials are entered in the UI and persisted to localStorage per-section.
+  if(section==='ant')  _aiSaveLs();
+  else if(section==='jira') _jiraSaveLs();
+  else if(section==='ado')  _adoSaveLs();
+  else if(section==='gh')   _ghSaveLs();
+  else if(section==='notif') _notifSaveLs();
   updateDots();
   toast(section.toUpperCase()+' saved','success');
 }
 function updateDots(){
   const dot=(id,ok)=>{const el=document.getElementById(id);if(el)el.className='cfg-dot'+(ok?' ok':'');};
-  // AI provider dot reflects whether active provider's key is known
-  const provOk = ProviderManager.isInitialized() ? ProviderManager.hasKey() : true;
+  // Sync from inputs so dots reflect what the user has typed
+  _aiReadInputs(); _jiraReadInputs(); _adoReadInputs(); _ghReadInputs();
+  // AI provider dot reflects whether the active provider's key has been entered
+  const provOk = (typeof ProviderManager!=='undefined' && ProviderManager.isInitialized())
+    ? ProviderManager.hasKey()
+    : !!(CFG.ant||CFG.geminiKey||CFG.groqKey);
   dot('dot-ant',  provOk);
   dot('prov-dot', provOk);
-  dot('dot-jira',!!(CFG.jiraUrl&&CFG.jiraToken));
+  dot('dot-jira',!!(CFG.jiraUrl&&CFG.jiraEmail&&CFG.jiraToken));
   dot('dot-ado',!!(CFG.adoOrg&&CFG.adoPat));
-  dot('dot-gh',!!(CFG.ghOwner&&CFG.ghToken));
+  dot('dot-gh',!!(CFG.ghOwner&&CFG.ghRepo&&CFG.ghToken));
   dot('dot-slack',!!CFG.slack);dot('dot-teams',!!CFG.teams);
 }
 
 function restoreConfig(){
-  const restore=(id,val,mask)=>{const el=document.getElementById(id);if(el)el.value=val?(mask?'●'.repeat(12):val):'';}; 
-  restore('ci-ant',CFG.ant,true);restore('ci-jira-url',CFG.jiraUrl);restore('ci-jira-email',CFG.jiraEmail);
-  restore('ci-jira-token',CFG.jiraToken,true);restore('ci-jira-proj',CFG.jiraProj);restore('ci-jira-board',CFG.jiraBoard);
-  restore('ci-ado-org',CFG.adoOrg);restore('ci-ado-project',CFG.adoProj);restore('ci-ado-pat',CFG.adoPat,true);restore('ci-ado-team',CFG.adoTeam);
-  restore('ci-gh-owner',CFG.ghOwner);restore('ci-gh-repo',CFG.ghRepo);restore('ci-gh-token',CFG.ghToken,true);
-  restore('ci-slack',CFG.slack);restore('ci-teams',CFG.teams);
-  // Restore org textbox (new UI)
-  const orgText = document.getElementById('ado-org-text');
-  if (orgText && CFG.adoOrg) orgText.value = CFG.adoOrg;
+  // Load saved credentials from localStorage (tokens are base64-decoded) into CFG
+  // and populate the visible inputs. Credentials persist across reloads.
+  CFG.ant       = _b64dec(localStorage.getItem('da_ant')||'');
+  CFG.geminiKey = _b64dec(localStorage.getItem('da_gemini')||'');
+  CFG.groqKey   = _b64dec(localStorage.getItem('da_groq')||'');
+  CFG.jiraUrl      = localStorage.getItem('da_jira_url')||'';
+  CFG.jiraEmail    = localStorage.getItem('da_jira_email')||'';
+  CFG.jiraToken    = _b64dec(localStorage.getItem('da_jira_token')||'');
+  CFG.jiraProj     = localStorage.getItem('da_jira_proj')||'';
+  CFG.jiraAssignee = localStorage.getItem('da_jira_assignee')||'';
+  CFG.adoOrg      = localStorage.getItem('da_ado_org')||'';
+  CFG.adoPat      = _b64dec(localStorage.getItem('da_ado_pat')||'');
+  CFG.adoProj     = localStorage.getItem('da_ado_proj')||'';
+  CFG.adoAssignee = localStorage.getItem('da_ado_assignee')||'';
+  CFG.ghOwner = localStorage.getItem('da_gh_owner')||'';
+  CFG.ghRepo  = localStorage.getItem('da_gh_repo')||'';
+  CFG.ghToken = _b64dec(localStorage.getItem('da_gh_token')||'');
+  CFG.slack = localStorage.getItem('da_slack')||'';
+  CFG.teams = localStorage.getItem('da_teams')||'';
+
+  // Populate visible inputs
+  _set('ai-claude-key',CFG.ant); _set('ai-gemini-key',CFG.geminiKey); _set('ai-groq-key',CFG.groqKey);
+  _set('jira-url-input',CFG.jiraUrl); _set('jira-email-input',CFG.jiraEmail); _set('jira-token-input',CFG.jiraToken);
+  _set('jira-assignee-input',CFG.jiraAssignee);
+  _set('ado-org-text',CFG.adoOrg); _set('ado-pat-input',CFG.adoPat); _set('ado-assignee-input',CFG.adoAssignee);
+  const oi=document.getElementById('ado-org-input'); if(oi) oi.value=CFG.adoOrg;
+  _set('gh-owner-input',CFG.ghOwner); _set('gh-repo-input',CFG.ghRepo); _set('gh-token-input',CFG.ghToken);
+  _set('slack-webhook-input',CFG.slack); _set('teams-webhook-input',CFG.teams);
+
+  // If creds exist, auto-load project dropdowns so saved project can be reselected
+  if(CFG.jiraUrl && CFG.jiraToken) { try{ loadProjects('jira'); }catch(e){} }
+  if(CFG.adoOrg && CFG.adoPat)     { try{ loadAdoProjects(); }catch(e){} }
 }
 
 async function clearChat(){
@@ -3845,7 +4114,11 @@ function resetSessionOnLoad() {
   bulkItems = []; isBulk = false; editOpen = false;
   activeTemplate = null; isListening = false;
 
-  sessionLog = [];
+  // Session history (da_log) persists across reloads — it is written on every
+  // post and powers the dashboard/export. Reset only chat/ticket/bulk working
+  // state above; reload history rather than wiping it.
+  try { sessionLog = JSON.parse(localStorage.getItem('da_log') || '[]'); }
+  catch(e) { sessionLog = []; }
 
   // Reset chat UI to clean state
   const chat = document.getElementById('chat');
@@ -3899,29 +4172,23 @@ window.addEventListener('load',()=>{
   initShortcuts();
   document.getElementById('din').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendDefect();}});
 
-  // Also loads projects + ADO orgs after confirming API is reachable
-  setTimeout(async ()=>{
+  // Initialise the AI provider from the keys the user has entered (browser-stored).
+  // Credentials are NOT read from Vercel — restoreConfig() already loaded them into CFG.
+  setTimeout(()=>{
     try {
-      // 1. Fetch status — initialises ProviderManager with key availability
-      const statusR = await fetch('/api/status');
-      if (statusR.ok) {
-        const statusData = await statusR.json();
-        ProviderManager.init(statusData);
-        console.log('[Bug Forge AI] Status loaded. Provider:', ProviderManager.getActive(), '| Keys:', ProviderManager._state.keys);
-      } else {
-        // status API not deployed yet — init with defaults (Claude assumed)
-        ProviderManager.init({ claudeKey: true, geminiKey: false, groqKey: false, aiProvider: 'claude' });
-        console.warn('[Bug Forge AI] /api/status unavailable — defaulting to Claude');
-      }
-      // 2. Load projects + ADO orgs
-      loadProjects('jira').catch(()=>{});
-      loadAdoOrgs().catch(()=>{});
+      ProviderManager.init({
+        claudeKey:  !!CFG.ant,
+        geminiKey:  !!CFG.geminiKey,
+        groqKey:    !!CFG.groqKey,
+        aiProvider: CFG.ant ? 'claude' : CFG.geminiKey ? 'gemini' : CFG.groqKey ? 'groq' : 'claude',
+      });
+      console.log('[Bug Forge AI] Provider initialised from browser keys:', ProviderManager.getActive(), '| Keys:', ProviderManager._state.keys);
+      updateDots();
     } catch(e) {
       console.log('[Bug Forge AI] Init error:', e.message);
-      // Fallback init so app is still usable
-      ProviderManager.init({ claudeKey: true, geminiKey: false, groqKey: false, aiProvider: 'claude' });
+      ProviderManager.init({ claudeKey: !!CFG.ant, geminiKey: !!CFG.geminiKey, groqKey: !!CFG.groqKey, aiProvider: 'claude' });
     }
-  }, 1200);
+  }, 300);
 });
 
 function toggleMobileSidebar() {
