@@ -1201,7 +1201,6 @@ if('serviceWorker' in navigator){
 // ticket / bulk working state is reset in-memory by resetSessionOnLoad(), while
 // preferences and history are preserved across reloads.
 
-const LS = k => '';
 const CFG = {
   ant:'', geminiKey:'', groqKey:'', jiraUrl:'', jiraEmail:'', jiraIssueType:'', jiraReporterEmail:'',
   jiraToken:'', jiraProj:'', jiraBoard:'',
@@ -1216,10 +1215,9 @@ const CFG = {
   set aiProvider(v) { if (typeof ProviderManager !== 'undefined') ProviderManager.setActive(v, true); },
 };
 
-// Full ProviderManager adapted from Shuddhi QA production code.
-// Single source of truth for all AI calls in Bug Forge AI.
-// api/status.js → ProviderManager.init() on page load
-// callAI() / callAIGenerate() replace all /api/claude calls.
+// Full ProviderManager — single source of truth for all AI calls in Bug Forge AI.
+// Initialised on page load from the API keys the user enters in Settings (browser-stored).
+// callAI() / callAIGenerate() route every AI request through /api/ai with the user's key.
 
 const ProviderManager = (function() {
   'use strict';
@@ -3566,16 +3564,6 @@ function copyInlineTC(){
   toast('Test cases copied!','success');
 }
 
-// loadAdoOrgs() kept as a safe no-op — called from init but no longer
-// needed since org is now a free-text input. Projects load via loadAdoProjects().
-async function loadAdoOrgs() {
-  const org = (document.getElementById('ado-org-text')?.value || CFG.adoOrg || '').trim();
-  if (org) {
-    await loadAdoProjects();
-  }
-  // If no org typed yet, silently do nothing — user will type and click Load
-}
-
 // loadAdoProjects() — called when user types org name + clicks Load
 async function loadAdoProjects() {
   const textEl = document.getElementById('ado-org-text');
@@ -3731,7 +3719,7 @@ async function postToSpecificPlatform(platform){
       return;
     }
     if(!dupCheckHasResults){
-      // Check ran cleanly, no dupes — auto-proceed
+      console.log('[Dupes] Check ran cleanly, no dupes — auto-proceed');
       _dupStripPostTarget = null;
       await _executePost(platform);
     }
@@ -3779,12 +3767,36 @@ async function _executePost(platform){
     try{
       let result;
       curTicket._platform = p;
+      // ADO renders inline screenshots from a self-contained data URI
+      const adoShot = (p==='azure_devops') ? (window.pendingShot?.dataUrl || null) : null;
       if(p==='jira') result = await postJira(curTicket);
-      else if(p==='azure_devops') result = await postADO(curTicket);
+      else if(p==='azure_devops') result = await postADO(curTicket, adoShot);
       else result = await postGH(curTicket);
 
       curTicket._postedId = result.id;
       curTicket._rawId = result.rawId || result.id.replace('#','');
+
+      // Attach the screenshot (if any) to the created ticket
+      if(window.pendingShot?.file){
+        try{
+          const b64 = await fileToBase64(window.pendingShot.file);
+          const ar = await fetch('/api/attach',{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+              platform: p,
+              fileName: window.pendingShot.name || `screenshot-${curTicket._rawId||'bug'}.png`,
+              fileBase64: b64,
+              mimeType: window.pendingShot.file.type || 'image/png',
+              ticketId: result.id,
+              rawId: result.rawId,
+              config: {...jiraCfg(), ...adoCfg(), ...ghCfg()}
+            })
+          });
+          const ad = await ar.json();
+          if(ad.ok) toast('Screenshot attached ✓','success');
+          else if(ad.error) toast(`Attach: ${ad.error}`,'warn');
+        }catch(attErr){ console.warn('[Attach] failed:', attErr.message); }
+      }
 
       await fetchAndAssignSprint(p, result.id);
       await sendNotifications(curTicket, result);
@@ -3795,6 +3807,8 @@ async function _executePost(platform){
       results.push({platform:p, error:e.message, ok:false});
     }
   }
+  // Clear the screenshot once posting is complete (mirrors legacy postTicket)
+  if(results.some(r=>r.ok) && window.pendingShot){ try{ clearShot(); }catch(e){} }
 
   const pNames = {'jira':'Jira','azure_devops':'ADO','github':'GitHub'};
   const successHTML = results.filter(r=>r.ok).map(r=>

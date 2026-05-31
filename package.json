@@ -1,6 +1,6 @@
 {
   "name": "bugforgeai",
-  "version": "2026.04.18",
+  "version": "4.19.0",
   "description": "Bug Forge AI — AI-powered bug ticket generator for Jira, Azure DevOps and GitHub",
   "private": true,
   "scripts": {
@@ -23,7 +23,7 @@
     "claude"
   ],
   "engines": {
-    "node": ">=18.x"
+    "node": "22.x"
   },
   "type": "module"
 }
