@@ -646,7 +646,7 @@ if('serviceWorker' in navigator){
       </div>
       <div>
         <div class="brand-name">Bug Forge AI</div>
-        <div class="brand-sub">v2026.04.18 · Jira · ADO · GitHub</div>
+        <div class="brand-sub">v4.19 · Jira · ADO · GitHub</div>
       </div>
     </div>
 
@@ -1373,7 +1373,7 @@ function _updateProviderUI(provider) {
   if (dot)       dot.className = 'cfg-dot' + (hasK ? ' ok' : ' err');
   // Topbar brand subtitle
   const sub = document.querySelector('.brand-sub');
-  if (sub) sub.textContent = 'v2026.04.18 · AI: '+(meta.name||provider)+' · Jira · ADO · GitHub';
+  if (sub) sub.textContent = 'v4.19 · AI: '+(meta.name||provider)+' · Jira · ADO · GitHub';
 }
 window._updateProviderUI = _updateProviderUI;
 
@@ -4127,7 +4127,7 @@ function resetSessionOnLoad() {
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span style="color:var(--accent2);font-size:13px">Drop screenshot to attach</span></div>
       <div class="msg ai">${aiAv()}<div><div class="msg-bub">
-        <strong>Bug Forge AI v4.7</strong> — Ready. Describe a defect below.<br><br>
+        <strong>Bug Forge AI v4.19</strong> — Ready. Describe a defect below.<br><br>
         <span style="color:var(--t2);font-size:12px">⭐ Severity scorer · 🧪 Test cases · 🔍 Root cause · 📋 Templates · 💬 Comments · 🔔 Notifications · 🏃 Sprint · 🎤 Voice · 📤 Export · 📊 Dashboard</span>
       </div></div></div>`;
   }
