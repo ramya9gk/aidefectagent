@@ -49,6 +49,7 @@ export default async function handler(req, res) {
     return d.result || [];
   }
 
+  try {
   // ── GET: load org config for app ───────────────────────────
   if (req.method === 'GET') {
     const org = req.query.org;
@@ -315,5 +316,10 @@ export default async function handler(req, res) {
     }
 
     return res.status(400).json({ error: `Unknown action: ${action}` });
+  }
+  } catch (e) {
+    const code = e?.cause?.code || e?.message || 'unknown';
+    console.error('[config] KV error:', code);
+    return res.status(503).json({ error: `Database unreachable (${code}). Check the KV store is active and KV_REST_API_URL is correct.` });
   }
 }
