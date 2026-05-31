@@ -13,11 +13,13 @@ export default async function handler(req, res) {
 
   // Read from Vercel env vars first, fall back to browser-supplied config
   // Multi-tenant: load from KV if orgCode provided
+  const _kvUrl = process.env.BUGFORGE_REST_API_KV_REST_API_URL   || process.env.KV_REST_API_URL;
+  const _kvTok = process.env.BUGFORGE_REST_API_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN;
   let orgCfgGh = {};
-  if (config?.orgCode && process.env.KV_REST_API_URL) {
+  if (config?.orgCode && _kvUrl) {
     try {
-      const kvR = await fetch(`${process.env.KV_REST_API_URL}/get/org:${config.orgCode}`, {
-        headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` }
+      const kvR = await fetch(`${_kvUrl}/get/org:${config.orgCode}`, {
+        headers: { Authorization: `Bearer ${_kvTok}` }
       });
       const kvD = await kvR.json();
       if (kvD.result) orgCfgGh = JSON.parse(kvD.result);
