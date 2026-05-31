@@ -26,10 +26,12 @@ export default async function handler(req, res) {
   }
 
   async function kvSet(key, value) {
+    // Upstash REST: POST /set/{key} stores the request BODY as the value verbatim.
+    // Send the stringified object directly (kvGet does JSON.parse on read).
     const r = await fetch(`${KV_URL}/set/${encodeURIComponent(key)}`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${KV_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ value: JSON.stringify(value) })
+      headers: { Authorization: `Bearer ${KV_TOKEN}`, 'Content-Type': 'text/plain' },
+      body: JSON.stringify(value)
     });
     return r.ok;
   }
