@@ -9,11 +9,11 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { payload } = req.body;
+  const { payload, config } = req.body;
 
-  // Read from Vercel env vars — webhook URLs never touch the browser
-  const slackUrl = process.env.SLACK_WEBHOOK_URL || '';
-  const teamsUrl = process.env.TEAMS_WEBHOOK_URL || '';
+  // Webhook URLs come from the UI config (browser-entered) — not from Vercel env.
+  const slackUrl = config?.slack || '';
+  const teamsUrl = config?.teams || '';
 
   const results = { slack: null, teams: null };
 
