@@ -7,13 +7,13 @@
  * Body: { text, candidates: [{id, title, description}] }
  *       → computes cosine similarity, returns ranked matches
  *
- * Uses BUGGEMINI_API_KEY. Falls back gracefully if not configured.
- * Model: text-embedding-004 (768 dimensions, GA, free tier 1500/day)
+ * Gemini key is provided per-request from the UI. Falls back gracefully if absent.
+ * Model: gemini-embedding-001 (v1beta; embedContent + batchEmbedContents)
  */
 
-const EMBED_MODEL = 'text-embedding-004';
-const EMBED_URL = `https://generativelanguage.googleapis.com/v1/models/${EMBED_MODEL}:embedContent`;
-const BATCH_URL = `https://generativelanguage.googleapis.com/v1/models/${EMBED_MODEL}:batchEmbedContents`;
+const EMBED_MODEL = 'gemini-embedding-001';
+const EMBED_URL = `https://generativelanguage.googleapis.com/v1beta/models/${EMBED_MODEL}:embedContent`;
+const BATCH_URL = `https://generativelanguage.googleapis.com/v1beta/models/${EMBED_MODEL}:batchEmbedContents`;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
